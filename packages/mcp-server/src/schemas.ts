@@ -214,6 +214,107 @@ export const DeleteRoleSchema = z.object({
   roleName: roleName.describe('Name of the role to delete'),
 });
 
+// --- Compound tool schemas ---
+
+export const GenKpiSuiteSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Name of the table to add KPI measures to'),
+  baseMeasure: measureName.describe('Name of an existing base measure (e.g. "Total Sales")'),
+  targetExpression: expression.describe('DAX expression for the target measure'),
+  kpiName: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe(
+      'Prefix for generated measures (e.g. "Revenue" creates "Revenue Target", "Revenue Variance", etc.)',
+    ),
+  displayFolder: displayFolder.describe('Display folder for all generated measures'),
+  formatString: formatString.describe('Format string for Actual/Target/Variance measures'),
+  statusThresholds: z
+    .object({
+      behind: z.number().describe('Threshold below which status is "Behind" (e.g. 0.8 for 80%)'),
+      atRisk: z.number().describe('Threshold below which status is "At Risk" (e.g. 0.9 for 90%)'),
+    })
+    .optional()
+    .describe('Custom thresholds for status color (default: behind=0.8, atRisk=0.95)'),
+});
+
+const timeIntelligenceVariant = z.enum([
+  'MTD',
+  'QTD',
+  'YTD',
+  'PY',
+  'PY_MTD',
+  'PY_QTD',
+  'PY_YTD',
+  'YoY',
+  'YoY%',
+]);
+
+export const GenTimeIntelligenceSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Name of the table to add time intelligence measures to'),
+  baseMeasure: measureName.describe('Name of an existing base measure'),
+  dateColumn: z
+    .string()
+    .min(1)
+    .max(512)
+    .describe('Fully qualified date column reference (e.g. "\'Calendar\'[Date]")'),
+  variants: z
+    .array(timeIntelligenceVariant)
+    .min(1)
+    .describe('Time intelligence variants to generate'),
+  displayFolder: displayFolder.describe('Display folder for generated measures'),
+});
+
+export const AuditUnusedMeasuresSchema = z.object({
+  projectPath,
+  tableName: tableName.optional().describe('Filter to measures in this table only'),
+});
+
+export const AuditDependenciesSchema = z.object({
+  projectPath,
+  measureName: measureName
+    .optional()
+    .describe(
+      'If provided, returns dependency tree for this measure only; otherwise returns full graph',
+    ),
+});
+
+export const GenDataDictionarySchema = z.object({
+  projectPath,
+  format: z.enum(['markdown', 'json']).default('markdown').describe('Output format'),
+  tableName: tableName.optional().describe('Filter to a specific table'),
+  includeExpressions: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Include DAX expressions for measures and calculated columns'),
+});
+
+export const OrganizeFoldersSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Name of the table to organize'),
+  rules: z
+    .array(
+      z.object({
+        pattern: z.string().min(1).max(256).describe('Match pattern (prefix, suffix, or contains)'),
+        folder: z.string().min(1).max(1024).describe('Display folder to assign'),
+        matchType: z
+          .enum(['prefix', 'suffix', 'contains'])
+          .default('prefix')
+          .describe('How to match the pattern against measure names'),
+      }),
+    )
+    .min(1)
+    .describe('Rules mapping name patterns to display folders'),
+  dryRun: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('If true (default), returns proposed changes without applying them'),
+});
+
 // --- DAX formatter tool schemas ---
 
 export const FormatDaxSchema = z.object({

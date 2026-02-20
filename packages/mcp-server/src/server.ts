@@ -9,6 +9,7 @@ import {
   applySecurityFilter,
 } from '@pbip-tools/project-discovery';
 import { registerTools } from './tools/index.js';
+import { registerPrompts } from './prompts/index.js';
 
 export function createServer() {
   const server = new McpServer({
@@ -81,6 +82,7 @@ export function createServer() {
   }
 
   registerTools(server, getProject, getProjectForWrite, invalidateCache);
+  registerPrompts(server);
 
   return server;
 }

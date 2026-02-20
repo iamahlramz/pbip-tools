@@ -33,6 +33,13 @@ import {
   FormatDaxSchema,
   ValidateDaxSchema,
   FormatMeasuresSchema,
+  // Compound tool schemas
+  GenKpiSuiteSchema,
+  GenTimeIntelligenceSchema,
+  AuditUnusedMeasuresSchema,
+  AuditDependenciesSchema,
+  GenDataDictionarySchema,
+  OrganizeFoldersSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -71,6 +78,14 @@ import { deleteRole } from './delete-role.js';
 import { formatDaxTool } from './format-dax.js';
 import { validateDaxTool } from './validate-dax.js';
 import { formatMeasures } from './format-measures.js';
+
+// Compound tool implementations
+import { genKpiSuite } from './gen-kpi-suite.js';
+import { genTimeIntelligence } from './gen-time-intelligence.js';
+import { auditUnusedMeasures } from './audit-unused-measures.js';
+import { auditDependencies } from './audit-dependencies.js';
+import { genDataDictionary } from './gen-data-dictionary.js';
+import { organizeFolders } from './organize-folders.js';
 
 type ToolResponse = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
@@ -550,6 +565,139 @@ export function registerTools(
       return jsonResponse({
         success: true,
         ...result,
+      });
+    }),
+  );
+
+  // =============================================
+  // COMPOUND TOOLS (6)
+  // =============================================
+
+  server.tool(
+    'pbip_gen_kpi_suite',
+    'Generate a complete KPI measure family: Target, Variance, Variance %, Status Color, and Gauge Max from a base measure',
+    GenKpiSuiteSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = genKpiSuite(
+        project,
+        args.tableName,
+        args.baseMeasure,
+        args.targetExpression,
+        args.kpiName,
+        args.displayFolder,
+        args.formatString,
+        args.statusThresholds,
+      );
+
+      const table = project.model.tables.find((t) => t.name === result.table)!;
+      await writeTableFile(project, table);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        measuresCreated: result.measures.length,
+        measures: result.measures,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_gen_time_intelligence',
+    'Generate time intelligence measure variants (MTD, QTD, YTD, PY, YoY, YoY%) from a base measure',
+    GenTimeIntelligenceSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = genTimeIntelligence(
+        project,
+        args.tableName,
+        args.baseMeasure,
+        args.dateColumn,
+        args.variants,
+        args.displayFolder,
+      );
+
+      const table = project.model.tables.find((t) => t.name === result.table)!;
+      await writeTableFile(project, table);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        measuresCreated: result.measures.length,
+        measures: result.measures,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_audit_unused_measures',
+    'Find measures not referenced by any visual binding or other measure DAX expression',
+    AuditUnusedMeasuresSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      const unused = await auditUnusedMeasures(project, args.tableName);
+      return jsonResponse({
+        unusedCount: unused.length,
+        measures: unused,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_audit_dependencies',
+    'Build measure-to-measure dependency graph by parsing [MeasureName] references in DAX expressions',
+    AuditDependenciesSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      const result = auditDependencies(project, args.measureName);
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_gen_data_dictionary',
+    'Generate a data dictionary for the semantic model in markdown or JSON format',
+    GenDataDictionarySchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      const result = genDataDictionary(
+        project,
+        args.format,
+        args.tableName,
+        args.includeExpressions,
+      );
+
+      if (typeof result === 'string') {
+        return { content: [{ type: 'text' as const, text: result }] };
+      }
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_organize_folders',
+    'Auto-assign display folders to measures based on naming convention rules (prefix/suffix/contains matching)',
+    OrganizeFoldersSchema.shape,
+    safeTool(async (args) => {
+      const project = args.dryRun
+        ? await getProject(args.projectPath)
+        : await getProjectForWrite(args.projectPath);
+      const result = organizeFolders(project, args.tableName, args.rules, args.dryRun);
+
+      if (!args.dryRun && result.changes.length > 0) {
+        const table = project.model.tables.find((t) => t.name === result.table)!;
+        await writeTableFile(project, table);
+        invalidateCache(project.pbipPath);
+      }
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        changeCount: result.changes.length,
+        applied: result.applied,
+        changes: result.changes,
       });
     }),
   );
