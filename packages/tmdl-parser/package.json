@@ -1,0 +1,25 @@
+{
+  "name": "@pbip-tools/tmdl-parser",
+  "version": "0.1.0",
+  "description": "TMDL file parser and serializer for Power BI PBIP projects",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@pbip-tools/core": "0.1.0"
+  },
+  "license": "MIT"
+}

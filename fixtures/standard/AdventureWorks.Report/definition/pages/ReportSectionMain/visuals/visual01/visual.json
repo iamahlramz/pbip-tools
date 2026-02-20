@@ -1,0 +1,28 @@
+{
+  "name": "visual01",
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "Commands": [
+        {
+          "SemanticQueryDataShapeCommand": {
+            "Query": {
+              "Select": [
+                {
+                  "Measure": {
+                    "Expression": {
+                      "SourceRef": { "Entity": "_Measures" }
+                    },
+                    "Property": "Total Sales"
+                  },
+                  "Name": "_Measures.Total Sales"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "objects": {}
+  }
+}

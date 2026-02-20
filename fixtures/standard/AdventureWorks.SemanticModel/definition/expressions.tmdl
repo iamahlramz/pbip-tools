@@ -1,0 +1,31 @@
+expression ServerURL =
+		"https://sql.example.com" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 70000000-0000-0000-0000-000000000001
+	queryGroup: Parameters
+	resultType: text
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Text
+
+expression fnGetLatestFile =
+		let
+			Source = (folderPath as text, filePrefix as text) =>
+				let
+					Files = Folder.Files(folderPath),
+					Filtered = Table.SelectRows(Files, each Text.StartsWith([Name], filePrefix)),
+					Sorted = Table.Sort(Filtered, {{"Date modified", Order.Descending}}),
+					Latest = Sorted{0}[Content]
+				in
+					Latest
+		in
+			Source
+	lineageTag: 70000000-0000-0000-0000-000000000002
+	queryGroup: Functions
+
+expression ErrorQuery =
+		let
+			Source = #"Non Existent Source"
+		in
+			Source
+	lineageTag: 70000000-0000-0000-0000-000000000003
+	queryGroup: Errors
+	annotation PBI_NavigationStepName = Navigation

@@ -1,0 +1,21 @@
+{
+  "name": "@pbip-tools/core",
+  "version": "0.1.0",
+  "description": "Core types and constants for pbip-tools",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "license": "MIT"
+}

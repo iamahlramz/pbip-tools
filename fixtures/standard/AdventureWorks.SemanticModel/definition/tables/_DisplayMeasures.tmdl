@@ -1,0 +1,25 @@
+table _DisplayMeasures
+
+	measure 'Sales Color' =
+		VAR _value = [Sales YoY %]
+		RETURN
+			SWITCH(
+				TRUE(),
+				_value >= 0.1, "#0D9F6E",
+				_value >= 0, "#C97A1E",
+				"#C92A2A"
+			)
+		lineageTag: 50000000-0000-0000-0000-000000000001
+		displayFolder: Colors
+
+	measure 'Sales Status Icon' = ```
+		VAR _value = [Sales YoY %]
+		RETURN
+			IF(
+				_value >= 0.1,
+				UNICHAR(9650),
+				IF(_value >= 0, UNICHAR(9679), UNICHAR(9660))
+			)
+		```
+		lineageTag: 50000000-0000-0000-0000-000000000002
+		displayFolder: Icons

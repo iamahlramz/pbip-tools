@@ -1,0 +1,48 @@
+table _Measures
+
+	measure 'Total Sales' =
+		SUMX(
+			FactSales,
+			FactSales[Amount]
+		)
+		formatString: "$"#,0;-"$"#,0;"$"#,0
+		lineageTag: 40000000-0000-0000-0000-000000000001
+		displayFolder: Sales
+
+	measure 'Total Quantity' = SUM(FactSales[Quantity])
+		formatString: #,0
+		lineageTag: 40000000-0000-0000-0000-000000000002
+		displayFolder: Sales
+
+	measure 'Average Price' = ```
+		// Calculate the weighted average price
+		VAR _totalQty = SUM(FactSales[Quantity])
+		VAR _totalAmt = SUM(FactSales[Amount])
+		RETURN
+			DIVIDE(_totalAmt, _totalQty, BLANK())
+		```
+		formatString: "$"#,0.00
+		lineageTag: 40000000-0000-0000-0000-000000000003
+		displayFolder: Sales\Pricing
+
+	measure 'Sales YoY %' =
+		VAR _currentYear = [Total Sales]
+		VAR _previousYear =
+			CALCULATE(
+				[Total Sales],
+				SAMEPERIODLASTYEAR(DimDate[Date])
+			)
+		RETURN
+			DIVIDE(
+				_currentYear - _previousYear,
+				_previousYear,
+				BLANK()
+			)
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: 40000000-0000-0000-0000-000000000004
+		displayFolder: Sales\YoY
+
+	measure 'Customer Count' = DISTINCTCOUNT(FactSales[CustomerKey])
+		formatString: #,0
+		lineageTag: 40000000-0000-0000-0000-000000000005
+		displayFolder: Customers

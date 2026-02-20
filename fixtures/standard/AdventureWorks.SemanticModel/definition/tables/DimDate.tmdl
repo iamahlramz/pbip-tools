@@ -1,0 +1,73 @@
+table DimDate
+	dataCategory: Time
+	lineageTag: 10000000-0000-0000-0000-000000000001
+
+	/// The primary date key in YYYYMMDD format
+	column DateKey
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 10000000-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: DateKey
+
+	column Date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 10000000-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: Date
+
+	column MonthName
+		dataType: string
+		lineageTag: 10000000-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: MonthName
+		sortByColumn: MonthNumber
+
+	column MonthNumber
+		dataType: int64
+		isHidden
+		lineageTag: 10000000-0000-0000-0000-000000000005
+		summarizeBy: none
+		sourceColumn: MonthNumber
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 10000000-0000-0000-0000-000000000006
+		summarizeBy: none
+		sourceColumn: Year
+
+	column Quarter
+		dataType: string
+		lineageTag: 10000000-0000-0000-0000-000000000007
+		summarizeBy: none
+		sourceColumn: Quarter
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: 10000000-0000-0000-0000-000000000020
+
+		level Year
+			ordinal: 0
+			column: Year
+			lineageTag: 10000000-0000-0000-0000-000000000021
+
+		level Quarter
+			ordinal: 1
+			column: Quarter
+			lineageTag: 10000000-0000-0000-0000-000000000022
+
+		level MonthName
+			ordinal: 2
+			column: MonthName
+			lineageTag: 10000000-0000-0000-0000-000000000023
+
+	partition DimDate = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database("sqlserver.example.com", "AdventureWorks"),
+				dbo_DimDate = Source{[Schema="dbo",Item="DimDate"]}[Data]
+			in
+				dbo_DimDate

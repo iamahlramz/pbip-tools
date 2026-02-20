@@ -1,0 +1,41 @@
+{
+  "name": "pbip-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Open-source tools for Power BI PBIP projects — TMDL parser + MCP server",
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/tmdl-parser",
+    "packages/project-discovery",
+    "packages/mcp-server"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "packageManager": "npm@11.6.2",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git"
+  }
+}

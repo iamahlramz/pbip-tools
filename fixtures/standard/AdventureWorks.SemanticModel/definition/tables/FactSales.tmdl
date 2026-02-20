@@ -1,0 +1,55 @@
+table FactSales
+	lineageTag: 30000000-0000-0000-0000-000000000001
+
+	column SalesKey
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 30000000-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: SalesKey
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 30000000-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: DateKey
+
+	column CustomerKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 30000000-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+	column Amount
+		dataType: decimal
+		formatString: "$"#,0.00;-"$"#,0.00;"$"#,0.00
+		lineageTag: 30000000-0000-0000-0000-000000000005
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column Quantity
+		dataType: int64
+		formatString: #,0
+		lineageTag: 30000000-0000-0000-0000-000000000006
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+	column UnitPrice
+		dataType: decimal
+		formatString: "$"#,0.00
+		lineageTag: 30000000-0000-0000-0000-000000000007
+		summarizeBy: none
+		sourceColumn: UnitPrice
+
+	partition FactSales = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database("sqlserver.example.com", "AdventureWorks"),
+				dbo_FactSales = Source{[Schema="dbo",Item="FactSales"]}[Data],
+				#"Filtered Rows" = Table.SelectRows(dbo_FactSales, each [Amount] > 0)
+			in
+				#"Filtered Rows"

@@ -1,0 +1,19 @@
+relationship 18f9fb00-5765-4e5e-8e8a-4a04302ec14a
+	fromColumn: FactSales.DateKey
+	toColumn: DimDate.DateKey
+
+relationship FactSales_DimCustomer
+	fromColumn: FactSales.CustomerKey
+	toColumn: DimCustomer.CustomerKey
+
+relationship 'Inactive Date'
+	fromColumn: FactSales.DateKey
+	toColumn: DimDate.DateKey
+	crossFilteringBehavior: bothDirections
+	isActive: false
+
+relationship ManyToMany_Example
+	fromColumn: DimCustomer.Region
+	toColumn: FactSales.CustomerKey
+	toCardinality: many
+	crossFilteringBehavior: bothDirections

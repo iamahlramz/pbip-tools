@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "artifacts": [
+    {
+      "report": {
+        "path": "AdventureWorks.Report"
+      }
+    },
+    {
+      "semanticModel": {
+        "path": "AdventureWorks.SemanticModel"
+      }
+    }
+  ]
+}

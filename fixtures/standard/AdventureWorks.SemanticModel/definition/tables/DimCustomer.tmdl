@@ -1,0 +1,34 @@
+table DimCustomer
+	lineageTag: 20000000-0000-0000-0000-000000000001
+
+	column CustomerKey
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: 20000000-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+		changedProperty = Name
+		changedProperty = SortByColumn
+
+	column CustomerName
+		dataType: string
+		lineageTag: 20000000-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: CustomerName
+
+	column Region
+		dataType: string
+		lineageTag: 20000000-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: Region
+
+	partition DimCustomer = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database("sqlserver.example.com", "AdventureWorks"),
+				dbo_DimCustomer = Source{[Schema="dbo",Item="DimCustomer"]}[Data]
+			in
+				dbo_DimCustomer

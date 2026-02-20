@@ -1,0 +1,45 @@
+table 'Time Comparison'
+	lineageTag: 60000000-0000-0000-0000-000000000001
+
+	calculationGroup
+		precedence: 20
+
+		calculationItem Current =
+			SELECTEDMEASURE()
+
+		calculationItem YoY =
+			// Year over year comparison
+			VAR _current = SELECTEDMEASURE()
+			VAR _prior =
+				CALCULATE(
+					SELECTEDMEASURE(),
+					SAMEPERIODLASTYEAR(DimDate[Date])
+				)
+			RETURN
+				_current - _prior
+
+		calculationItem 'YoY %' =
+			// Year over year percentage
+			VAR _current = SELECTEDMEASURE()
+			VAR _prior =
+				CALCULATE(
+					SELECTEDMEASURE(),
+					SAMEPERIODLASTYEAR(DimDate[Date])
+				)
+			RETURN
+				DIVIDE(_current - _prior, _prior, BLANK())
+			formatStringExpression =
+				IF(
+					SELECTEDMEASUREFORMATSTRING() = "$#,0",
+					"0.0%",
+					SELECTEDMEASUREFORMATSTRING()
+				)
+
+	column 'Time Calculation'
+		dataType: string
+		lineageTag: 60000000-0000-0000-0000-000000000002
+		summarizeBy: none
+		isHidden
+		sourceColumn: Name
+
+		annotation SummarizationSetBy = Automatic
