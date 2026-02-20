@@ -30,13 +30,24 @@ export type {
   AnnotationNode,
   ChangedPropertyNode,
   PropertyNode,
+  RoleNode,
+  TablePermissionNode,
+  RoleMemberNode,
+  ModelPermission,
   UnknownNode,
   SemanticModel,
 } from './tmdl.js';
 
 export type { PbipProject, PbipFileContent, PbipArtifact, TmdlFileType } from './pbip-project.js';
 
-export type { VisualBinding, VisualInfo } from './visual-binding.js';
+export type {
+  VisualBinding,
+  VisualInfo,
+  PageInfo,
+  BindingLocation,
+  BindingUpdateOp,
+  BindingAuditResult,
+} from './visual-binding.js';
 
 export type { PbipToolsConfig, ProjectConfig, SecurityConfig } from './config.js';
 

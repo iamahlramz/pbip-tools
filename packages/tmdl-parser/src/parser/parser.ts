@@ -5,6 +5,7 @@ import type {
   RelationshipNode,
   ExpressionNode,
   CultureNode,
+  RoleNode,
   TmdlFileType,
 } from '@pbip-tools/core';
 import { tokenize } from '../lexer/index.js';
@@ -14,6 +15,7 @@ import { parseTable } from './table-parser.js';
 import { parseRelationships } from './relationship-parser.js';
 import { parseExpressions } from './expression-parser.js';
 import { parseCulture } from './culture-parser.js';
+import { parseRole } from './role-parser.js';
 import type { ParseWarning } from '../errors.js';
 
 export type ParseResult =
@@ -22,7 +24,8 @@ export type ParseResult =
   | { type: 'table'; node: TableNode; warnings: ParseWarning[] }
   | { type: 'relationship'; nodes: RelationshipNode[]; warnings: ParseWarning[] }
   | { type: 'expression'; nodes: ExpressionNode[]; warnings: ParseWarning[] }
-  | { type: 'culture'; node: CultureNode; warnings: ParseWarning[] };
+  | { type: 'culture'; node: CultureNode; warnings: ParseWarning[] }
+  | { type: 'role'; node: RoleNode; warnings: ParseWarning[] };
 
 export function parseTmdl(text: string, fileType: TmdlFileType, file?: string): ParseResult {
   const tokens = tokenize(text);
@@ -41,6 +44,8 @@ export function parseTmdl(text: string, fileType: TmdlFileType, file?: string): 
       return { type: 'expression', nodes: parseExpressions(tokens, warnings), warnings };
     case 'culture':
       return { type: 'culture', node: parseCulture(tokens, warnings, file), warnings };
+    case 'role':
+      return { type: 'role', node: parseRole(tokens, warnings, file), warnings };
   }
 }
 
@@ -52,5 +57,6 @@ export function detectFileType(filename: string): TmdlFileType | null {
   if (lower === 'expressions.tmdl') return 'expression';
   if (lower.startsWith('cultures/') || lower.startsWith('cultures\\')) return 'culture';
   if (lower.startsWith('tables/') || lower.startsWith('tables\\')) return 'table';
+  if (lower.startsWith('roles/') || lower.startsWith('roles\\')) return 'role';
   return null;
 }

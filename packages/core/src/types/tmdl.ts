@@ -261,6 +261,34 @@ export interface PropertyNode extends TmdlNode {
   value: string | boolean | number | null;
 }
 
+// --- Role (RLS) ---
+
+export type ModelPermission = 'read' | 'readRefresh' | 'none';
+
+export interface RoleNode extends TmdlNode {
+  kind: 'role';
+  name: string;
+  modelPermission: ModelPermission;
+  tablePermissions: TablePermissionNode[];
+  members?: RoleMemberNode[];
+  annotations?: AnnotationNode[];
+  properties?: PropertyNode[];
+}
+
+export interface TablePermissionNode extends TmdlNode {
+  kind: 'tablePermission';
+  tableName: string;
+  filterExpression: string;
+  annotations?: AnnotationNode[];
+  properties?: PropertyNode[];
+}
+
+export interface RoleMemberNode extends TmdlNode {
+  kind: 'roleMember';
+  memberName: string;
+  identityProvider?: string;
+}
+
 // --- Unknown (forward compatibility) ---
 
 export interface UnknownNode extends TmdlNode {
@@ -278,4 +306,5 @@ export interface SemanticModel {
   relationships: RelationshipNode[];
   expressions: ExpressionNode[];
   cultures: CultureNode[];
+  roles: RoleNode[];
 }

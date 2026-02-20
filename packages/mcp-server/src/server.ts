@@ -15,30 +15,30 @@ export function createServer() {
     version: '0.1.0',
   });
 
-  const projectCache = new Map<string, PbipProject>();
+  // Dual cache: filtered for read tools, unfiltered for write tools
+  const filteredCache = new Map<string, PbipProject>();
+  const unfilteredCache = new Map<string, PbipProject>();
+
+  async function resolvePbipPath(projectPath?: string): Promise<string> {
+    if (projectPath) return projectPath;
+    const cwd = process.cwd();
+    const projects = await discoverProjects(cwd, 2);
+    if (projects.length === 0) {
+      throw new Error(`No .pbip project found in ${cwd}`);
+    }
+    return projects[0].pbipPath;
+  }
 
   async function getProject(projectPath?: string): Promise<PbipProject> {
-    const cwd = process.cwd();
-    let pbipPath = projectPath;
+    const pbipPath = await resolvePbipPath(projectPath);
 
-    if (!pbipPath) {
-      // Auto-discover in CWD
-      const projects = await discoverProjects(cwd, 2);
-      if (projects.length === 0) {
-        throw new Error(`No .pbip project found in ${cwd}`);
-      }
-      pbipPath = projects[0].pbipPath;
+    if (filteredCache.has(pbipPath)) {
+      return filteredCache.get(pbipPath)!;
     }
 
-    // Check cache
-    if (projectCache.has(pbipPath)) {
-      return projectCache.get(pbipPath)!;
-    }
-
-    // Load project
     const project = await loadProject(pbipPath);
 
-    // Apply security filter
+    const cwd = process.cwd();
     const config = await loadConfig(cwd);
     const securityConfig = resolveSecurityConfig(config);
     const filteredModel = applySecurityFilter(project.model, securityConfig);
@@ -48,11 +48,30 @@ export function createServer() {
       model: filteredModel,
     };
 
-    projectCache.set(pbipPath, filteredProject);
+    filteredCache.set(pbipPath, filteredProject);
+    // Also cache unfiltered version
+    unfilteredCache.set(pbipPath, project);
     return filteredProject;
   }
 
-  registerTools(server, getProject);
+  async function getProjectForWrite(projectPath?: string): Promise<PbipProject> {
+    const pbipPath = await resolvePbipPath(projectPath);
+
+    if (unfilteredCache.has(pbipPath)) {
+      return unfilteredCache.get(pbipPath)!;
+    }
+
+    const project = await loadProject(pbipPath);
+    unfilteredCache.set(pbipPath, project);
+    return project;
+  }
+
+  function invalidateCache(projectPath: string): void {
+    filteredCache.delete(projectPath);
+    unfilteredCache.delete(projectPath);
+  }
+
+  registerTools(server, getProject, getProjectForWrite, invalidateCache);
 
   return server;
 }

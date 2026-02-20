@@ -1,0 +1,6 @@
+role 'Store Manager'
+	modelPermission: read
+
+	tablePermission DimCustomer = 'DimCustomer'[Region] = "West"
+
+	annotation PBI_Id = 160d7a327dfd4ca2996841bfdde3567d

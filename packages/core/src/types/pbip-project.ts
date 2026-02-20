@@ -24,4 +24,5 @@ export type TmdlFileType =
   | 'table'
   | 'relationship'
   | 'expression'
-  | 'culture';
+  | 'culture'
+  | 'role';

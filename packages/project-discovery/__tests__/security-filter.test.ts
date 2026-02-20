@@ -68,6 +68,7 @@ function createTestModel(): SemanticModel {
       },
     ],
     cultures: [],
+    roles: [],
   };
 }
 

@@ -5,6 +5,7 @@ import type {
   RelationshipNode,
   ExpressionNode,
   CultureNode,
+  RoleNode,
   ColumnNode,
   MeasureNode,
   PartitionNode,
@@ -399,6 +400,50 @@ export function serializeCulture(node: CultureNode): string {
     const metaLines = node.linguisticMetadata.split('\n');
     for (const ml of metaLines) {
       lines.push(`${indent(2)}${ml}`);
+    }
+  }
+
+  return lines.join('\n') + '\n';
+}
+
+export function serializeRole(node: RoleNode): string {
+  const lines: string[] = [];
+  lines.push(`role ${quoteName(node.name)}`);
+  lines.push(`${indent(1)}modelPermission: ${node.modelPermission}`);
+
+  for (const tp of node.tablePermissions) {
+    lines.push('');
+    const expr = tp.filterExpression;
+    if (expr.includes('\n')) {
+      lines.push(`${indent(1)}tablePermission ${quoteName(tp.tableName)} =`);
+      for (const exprLine of expr.split('\n')) {
+        lines.push(`${indent(2)}${exprLine}`);
+      }
+    } else {
+      lines.push(`${indent(1)}tablePermission ${quoteName(tp.tableName)} = ${expr}`);
+    }
+
+    if (tp.annotations && tp.annotations.length > 0) {
+      for (const ann of tp.annotations) {
+        lines.push(`${indent(2)}annotation ${ann.name} = ${ann.value}`);
+      }
+    }
+  }
+
+  if (node.members && node.members.length > 0) {
+    for (const member of node.members) {
+      lines.push('');
+      lines.push(`${indent(1)}member ${quoteName(member.memberName)}`);
+      if (member.identityProvider) {
+        lines.push(`${indent(2)}identityProvider: ${member.identityProvider}`);
+      }
+    }
+  }
+
+  if (node.annotations && node.annotations.length > 0) {
+    lines.push('');
+    for (const ann of node.annotations) {
+      lines.push(`${indent(1)}annotation ${ann.name} = ${ann.value}`);
     }
   }
 

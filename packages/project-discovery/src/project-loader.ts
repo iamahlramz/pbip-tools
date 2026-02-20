@@ -8,6 +8,7 @@ import type {
   RelationshipNode,
   ExpressionNode,
   CultureNode,
+  RoleNode,
   DatabaseNode,
   ModelNode,
 } from '@pbip-tools/core';
@@ -54,6 +55,9 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
   // Parse all cultures from cultures/ directory
   const cultures = await parseCulturesDir(join(definitionDir, TMDL_FILES.CULTURES_DIR));
 
+  // Parse all roles from roles/ directory
+  const roles = await parseRolesDir(join(definitionDir, TMDL_FILES.ROLES_DIR));
+
   const semanticModel: SemanticModel = {
     database,
     model,
@@ -61,6 +65,7 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
     relationships,
     expressions,
     cultures,
+    roles,
   };
 
   const project: PbipProject = {
@@ -169,4 +174,28 @@ async function parseCulturesDir(culturesDir: string): Promise<CultureNode[]> {
   }
 
   return cultures;
+}
+
+async function parseRolesDir(rolesDir: string): Promise<RoleNode[]> {
+  let entries: string[];
+  try {
+    entries = await readdir(rolesDir);
+  } catch {
+    return [];
+  }
+
+  const roles: RoleNode[] = [];
+  for (const entry of entries.sort()) {
+    if (!entry.endsWith('.tmdl')) continue;
+    const filePath = join(rolesDir, entry);
+    const text = await readFile(filePath, 'utf-8');
+    const fileType = detectFileType(`roles/${entry}`);
+    if (fileType !== 'role') continue;
+    const result = parseTmdl(text, 'role', filePath);
+    if (result.type === 'role') {
+      roles.push(result.node);
+    }
+  }
+
+  return roles;
 }

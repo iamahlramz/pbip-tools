@@ -1,0 +1,11 @@
+role 'Regional Admin'
+	modelPermission: read
+
+	tablePermission FactSales =
+		VAR _allowedRegions = {"East", "North"}
+		RETURN
+			'FactSales'[Region] IN _allowedRegions
+
+	tablePermission DimCustomer = 'DimCustomer'[IsActive] = TRUE()
+
+	annotation PBI_Id = 271e8a438bbc4d12a456789abcdef012

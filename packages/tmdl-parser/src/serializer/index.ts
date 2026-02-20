@@ -5,4 +5,5 @@ export {
   serializeRelationships,
   serializeExpressions,
   serializeCulture,
+  serializeRole,
 } from './serializer.js';

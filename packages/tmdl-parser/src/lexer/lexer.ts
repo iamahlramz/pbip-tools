@@ -247,6 +247,16 @@ export function tokenize(text: string): Token[] {
           ctx.blockStartIndent = indent;
         }
       }
+    } else if (token.type === TokenType.TABLE_PERMISSION) {
+      // tablePermission may have inline or multi-line DAX filter
+      if (token.value !== undefined) {
+        const val = token.value.trim();
+        if (val === '') {
+          ctx.state = 'DAX_MULTILINE';
+          ctx.expressionIndent = indent + 1;
+          ctx.blockStartIndent = indent;
+        }
+      }
     }
 
     tokens.push(token);
@@ -313,9 +323,10 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
     } else if (
       token.type === TokenType.MEASURE ||
       token.type === TokenType.EXPRESSION ||
-      token.type === TokenType.CALCULATION_ITEM
+      token.type === TokenType.CALCULATION_ITEM ||
+      token.type === TokenType.TABLE_PERMISSION
     ) {
-      // `measure 'Name' = VALUE` or `measure Name = VALUE`
+      // `measure 'Name' = VALUE` or `tablePermission Store = DAX`
       const eqIndex = rest.indexOf('=');
       if (eqIndex >= 0) {
         token.name = unquoteName(rest.substring(0, eqIndex).trim());

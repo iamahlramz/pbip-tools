@@ -7,6 +7,7 @@
   "workspaces": [
     "packages/core",
     "packages/tmdl-parser",
+    "packages/visual-handler",
     "packages/project-discovery",
     "packages/mcp-server"
   ],

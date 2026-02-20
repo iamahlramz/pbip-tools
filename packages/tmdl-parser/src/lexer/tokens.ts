@@ -18,6 +18,9 @@ export enum TokenType {
   REF = 'REF',
   QUERY_GROUP = 'QUERY_GROUP',
   DATA_ACCESS_OPTIONS = 'DATA_ACCESS_OPTIONS',
+  ROLE = 'ROLE',
+  TABLE_PERMISSION = 'TABLE_PERMISSION',
+  MEMBER = 'MEMBER',
 
   // Property keywords
   PROPERTY = 'PROPERTY',
@@ -62,6 +65,9 @@ export const STRUCTURAL_KEYWORDS: Record<string, TokenType> = {
   ref: TokenType.REF,
   queryGroup: TokenType.QUERY_GROUP,
   dataAccessOptions: TokenType.DATA_ACCESS_OPTIONS,
+  role: TokenType.ROLE,
+  tablePermission: TokenType.TABLE_PERMISSION,
+  member: TokenType.MEMBER,
 };
 
 export const BOOLEAN_FLAGS = new Set([
@@ -106,4 +112,7 @@ export const PROPERTY_KEYWORDS = new Set([
   'columnType',
   'formatStringExpression',
   'linguisticMetadata',
+  'modelPermission',
+  'metadataPermission',
+  'identityProvider',
 ]);

@@ -11,6 +11,7 @@ export const TMDL_FILES = {
   EXPRESSIONS: 'expressions.tmdl',
   TABLES_DIR: 'tables',
   CULTURES_DIR: 'cultures',
+  ROLES_DIR: 'roles',
 } as const;
 
 export const KNOWN_PROPERTY_KEYWORDS = new Set([
@@ -67,6 +68,12 @@ export const KNOWN_PROPERTY_KEYWORDS = new Set([
   'name',
   'dataAccessOptions',
   'formatStringExpression',
+  'modelPermission',
+  'metadataPermission',
+  'identityProvider',
+  'tablePermission',
+  'role',
+  'member',
 ]);
 
 export const REDACTED_MCODE_PLACEHOLDER = '[M-code redacted]';
