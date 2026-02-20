@@ -54,7 +54,7 @@ To contribute or run pbip-tools from source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/pbip-tools/pbip-tools.git
+git clone https://github.com/iamahlramz/pbip-tools.git
 cd pbip-tools
 
 # Install dependencies

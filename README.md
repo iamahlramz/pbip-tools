@@ -222,7 +222,7 @@ The parser handles the full TMDL specification:
 - **Phase 1** — Read-only MCP server with TMDL parser
 - **Phase 2** — Write tools, visual.json handler, RLS, calculation groups
 - **Phase 3** — DAX formatter, production hardening, security review
-- **Phase 4** (current) — npm publish + documentation site
+- **Phase 4** (complete) — npm publish + documentation site
 
 ## License
 
