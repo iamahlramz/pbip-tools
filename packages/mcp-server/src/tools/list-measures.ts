@@ -1,10 +1,6 @@
 import type { PbipProject } from '@pbip-tools/core';
 
-export function listMeasures(
-  project: PbipProject,
-  tableName?: string,
-  displayFolder?: string,
-) {
+export function listMeasures(project: PbipProject, tableName?: string, displayFolder?: string) {
   const results: Array<{
     name: string;
     table: string;

@@ -24,11 +24,7 @@ export type ParseResult =
   | { type: 'expression'; nodes: ExpressionNode[]; warnings: ParseWarning[] }
   | { type: 'culture'; node: CultureNode; warnings: ParseWarning[] };
 
-export function parseTmdl(
-  text: string,
-  fileType: TmdlFileType,
-  file?: string,
-): ParseResult {
+export function parseTmdl(text: string, fileType: TmdlFileType, file?: string): ParseResult {
   const tokens = tokenize(text);
   const warnings: ParseWarning[] = [];
 

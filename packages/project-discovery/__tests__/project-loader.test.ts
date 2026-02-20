@@ -107,8 +107,6 @@ describe('loadProject', () => {
   });
 
   it('should throw for a non-existent .pbip file', async () => {
-    await expect(
-      loadProject(resolve(fixturesPath, 'nonexistent/Missing.pbip')),
-    ).rejects.toThrow();
+    await expect(loadProject(resolve(fixturesPath, 'nonexistent/Missing.pbip'))).rejects.toThrow();
   });
 });

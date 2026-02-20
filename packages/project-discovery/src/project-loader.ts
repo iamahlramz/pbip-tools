@@ -45,12 +45,8 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
   const model = await parseModelFile(join(definitionDir, TMDL_FILES.MODEL));
 
   // Parse optional files
-  const relationships = await parseRelationshipsFile(
-    join(definitionDir, TMDL_FILES.RELATIONSHIPS),
-  );
-  const expressions = await parseExpressionsFile(
-    join(definitionDir, TMDL_FILES.EXPRESSIONS),
-  );
+  const relationships = await parseRelationshipsFile(join(definitionDir, TMDL_FILES.RELATIONSHIPS));
+  const expressions = await parseExpressionsFile(join(definitionDir, TMDL_FILES.EXPRESSIONS));
 
   // Parse all tables from tables/ directory
   const tables = await parseTablesDir(join(definitionDir, TMDL_FILES.TABLES_DIR));

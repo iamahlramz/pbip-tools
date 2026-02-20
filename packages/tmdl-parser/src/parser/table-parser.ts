@@ -2,8 +2,6 @@ import type {
   TableNode,
   AnnotationNode,
   ChangedPropertyNode,
-  ColumnNode,
-  MeasureNode,
   HierarchyNode,
   HierarchyLevelNode,
 } from '@pbip-tools/core';
@@ -15,11 +13,7 @@ import { parseMeasure } from './measure-parser.js';
 import { parsePartition } from './partition-parser.js';
 import { parseCalculationGroup } from './calc-group-parser.js';
 
-export function parseTable(
-  tokens: Token[],
-  warnings: ParseWarning[],
-  _file?: string,
-): TableNode {
+export function parseTable(tokens: Token[], warnings: ParseWarning[], _file?: string): TableNode {
   const tableToken = tokens.find((t) => t.type === TokenType.TABLE);
   if (!tableToken) {
     warnings.push({ message: 'No table declaration found', line: 1 });
@@ -54,7 +48,10 @@ export function parseTable(
   let i = tokens.indexOf(tableToken) + 1;
   while (i < tokens.length) {
     const t = tokens[i];
-    if (t.type === TokenType.BLANK_LINE || (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')) {
+    if (
+      t.type === TokenType.BLANK_LINE ||
+      (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')
+    ) {
       i++;
       continue;
     }
@@ -193,7 +190,10 @@ function parseHierarchy(
   let i = startIndex + 1;
   while (i < tokens.length) {
     const t = tokens[i];
-    if (t.type === TokenType.BLANK_LINE || (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')) {
+    if (
+      t.type === TokenType.BLANK_LINE ||
+      (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')
+    ) {
       i++;
       continue;
     }
@@ -266,7 +266,10 @@ function parseHierarchyLevel(
   let i = startIndex + 1;
   while (i < tokens.length) {
     const t = tokens[i];
-    if (t.type === TokenType.BLANK_LINE || (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')) {
+    if (
+      t.type === TokenType.BLANK_LINE ||
+      (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')
+    ) {
       i++;
       continue;
     }

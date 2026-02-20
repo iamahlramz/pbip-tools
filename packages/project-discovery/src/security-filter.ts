@@ -1,17 +1,11 @@
 import type { SemanticModel, SecurityConfig } from '@pbip-tools/core';
-import {
-  REDACTED_MCODE_PLACEHOLDER,
-  REDACTED_CONNECTION_PLACEHOLDER,
-} from '@pbip-tools/core';
+import { REDACTED_MCODE_PLACEHOLDER, REDACTED_CONNECTION_PLACEHOLDER } from '@pbip-tools/core';
 
 /**
  * Apply security filtering to a SemanticModel, redacting sensitive content
  * like M-code expressions and connection strings before AI context use.
  */
-export function applySecurityFilter(
-  model: SemanticModel,
-  config: SecurityConfig,
-): SemanticModel {
+export function applySecurityFilter(model: SemanticModel, config: SecurityConfig): SemanticModel {
   // Deep clone to avoid mutating the original
   const filtered: SemanticModel = JSON.parse(JSON.stringify(model));
 
@@ -29,8 +23,8 @@ export function applySecurityFilter(
 // --- M-code patterns ---
 
 const MCODE_PATTERNS = [
-  /\blet\b[\s\S]*\bin\b/i,     // let ... in (M-code block)
-  /\bSource\s*=/i,              // Source = (common M-code start)
+  /\blet\b[\s\S]*\bin\b/i, // let ... in (M-code block)
+  /\bSource\s*=/i, // Source = (common M-code start)
 ];
 
 function isMCodeExpression(expr: string): boolean {

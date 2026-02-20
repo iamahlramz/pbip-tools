@@ -20,12 +20,9 @@ describe('tokenize', () => {
   });
 
   it('tokenizes a column with boolean flags (isKey, isHidden)', () => {
-    const input = [
-      '\tcolumn ProductKey',
-      '\t\tdataType: int64',
-      '\t\tisKey',
-      '\t\tisHidden',
-    ].join('\n');
+    const input = ['\tcolumn ProductKey', '\t\tdataType: int64', '\t\tisKey', '\t\tisHidden'].join(
+      '\n',
+    );
 
     const tokens = tokenize(input);
 
@@ -91,10 +88,7 @@ describe('tokenize', () => {
   });
 
   it('tokenizes doc comments (///)', () => {
-    const input = [
-      '\t/// The unique product identifier',
-      '\tcolumn ProductKey',
-    ].join('\n');
+    const input = ['\t/// The unique product identifier', '\tcolumn ProductKey'].join('\n');
 
     const tokens = tokenize(input);
 

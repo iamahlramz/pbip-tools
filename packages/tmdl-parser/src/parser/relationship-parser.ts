@@ -73,12 +73,10 @@ function parseRelationship(
           break;
         }
         case 'crossFilteringBehavior':
-          node.crossFilteringBehavior =
-            t.value as RelationshipNode['crossFilteringBehavior'];
+          node.crossFilteringBehavior = t.value as RelationshipNode['crossFilteringBehavior'];
           break;
         case 'securityFilteringBehavior':
-          node.securityFilteringBehavior =
-            t.value as RelationshipNode['securityFilteringBehavior'];
+          node.securityFilteringBehavior = t.value as RelationshipNode['securityFilteringBehavior'];
           break;
         case 'toCardinality':
           node.toCardinality = t.value as RelationshipNode['toCardinality'];

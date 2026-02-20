@@ -1,11 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  parseTmdl,
-  serializeDatabase,
-  serializeRelationships,
-} from '../src/index.js';
+import { parseTmdl, serializeDatabase, serializeRelationships } from '../src/index.js';
 import type { DatabaseNode, RelationshipNode } from '@pbip-tools/core';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

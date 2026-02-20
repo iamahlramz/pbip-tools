@@ -7,12 +7,7 @@ import {
 } from './tokens.js';
 import { countTabs, stripIndent } from './indent.js';
 
-export type LexerState =
-  | 'NORMAL'
-  | 'DAX_BLOCK'
-  | 'DAX_MULTILINE'
-  | 'MCODE_BLOCK'
-  | 'JSON_BLOB';
+export type LexerState = 'NORMAL' | 'DAX_BLOCK' | 'DAX_MULTILINE' | 'MCODE_BLOCK' | 'JSON_BLOB';
 
 export interface LexerContext {
   state: LexerState;

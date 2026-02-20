@@ -1,12 +1,21 @@
 import { z } from 'zod';
 
 export const GetProjectInfoSchema = z.object({
-  projectPath: z.string().optional().describe('Path to the .pbip file or directory containing it. If omitted, auto-discovers in CWD.'),
+  projectPath: z
+    .string()
+    .optional()
+    .describe(
+      'Path to the .pbip file or directory containing it. If omitted, auto-discovers in CWD.',
+    ),
 });
 
 export const ListTablesSchema = z.object({
   projectPath: z.string().optional(),
-  includeColumns: z.boolean().optional().default(false).describe('Include column details for each table'),
+  includeColumns: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Include column details for each table'),
 });
 
 export const ListMeasuresSchema = z.object({

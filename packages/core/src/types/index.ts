@@ -34,19 +34,10 @@ export type {
   SemanticModel,
 } from './tmdl.js';
 
-export type {
-  PbipProject,
-  PbipFileContent,
-  PbipArtifact,
-  TmdlFileType,
-} from './pbip-project.js';
+export type { PbipProject, PbipFileContent, PbipArtifact, TmdlFileType } from './pbip-project.js';
 
 export type { VisualBinding, VisualInfo } from './visual-binding.js';
 
-export type {
-  PbipToolsConfig,
-  ProjectConfig,
-  SecurityConfig,
-} from './config.js';
+export type { PbipToolsConfig, ProjectConfig, SecurityConfig } from './config.js';
 
 export { DEFAULT_SECURITY_CONFIG } from './config.js';

@@ -14,7 +14,7 @@ export function parseMeasure(
 
   // Collect expression content
   const expressionLines: string[] = [];
-  let inlineExpression = measureToken.value?.trim() ?? '';
+  const inlineExpression = measureToken.value?.trim() ?? '';
 
   // Check for backtick fence immediately following
   let i = startIndex + 1;

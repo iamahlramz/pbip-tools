@@ -21,9 +21,10 @@ export function searchMeasures(project: PbipProject, query: string) {
           table: table.name,
           displayFolder: measure.displayFolder ?? null,
           matchedIn: nameMatch && exprMatch ? 'both' : nameMatch ? 'name' : 'expression',
-          expressionPreview: measure.expression.length > 200
-            ? measure.expression.substring(0, 200) + '...'
-            : measure.expression,
+          expressionPreview:
+            measure.expression.length > 200
+              ? measure.expression.substring(0, 200) + '...'
+              : measure.expression,
         });
       }
     }

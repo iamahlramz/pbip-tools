@@ -21,9 +21,7 @@ function indent(level: number): string {
 }
 
 function serializeAnnotations(annotations: AnnotationNode[], level: number): string[] {
-  return annotations.map(
-    (a) => `${indent(level)}annotation ${a.name} = ${a.value}`,
-  );
+  return annotations.map((a) => `${indent(level)}annotation ${a.name} = ${a.value}`);
 }
 
 function serializeChangedProperties(props: ChangedPropertyNode[], level: number): string[] {
@@ -54,7 +52,9 @@ export function serializeModel(node: ModelNode): string {
 
   if (node.culture) lines.push(`${indent(1)}culture: ${node.culture}`);
   if (node.defaultPowerBIDataSourceVersion) {
-    lines.push(`${indent(1)}defaultPowerBIDataSourceVersion: ${node.defaultPowerBIDataSourceVersion}`);
+    lines.push(
+      `${indent(1)}defaultPowerBIDataSourceVersion: ${node.defaultPowerBIDataSourceVersion}`,
+    );
   }
   if (node.discourageImplicitMeasures) {
     lines.push(`${indent(1)}discourageImplicitMeasures`);
@@ -288,9 +288,7 @@ function serializeCalculationItem(item: CalculationItemNode, level: number): str
 
   const exprLines = item.expression.split('\n');
   if (exprLines.length === 1) {
-    lines.push(
-      `${indent(level)}calculationItem ${quoteName(item.name)} =`,
-    );
+    lines.push(`${indent(level)}calculationItem ${quoteName(item.name)} =`);
     lines.push(`${indent(level + 1)}${item.expression}`);
   } else {
     lines.push(`${indent(level)}calculationItem ${quoteName(item.name)} =`);

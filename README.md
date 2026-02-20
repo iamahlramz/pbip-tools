@@ -13,15 +13,15 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 
 ## MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `pbip_get_project_info` | Model summary: table/measure/relationship counts |
-| `pbip_list_tables` | All tables with column/measure counts, optional column details |
-| `pbip_list_measures` | Measures filtered by table or display folder |
-| `pbip_get_measure` | Full measure detail: DAX, format string, folder, referenced measures/columns |
-| `pbip_list_relationships` | Relationships with cardinality, direction, active status |
-| `pbip_search_measures` | Search measure names and DAX expressions |
-| `pbip_list_display_folders` | Display folder tree with measure counts |
+| Tool                        | Description                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `pbip_get_project_info`     | Model summary: table/measure/relationship counts                             |
+| `pbip_list_tables`          | All tables with column/measure counts, optional column details               |
+| `pbip_list_measures`        | Measures filtered by table or display folder                                 |
+| `pbip_get_measure`          | Full measure detail: DAX, format string, folder, referenced measures/columns |
+| `pbip_list_relationships`   | Relationships with cardinality, direction, active status                     |
+| `pbip_search_measures`      | Search measure names and DAX expressions                                     |
+| `pbip_list_display_folders` | Display folder tree with measure counts                                      |
 
 All tools are read-only (`readOnlyHint: true`).
 
@@ -64,9 +64,7 @@ Create a `.pbip-tools.json` in your workspace root:
 
 ```json
 {
-  "projects": [
-    { "name": "My Dataset", "path": "./MyDataset.pbip" }
-  ],
+  "projects": [{ "name": "My Dataset", "path": "./MyDataset.pbip" }],
   "security": {
     "redactMCode": true,
     "redactConnectionStrings": true
@@ -76,10 +74,10 @@ Create a `.pbip-tools.json` in your workspace root:
 
 ### Security Defaults
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `redactMCode` | `true` | Replaces M-code in partitions and expressions with `[M-code redacted]` |
-| `redactConnectionStrings` | `true` | Replaces connection strings, URLs, and `Sql.Database()` calls |
+| Setting                   | Default | Description                                                            |
+| ------------------------- | ------- | ---------------------------------------------------------------------- |
+| `redactMCode`             | `true`  | Replaces M-code in partitions and expressions with `[M-code redacted]` |
+| `redactConnectionStrings` | `true`  | Replaces connection strings, URLs, and `Sql.Database()` calls          |
 
 These defaults ensure your data source credentials never reach the AI context window, regardless of your data source.
 
@@ -128,7 +126,7 @@ The parser handles the full TMDL specification:
 
 - **Database/Model** — compatibility level, culture, data access options, query groups
 - **Tables** — columns (with `isKey`, `sortByColumn`, data categories), measures, partitions, hierarchies
-- **Measures** — all 3 DAX forms: inline (`= COUNTROWS(T)`), multi-line indent-based, and backtick-delimited (`` = ``` ... ``` ``)
+- **Measures** — all 3 DAX forms: inline (`= COUNTROWS(T)`), multi-line indent-based, and backtick-delimited (` = ``` ... ``` `)
 - **Calculation Groups** — precedence, calculation items with `formatStringExpression`
 - **Relationships** — GUID-named and descriptive-named, `bothDirections`, `isActive: false`, many-to-many
 - **Expressions** — M-code parameters with `meta [IsParameterQuery=true]`, functions, query groups

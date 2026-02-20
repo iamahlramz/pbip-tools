@@ -6,8 +6,5 @@
     "rootDir": "./src"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../core" },
-    { "path": "../tmdl-parser" }
-  ]
+  "references": [{ "path": "../core" }, { "path": "../tmdl-parser" }]
 }

@@ -32,7 +32,10 @@ export function parseCalculationGroup(
   let i = startIndex + 1;
   while (i < tokens.length) {
     const t = tokens[i];
-    if (t.type === TokenType.BLANK_LINE || (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')) {
+    if (
+      t.type === TokenType.BLANK_LINE ||
+      (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')
+    ) {
       i++;
       continue;
     }
@@ -82,7 +85,7 @@ function parseCalculationItem(
   const baseIndent = itemToken.indent;
 
   const expressionLines: string[] = [];
-  let inlineExpression = itemToken.value?.trim() ?? '';
+  const inlineExpression = itemToken.value?.trim() ?? '';
 
   const node: CalculationItemNode = {
     kind: 'calculationItem',
@@ -142,7 +145,10 @@ function parseCalculationItem(
 
   while (i < tokens.length) {
     const t = tokens[i];
-    if (t.type === TokenType.BLANK_LINE || (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')) {
+    if (
+      t.type === TokenType.BLANK_LINE ||
+      (t.type === TokenType.EXPRESSION_CONTENT && t.raw.trim() === '')
+    ) {
       i++;
       continue;
     }

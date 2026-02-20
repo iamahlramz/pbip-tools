@@ -12,7 +12,10 @@ describe('parser-calcgroup', () => {
 
   beforeAll(() => {
     const text = readFileSync(
-      resolve(FIXTURES, 'standard/AdventureWorks.SemanticModel/definition/tables/Time Comparison.tmdl'),
+      resolve(
+        FIXTURES,
+        'standard/AdventureWorks.SemanticModel/definition/tables/Time Comparison.tmdl',
+      ),
       'utf-8',
     );
     const result = parseTmdl(text, 'table');

@@ -1,18 +1,9 @@
-import type {
-  ModelNode,
-  TableRefNode,
-  QueryGroupNode,
-  AnnotationNode,
-} from '@pbip-tools/core';
+import type { ModelNode, TableRefNode, QueryGroupNode, AnnotationNode } from '@pbip-tools/core';
 import type { Token } from '../lexer/index.js';
 import { TokenType } from '../lexer/index.js';
 import type { ParseWarning } from '../errors.js';
 
-export function parseModel(
-  tokens: Token[],
-  warnings: ParseWarning[],
-  file?: string,
-): ModelNode {
+export function parseModel(tokens: Token[], warnings: ParseWarning[], file?: string): ModelNode {
   const modelToken = tokens.find((t) => t.type === TokenType.MODEL);
   if (!modelToken) {
     warnings.push({ message: 'No model declaration found', line: 1, file });

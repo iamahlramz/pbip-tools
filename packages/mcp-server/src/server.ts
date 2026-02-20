@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
-import { DEFAULT_SECURITY_CONFIG } from '@pbip-tools/core';
 import {
   discoverProjects,
   loadProject,

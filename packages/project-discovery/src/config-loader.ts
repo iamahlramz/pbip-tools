@@ -1,5 +1,5 @@
 import { readFile, stat } from 'node:fs/promises';
-import { join, dirname, parse as parsePath } from 'node:path';
+import { join, dirname } from 'node:path';
 import type { PbipToolsConfig, SecurityConfig } from '@pbip-tools/core';
 import { CONFIG_FILENAME, DEFAULT_SECURITY_CONFIG } from '@pbip-tools/core';
 

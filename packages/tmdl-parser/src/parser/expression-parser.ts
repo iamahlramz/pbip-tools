@@ -3,10 +3,7 @@ import type { Token } from '../lexer/index.js';
 import { TokenType } from '../lexer/index.js';
 import type { ParseWarning } from '../errors.js';
 
-export function parseExpressions(
-  tokens: Token[],
-  _warnings: ParseWarning[],
-): ExpressionNode[] {
+export function parseExpressions(tokens: Token[], _warnings: ParseWarning[]): ExpressionNode[] {
   const expressions: ExpressionNode[] = [];
   let i = 0;
 
@@ -33,7 +30,7 @@ function parseExpression(
   const baseIndent = exprToken.indent;
 
   const expressionLines: string[] = [];
-  let inlineValue = exprToken.value?.trim() ?? '';
+  const inlineValue = exprToken.value?.trim() ?? '';
 
   let isBacktickBlock = false;
 

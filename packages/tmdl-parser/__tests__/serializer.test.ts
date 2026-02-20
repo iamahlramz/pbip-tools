@@ -36,9 +36,7 @@ describe('serializer', () => {
         kind: 'database',
         name: 'MyDB',
         compatibilityLevel: 1605,
-        annotations: [
-          { kind: 'annotation', name: 'PBI_Version', value: '1.0' },
-        ],
+        annotations: [{ kind: 'annotation', name: 'PBI_Version', value: '1.0' }],
       };
 
       const output = serializeDatabase(dbNode);
@@ -60,12 +58,8 @@ describe('serializer', () => {
           { kind: 'tableRef', name: 'DimDate' },
           { kind: 'tableRef', name: 'Time Comparison' },
         ],
-        queryGroups: [
-          { kind: 'queryGroup', name: 'Parameters', docComment: 'My parameters' },
-        ],
-        annotations: [
-          { kind: 'annotation', name: 'PBI_QueryOrder', value: '["DimDate"]' },
-        ],
+        queryGroups: [{ kind: 'queryGroup', name: 'Parameters', docComment: 'My parameters' }],
+        annotations: [{ kind: 'annotation', name: 'PBI_QueryOrder', value: '["DimDate"]' }],
       };
 
       const output = serializeModel(modelNode);
