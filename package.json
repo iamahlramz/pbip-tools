@@ -19,9 +19,14 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",

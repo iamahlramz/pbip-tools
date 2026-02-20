@@ -11,11 +11,32 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist *.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "power-bi",
+    "pbip",
+    "tmdl",
+    "semantic-model",
+    "types"
+  ],
   "license": "MIT"
 }

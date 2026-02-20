@@ -8,3 +8,8 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
+
+# Astro docs
+docs/dist/
+docs/.astro/
+docs/node_modules/

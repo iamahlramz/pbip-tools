@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist *.tsbuildinfo",
@@ -22,5 +25,23 @@
     "@pbip-tools/core": "0.1.0",
     "@pbip-tools/tmdl-parser": "0.1.0"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git",
+    "directory": "packages/project-discovery"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "power-bi",
+    "pbip",
+    "project-discovery",
+    "security-filter",
+    "tmdl"
+  ],
   "license": "MIT"
 }

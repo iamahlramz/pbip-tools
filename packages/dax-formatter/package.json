@@ -1,19 +1,49 @@
 {
   "name": "@pbip-tools/dax-formatter",
   "version": "0.1.0",
+  "description": "DAX expression formatter and validator for Power BI — DaxFormatter.com API client + offline validation",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist *.tsbuildinfo",
     "test": "vitest run",
-    "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@pbip-tools/core": "0.1.0"
   },
   "devDependencies": {
     "vitest": "^3.0.0"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git",
+    "directory": "packages/dax-formatter"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "power-bi",
+    "dax",
+    "formatter",
+    "validator",
+    "daxformatter"
+  ],
+  "license": "MIT"
 }

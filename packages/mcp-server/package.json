@@ -14,6 +14,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist *.tsbuildinfo",
@@ -30,5 +33,27 @@
     "@modelcontextprotocol/sdk": "^1.27.0",
     "zod": "^3.25.0"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git",
+    "directory": "packages/mcp-server"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "power-bi",
+    "pbip",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "cursor",
+    "semantic-model",
+    "tmdl"
+  ],
   "license": "MIT"
 }

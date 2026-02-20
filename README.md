@@ -73,6 +73,18 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 
 ## Quick Start
 
+### Install
+
+```bash
+npm install -g @pbip-tools/mcp-server
+```
+
+Or use directly with npx (no install needed):
+
+```bash
+npx @pbip-tools/mcp-server
+```
+
 ### Configure in Claude Code
 
 Add to your `.mcp.json`:
@@ -81,8 +93,8 @@ Add to your `.mcp.json`:
 {
   "mcpServers": {
     "pbip-tools": {
-      "command": "node",
-      "args": ["path/to/pbip-tools/packages/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["@pbip-tools/mcp-server"],
       "type": "stdio"
     }
   }
@@ -98,8 +110,8 @@ Add to your MCP settings:
 ```json
 {
   "pbip-tools": {
-    "command": "node",
-    "args": ["path/to/pbip-tools/packages/mcp-server/dist/index.js"]
+    "command": "npx",
+    "args": ["@pbip-tools/mcp-server"]
   }
 }
 ```
@@ -194,12 +206,23 @@ The parser handles the full TMDL specification:
 - **Security Filter** — Enhanced M-code patterns: `Sql.Native()`, `OleDb.DataSource()`, `Odbc.DataSource()`, connection strings, and URLs
 - **Runtime Type Guards** — JSON parsing in visual handler validates object types before access
 
+## Packages
+
+| Package                                                       | Description                                                |
+| ------------------------------------------------------------- | ---------------------------------------------------------- |
+| [`@pbip-tools/core`](packages/core)                           | Core types and constants                                   |
+| [`@pbip-tools/tmdl-parser`](packages/tmdl-parser)             | TMDL file parser and serializer                            |
+| [`@pbip-tools/visual-handler`](packages/visual-handler)       | Visual.json binding extraction and updating                |
+| [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator |
+| [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, and security filtering         |
+| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 25 tools for AI assistants                 |
+
 ## Roadmap
 
 - **Phase 1** — Read-only MCP server with TMDL parser
 - **Phase 2** — Write tools, visual.json handler, RLS, calculation groups
-- **Phase 3** (current) — DAX formatter, production hardening, security review
-- **Phase 4** — npm publish + documentation site
+- **Phase 3** — DAX formatter, production hardening, security review
+- **Phase 4** (current) — npm publish + documentation site
 
 ## License
 

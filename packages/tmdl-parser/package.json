@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist *.tsbuildinfo",
@@ -21,5 +24,25 @@
   "dependencies": {
     "@pbip-tools/core": "0.1.0"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamahlramz/pbip-tools.git",
+    "directory": "packages/tmdl-parser"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "power-bi",
+    "pbip",
+    "tmdl",
+    "parser",
+    "semantic-model",
+    "dax",
+    "tabular-model"
+  ],
   "license": "MIT"
 }
