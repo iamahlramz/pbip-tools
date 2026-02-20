@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
 import {
@@ -20,11 +21,19 @@ export function createServer() {
   const unfilteredCache = new Map<string, PbipProject>();
 
   async function resolvePbipPath(projectPath?: string): Promise<string> {
-    if (projectPath) return projectPath;
+    if (projectPath) {
+      // Validate that resolved path doesn't escape the working directory
+      const cwd = process.cwd();
+      const resolved = resolve(cwd, projectPath);
+      if (!resolved.startsWith(cwd)) {
+        throw new Error('Project path must be within the working directory');
+      }
+      return resolved;
+    }
     const cwd = process.cwd();
     const projects = await discoverProjects(cwd, 2);
     if (projects.length === 0) {
-      throw new Error(`No .pbip project found in ${cwd}`);
+      throw new Error('No .pbip project found in the current directory');
     }
     return projects[0].pbipPath;
   }

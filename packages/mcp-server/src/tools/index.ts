@@ -29,6 +29,10 @@ import {
   CreateRoleSchema,
   UpdateRoleSchema,
   DeleteRoleSchema,
+  // DAX formatter schemas
+  FormatDaxSchema,
+  ValidateDaxSchema,
+  FormatMeasuresSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -63,8 +67,34 @@ import { createRole } from './create-role.js';
 import { updateRole } from './update-role.js';
 import { deleteRole } from './delete-role.js';
 
-function jsonResponse(data: unknown) {
+// DAX formatter tool implementations
+import { formatDaxTool } from './format-dax.js';
+import { validateDaxTool } from './validate-dax.js';
+import { formatMeasures } from './format-measures.js';
+
+type ToolResponse = { content: { type: 'text'; text: string }[]; isError?: boolean };
+
+function jsonResponse(data: unknown): ToolResponse {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+}
+
+/**
+ * Wrap a tool handler in try-catch to prevent stack traces from leaking through MCP.
+ */
+function safeTool<T>(
+  handler: (args: T) => Promise<ToolResponse>,
+): (args: T) => Promise<ToolResponse> {
+  return async (args: T) => {
+    try {
+      return await handler(args);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  };
 }
 
 export function registerTools(
@@ -81,70 +111,70 @@ export function registerTools(
     'pbip_get_project_info',
     'Get Power BI semantic model summary: table/measure/relationship counts and metadata',
     GetProjectInfoSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(getProjectInfo(project));
-    },
+    }),
   );
 
   server.tool(
     'pbip_list_tables',
     'List all tables with column/measure counts, optionally include column details',
     ListTablesSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listTables(project, args.includeColumns ?? false));
-    },
+    }),
   );
 
   server.tool(
     'pbip_list_measures',
     'List measures with optional filter by table name or display folder',
     ListMeasuresSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listMeasures(project, args.tableName, args.displayFolder));
-    },
+    }),
   );
 
   server.tool(
     'pbip_get_measure',
     'Get full measure detail: DAX expression, format string, display folder, referenced measures/columns',
     GetMeasureSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(getMeasure(project, args.measureName));
-    },
+    }),
   );
 
   server.tool(
     'pbip_list_relationships',
     'List all relationships with cardinality, cross-filtering direction, and active status',
     ListRelationshipsSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listRelationships(project, args.tableName));
-    },
+    }),
   );
 
   server.tool(
     'pbip_search_measures',
     'Search measure names and DAX expressions for a query string',
     SearchMeasuresSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(searchMeasures(project, args.query));
-    },
+    }),
   );
 
   server.tool(
     'pbip_list_display_folders',
     'List display folder tree with measure counts per table',
     ListDisplayFoldersSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listDisplayFolders(project, args.tableName));
-    },
+    }),
   );
 
   // =============================================
@@ -155,7 +185,7 @@ export function registerTools(
     'pbip_create_measure',
     'Create a new DAX measure in a table with optional format string, display folder, and description',
     CreateMeasureSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = createMeasure(
         project,
@@ -178,14 +208,14 @@ export function registerTools(
         measure: result.measure.name,
         lineageTag: result.measure.lineageTag,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_update_measure',
     'Update an existing measure: modify DAX expression, format string, display folder, description, or visibility',
     UpdateMeasureSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = updateMeasure(project, args.measureName, {
         expression: args.expression,
@@ -204,14 +234,14 @@ export function registerTools(
         table: result.table,
         measure: result.measure.name,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_delete_measure',
     'Delete a measure from its table (destructive — cannot be undone)',
     DeleteMeasureSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = deleteMeasure(project, args.measureName);
 
@@ -224,14 +254,14 @@ export function registerTools(
         table: result.table,
         deletedMeasure: result.deletedMeasure,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_move_measure',
     'Move a measure between tables with automatic visual.json binding updates (destructive — changes visual bindings)',
     MoveMeasureSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = moveMeasure(project, args.measureName, args.targetTable);
 
@@ -259,7 +289,7 @@ export function registerTools(
           totalUpdates: bindingsResult.totalUpdates,
         },
       });
-    },
+    }),
   );
 
   // =============================================
@@ -270,7 +300,7 @@ export function registerTools(
     'pbip_create_calc_group',
     'Create a new calculation group table with SELECTEDMEASURE() transformation items',
     CreateCalcGroupSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = createCalcGroup(project, args.tableName, args.items, args.precedence);
 
@@ -282,14 +312,14 @@ export function registerTools(
         table: result.table.name,
         itemCount: result.table.calculationGroup!.items.length,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_add_calc_item',
     'Add a new calculation item to an existing calculation group table',
     AddCalcItemSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = addCalcItem(
         project,
@@ -310,7 +340,7 @@ export function registerTools(
         item: result.item.name,
         ordinal: result.item.ordinal,
       });
-    },
+    }),
   );
 
   // =============================================
@@ -321,27 +351,27 @@ export function registerTools(
     'pbip_list_visuals',
     'List all visuals across all report pages with visual types and binding counts',
     ListVisualsSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(await listVisuals(project, args.pageId));
-    },
+    }),
   );
 
   server.tool(
     'pbip_get_visual_bindings',
     'Get detailed measure/column bindings for a specific visual or all visuals on a page',
     GetVisualBindingsSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(await getVisualBindings(project, args.visualId, args.pageId));
-    },
+    }),
   );
 
   server.tool(
     'pbip_audit_bindings',
     'Audit all visual bindings to find references to missing tables, measures, or columns',
     AuditBindingsSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       const issues = await auditBindings(project);
       return jsonResponse({
@@ -354,14 +384,14 @@ export function registerTools(
           issue: i.issue,
         })),
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_update_visual_bindings',
     'Batch update visual.json bindings — use after moving/renaming measures or tables',
     UpdateVisualBindingsSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = await updateVisualBindings(project, args.updates);
       invalidateCache(project.pbipPath);
@@ -370,7 +400,7 @@ export function registerTools(
         filesModified: result.filesModified,
         totalUpdates: result.totalUpdates,
       });
-    },
+    }),
   );
 
   // =============================================
@@ -381,27 +411,27 @@ export function registerTools(
     'pbip_list_roles',
     'List all row-level security roles with table permission counts',
     ListRolesSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listRoles(project));
-    },
+    }),
   );
 
   server.tool(
     'pbip_get_role',
     'Get full RLS role detail including DAX filter expressions and members',
     GetRoleSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(getRole(project, args.roleName));
-    },
+    }),
   );
 
   server.tool(
     'pbip_create_role',
     'Create a new row-level security role with table-level DAX filter expressions',
     CreateRoleSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = createRole(
         project,
@@ -418,14 +448,14 @@ export function registerTools(
         role: result.role.name,
         tablePermissionCount: result.role.tablePermissions.length,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_update_role',
     'Update an existing RLS role: modify model permission or table-level DAX filters',
     UpdateRoleSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = updateRole(
         project,
@@ -442,14 +472,14 @@ export function registerTools(
         role: result.role.name,
         tablePermissionCount: result.role.tablePermissions.length,
       });
-    },
+    }),
   );
 
   server.tool(
     'pbip_delete_role',
     'Delete an RLS role (destructive — cannot be undone)',
     DeleteRoleSchema.shape,
-    async (args) => {
+    safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
       const result = deleteRole(project, args.roleName);
 
@@ -460,6 +490,67 @@ export function registerTools(
         success: true,
         deletedRole: result.deletedRole,
       });
-    },
+    }),
+  );
+
+  // =============================================
+  // DAX FORMATTER TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_format_dax',
+    'Format a DAX expression via DaxFormatter.com API (requires internet)',
+    FormatDaxSchema.shape,
+    safeTool(async (args) => {
+      const result = await formatDaxTool(
+        args.expression,
+        args.listSeparator,
+        args.decimalSeparator,
+        args.lineStyle,
+        args.spacingStyle,
+      );
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_validate_dax',
+    'Validate DAX syntax locally — offline, no API call needed',
+    ValidateDaxSchema.shape,
+    safeTool(async (args) => {
+      const result = validateDaxTool(args.expression);
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_format_measures',
+    'Batch format all measures in a table via DaxFormatter.com API and write back to TMDL (requires internet)',
+    FormatMeasuresSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = await formatMeasures(
+        project,
+        args.tableName,
+        {
+          listSeparator: args.listSeparator,
+          decimalSeparator: args.decimalSeparator,
+          lineStyle: args.lineStyle,
+          spacingStyle: args.spacingStyle,
+        },
+        args.dryRun,
+      );
+
+      if (!args.dryRun && result.measuresFormatted > 0) {
+        const table = project.model.tables.find((t) => t.name === args.tableName)!;
+        await writeTableFile(project, table);
+        invalidateCache(project.pbipPath);
+      }
+
+      return jsonResponse({
+        success: true,
+        ...result,
+      });
+    }),
   );
 }

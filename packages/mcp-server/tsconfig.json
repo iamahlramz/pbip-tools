@@ -9,6 +9,7 @@
     { "path": "../core" },
     { "path": "../tmdl-parser" },
     { "path": "../visual-handler" },
+    { "path": "../dax-formatter" },
     { "path": "../project-discovery" }
   ]
 }

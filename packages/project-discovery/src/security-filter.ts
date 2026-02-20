@@ -66,6 +66,9 @@ const CONNECTION_PATTERNS = [
   /Server\s*=[^\s;]+/gi,
   /Data Source\s*=[^\s;]+/gi,
   /Sql\.Database\s*\([^)]*\)/gi,
+  /Sql\.Native\s*\([^)]*\)/gi,
+  /OleDb\.DataSource\s*\([^)]*\)/gi,
+  /Odbc\.DataSource\s*\([^)]*\)/gi,
   /SharePoint\.Files\s*\([^)]*\)/gi,
   /https?:\/\/[^\s"',)]+/gi,
 ];

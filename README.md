@@ -9,9 +9,10 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 - **TMDL Parser** — Full parser for the tab-indented TMDL format including all 3 DAX expression forms (inline, multi-line, backtick-delimited), calculation groups, relationships, expressions with `meta` parameters, and cultures
 - **Project Discovery** — Auto-discovers `.pbip` projects in your workspace
 - **Security Filter** — Strips M-code and connection strings before sending content to AI, so any data source can be used safely
-- **22 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, and RLS
+- **25 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, RLS, and DAX formatting
 - **Visual.json Handler** — Recursive binding extractor that handles all 6 binding locations (projections, sort, objects, container objects, reference lines, filters) for any visual type including Deneb and custom visuals
 - **RLS Support** — Full parser and write tools for row-level security roles with DAX filter expressions
+- **DAX Formatter** — Format DAX expressions via DaxFormatter.com API + offline syntax validation with 400+ function catalog
 
 ## MCP Tools
 
@@ -61,6 +62,14 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_create_role` | Create a new role with table-level DAX filters  |
 | `pbip_update_role` | Modify role permission or filter expressions    |
 | `pbip_delete_role` | Remove an RLS role                              |
+
+### DAX Formatter (3)
+
+| Tool                   | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| `pbip_format_dax`      | Format a DAX expression via DaxFormatter.com API (needs internet) |
+| `pbip_validate_dax`    | Validate DAX syntax locally — offline, no API needed              |
+| `pbip_format_measures` | Batch format all measures in a table and write back to TMDL       |
 
 ## Quick Start
 
@@ -123,22 +132,23 @@ These defaults ensure your data source credentials never reach the AI context wi
 ```
 @pbip-tools/core              (zero deps — types only)
         |
-   +----+----+
-   |         |
-@pbip-tools/ @pbip-tools/
-tmdl-parser  visual-handler   (visual.json parse/modify)
-   |         |
-   +----+----+
+   +----+----+----+
+   |    |         |
+@pbip/ @pbip/   @pbip/
+tmdl   visual   dax-formatter   (DaxFormatter.com client + local validator)
+parser handler
+   |    |         |
+   +----+----+----+
         |
 @pbip-tools/project-discovery  (filesystem discovery + security filter + writer)
         |
-@pbip-tools/mcp-server         (MCP protocol server + 22 tools)
+@pbip-tools/mcp-server         (MCP protocol server + 25 tools)
 ```
 
 - **Monorepo:** npm workspaces + Turborepo
 - **Language:** TypeScript 5.7+, strict mode, ESM
 - **Runtime:** Node.js 18+
-- **Tests:** Vitest — 217 tests across 42 test files
+- **Tests:** Vitest — 260 tests across 46 test files
 
 ## Development
 
@@ -176,11 +186,19 @@ The parser handles the full TMDL specification:
 - **Roles** — RLS roles with `tablePermission` DAX filters, members, and `modelPermission`
 - **Forward Compatibility** — Unknown keywords captured as `UnknownNode`, never throws on unrecognized syntax
 
+## Production Hardening
+
+- **Input Validation** — All 25 tool schemas enforce string length limits (names ≤256 chars, expressions ≤100K chars)
+- **Error Handling** — All tool handlers wrapped in try-catch to prevent stack trace leakage through MCP
+- **Path Traversal Protection** — Resolved paths validated to stay within the working directory
+- **Security Filter** — Enhanced M-code patterns: `Sql.Native()`, `OleDb.DataSource()`, `Odbc.DataSource()`, connection strings, and URLs
+- **Runtime Type Guards** — JSON parsing in visual handler validates object types before access
+
 ## Roadmap
 
 - **Phase 1** — Read-only MCP server with TMDL parser
-- **Phase 2** (current) — Write tools, visual.json handler, RLS, calculation groups
-- **Phase 3** — .NET sidecar for DAX formatting and validation
+- **Phase 2** — Write tools, visual.json handler, RLS, calculation groups
+- **Phase 3** (current) — DAX formatter, production hardening, security review
 - **Phase 4** — npm publish + documentation site
 
 ## License

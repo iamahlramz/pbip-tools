@@ -10,8 +10,16 @@ export function parseVisualFile(
   pageId: string,
   pagePath: string,
 ): VisualInfo {
+  if (json === null || json === undefined || typeof json !== 'object') {
+    return { visualId, pageId, pagePath, visualType: 'unknown', bindings: [] };
+  }
+
   const obj = json as Record<string, unknown>;
-  const visual = (obj['visual'] ?? obj) as Record<string, unknown>;
+  const rawVisual = obj['visual'] ?? obj;
+  if (rawVisual === null || rawVisual === undefined || typeof rawVisual !== 'object') {
+    return { visualId, pageId, pagePath, visualType: 'unknown', bindings: [] };
+  }
+  const visual = rawVisual as Record<string, unknown>;
 
   let visualType = 'unknown';
   if ('visualType' in visual && typeof visual['visualType'] === 'string') {
