@@ -9,9 +9,13 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 - **TMDL Parser** — Full parser for the tab-indented TMDL format including all 3 DAX expression forms (inline, multi-line, backtick-delimited), calculation groups, relationships, expressions with `meta` parameters, and cultures
 - **Project Discovery** — Auto-discovers `.pbip` projects in your workspace
 - **Security Filter** — Strips M-code and connection strings before sending content to AI, so any data source can be used safely
-- **7 MCP Tools** — Read-only tools for querying your semantic model
+- **22 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, and RLS
+- **Visual.json Handler** — Recursive binding extractor that handles all 6 binding locations (projections, sort, objects, container objects, reference lines, filters) for any visual type including Deneb and custom visuals
+- **RLS Support** — Full parser and write tools for row-level security roles with DAX filter expressions
 
 ## MCP Tools
+
+### Read-Only (7)
 
 | Tool                        | Description                                                                  |
 | --------------------------- | ---------------------------------------------------------------------------- |
@@ -23,7 +27,40 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_search_measures`      | Search measure names and DAX expressions                                     |
 | `pbip_list_display_folders` | Display folder tree with measure counts                                      |
 
-All tools are read-only (`readOnlyHint: true`).
+### Measure Write (4)
+
+| Tool                  | Description                                                          |
+| --------------------- | -------------------------------------------------------------------- |
+| `pbip_create_measure` | Create a new DAX measure with format string, display folder, etc.    |
+| `pbip_update_measure` | Modify expression, format string, folder, description, or visibility |
+| `pbip_delete_measure` | Remove a measure from its table                                      |
+| `pbip_move_measure`   | Move between tables with automatic visual.json binding updates       |
+
+### Calculation Groups (2)
+
+| Tool                     | Description                                     |
+| ------------------------ | ----------------------------------------------- |
+| `pbip_create_calc_group` | Create a new calculation group table with items |
+| `pbip_add_calc_item`     | Add a calculation item to an existing group     |
+
+### Visual Handler (4)
+
+| Tool                          | Description                                                      |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `pbip_list_visuals`           | List all visuals across pages with types and binding counts      |
+| `pbip_get_visual_bindings`    | Get measure/column bindings for a visual or page                 |
+| `pbip_audit_bindings`         | Find broken bindings referencing missing tables/measures/columns |
+| `pbip_update_visual_bindings` | Batch update bindings after measure moves or table renames       |
+
+### Row-Level Security (5)
+
+| Tool               | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `pbip_list_roles`  | List all RLS roles with table permission counts |
+| `pbip_get_role`    | Full role detail with DAX filter expressions    |
+| `pbip_create_role` | Create a new role with table-level DAX filters  |
+| `pbip_update_role` | Modify role permission or filter expressions    |
+| `pbip_delete_role` | Remove an RLS role                              |
 
 ## Quick Start
 
@@ -86,17 +123,22 @@ These defaults ensure your data source credentials never reach the AI context wi
 ```
 @pbip-tools/core              (zero deps — types only)
         |
-@pbip-tools/tmdl-parser       (TMDL lexer + parser + serializer)
+   +----+----+
+   |         |
+@pbip-tools/ @pbip-tools/
+tmdl-parser  visual-handler   (visual.json parse/modify)
+   |         |
+   +----+----+
         |
-@pbip-tools/project-discovery  (filesystem discovery + security filter)
+@pbip-tools/project-discovery  (filesystem discovery + security filter + writer)
         |
-@pbip-tools/mcp-server         (MCP protocol server + 7 tools)
+@pbip-tools/mcp-server         (MCP protocol server + 22 tools)
 ```
 
 - **Monorepo:** npm workspaces + Turborepo
 - **Language:** TypeScript 5.7+, strict mode, ESM
 - **Runtime:** Node.js 18+
-- **Tests:** Vitest — 134 tests across 21 test files
+- **Tests:** Vitest — 217 tests across 42 test files
 
 ## Development
 
@@ -131,12 +173,13 @@ The parser handles the full TMDL specification:
 - **Relationships** — GUID-named and descriptive-named, `bothDirections`, `isActive: false`, many-to-many
 - **Expressions** — M-code parameters with `meta [IsParameterQuery=true]`, functions, query groups
 - **Cultures** — `linguisticMetadata` JSON blobs
+- **Roles** — RLS roles with `tablePermission` DAX filters, members, and `modelPermission`
 - **Forward Compatibility** — Unknown keywords captured as `UnknownNode`, never throws on unrecognized syntax
 
 ## Roadmap
 
-- **Phase 1** (current) — Read-only MCP server with TMDL parser
-- **Phase 2** — Write tools (create/update/move/delete measures) + visual.json handler
+- **Phase 1** — Read-only MCP server with TMDL parser
+- **Phase 2** (current) — Write tools, visual.json handler, RLS, calculation groups
 - **Phase 3** — .NET sidecar for DAX formatting and validation
 - **Phase 4** — npm publish + documentation site
 
