@@ -344,6 +344,22 @@ export const RdlListDatasetsSchema = z.object({
   rdlPath,
 });
 
+export const RdlGetParametersSchema = z.object({
+  rdlPath,
+});
+
+export const RdlGetSectionsSchema = z.object({
+  rdlPath,
+});
+
+export const RdlExtractQueriesSchema = z.object({
+  rdlPath,
+});
+
+export const RdlRoundTripSchema = z.object({
+  rdlPath,
+});
+
 // --- DAX formatter tool schemas (continued) ---
 
 export const FormatMeasuresSchema = z.object({

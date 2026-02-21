@@ -38,6 +38,10 @@ import {
   // RDL tool schemas
   RdlGetInfoSchema,
   RdlListDatasetsSchema,
+  RdlGetParametersSchema,
+  RdlGetSectionsSchema,
+  RdlExtractQueriesSchema,
+  RdlRoundTripSchema,
   // Compound tool schemas
   GenKpiSuiteSchema,
   GenTimeIntelligenceSchema,
@@ -87,6 +91,10 @@ import { formatMeasures } from './format-measures.js';
 // RDL tool implementations
 import { rdlGetInfo } from './rdl-get-info.js';
 import { rdlListDatasets } from './rdl-list-datasets.js';
+import { rdlGetParameters } from './rdl-get-parameters.js';
+import { rdlGetSections } from './rdl-get-sections.js';
+import { rdlExtractQueries } from './rdl-extract-queries.js';
+import { rdlRoundTrip } from './rdl-round-trip.js';
 
 // Compound tool implementations
 import { genKpiSuite } from './gen-kpi-suite.js';
@@ -591,7 +599,7 @@ export function registerTools(
   );
 
   // =============================================
-  // RDL PAGINATED REPORT TOOLS (2)
+  // RDL PAGINATED REPORT TOOLS (6)
   // =============================================
 
   server.tool(
@@ -613,6 +621,50 @@ export function registerTools(
       const rdlPath = resolveRdlPath(args.rdlPath);
       const xml = await readFile(rdlPath, 'utf-8');
       return jsonResponse(rdlListDatasets(xml, rdlPath));
+    }),
+  );
+
+  server.tool(
+    'pbip_rdl_get_parameters',
+    'List all report parameters with data types, defaults, valid values, and prompt text',
+    RdlGetParametersSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlGetParameters(xml, rdlPath));
+    }),
+  );
+
+  server.tool(
+    'pbip_rdl_get_sections',
+    'Get detailed section/page layout including page settings, header/footer bands, and body report items',
+    RdlGetSectionsSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlGetSections(xml, rdlPath));
+    }),
+  );
+
+  server.tool(
+    'pbip_rdl_extract_queries',
+    'Extract all DAX/SQL/MDX queries from an RDL report with type detection and measure reference extraction',
+    RdlExtractQueriesSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlExtractQueries(xml, rdlPath));
+    }),
+  );
+
+  server.tool(
+    'pbip_rdl_round_trip',
+    'Parse and re-serialize an RDL file to validate XML round-trip fidelity — returns structural comparison and serialized output',
+    RdlRoundTripSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlRoundTrip(xml, rdlPath));
     }),
   );
 
