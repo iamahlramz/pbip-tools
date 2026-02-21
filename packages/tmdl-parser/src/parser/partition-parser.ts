@@ -2,6 +2,7 @@ import type { PartitionNode, PartitionSource, AnnotationNode } from '@pbip-tools
 import type { Token } from '../lexer/index.js';
 import { TokenType } from '../lexer/index.js';
 import type { ParseWarning } from '../errors.js';
+import { normalizeExpression } from './normalize-expression.js';
 
 export function parsePartition(
   tokens: Token[],
@@ -76,7 +77,7 @@ export function parsePartition(
   }
 
   if (sourceLines.length > 0) {
-    const expression = normalizeSourceExpression(sourceLines);
+    const expression = normalizeExpression(sourceLines);
     if (source.type === 'mCode') {
       source.expression = expression;
     } else if (source.type === 'calculated') {
@@ -92,34 +93,4 @@ export function parsePartition(
   };
 
   return { node, endIndex: i };
-}
-
-function normalizeSourceExpression(lines: string[]): string {
-  if (lines.length === 0) return '';
-
-  let minIndent = Infinity;
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-    let tabs = 0;
-    for (const ch of line) {
-      if (ch === '\t') tabs++;
-      else break;
-    }
-    minIndent = Math.min(minIndent, tabs);
-  }
-  if (!isFinite(minIndent)) minIndent = 0;
-
-  const normalized = lines.map((line) => {
-    if (line.trim() === '') return '';
-    return line.substring(minIndent);
-  });
-
-  while (normalized.length > 0 && normalized[normalized.length - 1].trim() === '') {
-    normalized.pop();
-  }
-  while (normalized.length > 0 && normalized[0].trim() === '') {
-    normalized.shift();
-  }
-
-  return normalized.join('\n');
 }

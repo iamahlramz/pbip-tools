@@ -2,6 +2,7 @@ import type { MeasureNode, AnnotationNode, ChangedPropertyNode } from '@pbip-too
 import type { Token } from '../lexer/index.js';
 import { TokenType } from '../lexer/index.js';
 import type { ParseWarning } from '../errors.js';
+import { normalizeExpression } from './normalize-expression.js';
 
 export function parseMeasure(
   tokens: Token[],
@@ -136,38 +137,4 @@ export function parseMeasure(
   };
 
   return { node, endIndex: i };
-}
-
-function normalizeExpression(lines: string[]): string {
-  if (lines.length === 0) return '';
-
-  // Find minimum indentation across non-empty lines
-  let minIndent = Infinity;
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-    let tabs = 0;
-    for (const ch of line) {
-      if (ch === '\t') tabs++;
-      else break;
-    }
-    minIndent = Math.min(minIndent, tabs);
-  }
-  if (!isFinite(minIndent)) minIndent = 0;
-
-  // Strip the common leading tabs
-  const normalized = lines.map((line) => {
-    if (line.trim() === '') return '';
-    return line.substring(minIndent);
-  });
-
-  // Trim trailing empty lines
-  while (normalized.length > 0 && normalized[normalized.length - 1].trim() === '') {
-    normalized.pop();
-  }
-  // Trim leading empty lines
-  while (normalized.length > 0 && normalized[0].trim() === '') {
-    normalized.shift();
-  }
-
-  return normalized.join('\n');
 }
