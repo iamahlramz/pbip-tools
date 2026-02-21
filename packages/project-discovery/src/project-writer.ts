@@ -4,10 +4,19 @@ import type { PbipProject, TableNode, RoleNode } from '@pbip-tools/core';
 import { TMDL_FILES } from '@pbip-tools/core';
 import { serializeTable, serializeRole } from '@pbip-tools/tmdl-parser';
 
+const UNSAFE_NAME_PATTERN = /[/\\]/;
+
+function validateName(name: string, kind: string): void {
+  if (UNSAFE_NAME_PATTERN.test(name)) {
+    throw new Error(`${kind} name contains invalid path characters: ${name}`);
+  }
+}
+
 /**
  * Write a table's TMDL to disk. Overwrites existing file or creates new one.
  */
 export async function writeTableFile(project: PbipProject, table: TableNode): Promise<void> {
+  validateName(table.name, 'Table');
   const tablesDir = join(project.semanticModelPath, 'definition', TMDL_FILES.TABLES_DIR);
   await mkdir(tablesDir, { recursive: true });
   const filePath = join(tablesDir, `${table.name}.tmdl`);
@@ -19,6 +28,7 @@ export async function writeTableFile(project: PbipProject, table: TableNode): Pr
  * Delete a table's TMDL file from disk.
  */
 export async function deleteTableFile(project: PbipProject, tableName: string): Promise<void> {
+  validateName(tableName, 'Table');
   const filePath = join(
     project.semanticModelPath,
     'definition',
@@ -32,6 +42,7 @@ export async function deleteTableFile(project: PbipProject, tableName: string): 
  * Write a role's TMDL to disk. Overwrites existing file or creates new one.
  */
 export async function writeRoleFile(project: PbipProject, role: RoleNode): Promise<void> {
+  validateName(role.name, 'Role');
   const rolesDir = join(project.semanticModelPath, 'definition', TMDL_FILES.ROLES_DIR);
   await mkdir(rolesDir, { recursive: true });
   const filePath = join(rolesDir, `${role.name}.tmdl`);
@@ -43,6 +54,7 @@ export async function writeRoleFile(project: PbipProject, role: RoleNode): Promi
  * Delete a role's TMDL file from disk.
  */
 export async function deleteRoleFile(project: PbipProject, roleName: string): Promise<void> {
+  validateName(roleName, 'Role');
   const filePath = join(
     project.semanticModelPath,
     'definition',

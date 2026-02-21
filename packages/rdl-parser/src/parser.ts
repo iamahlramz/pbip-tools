@@ -71,7 +71,12 @@ function extractName(filePath: string): string {
 
 // --- Element helpers for preserveOrder AST ---
 
-function findElement(nodes: XmlNode[] | XmlNode, tagName: string): XmlNode | undefined {
+function findElement(
+  nodes: XmlNode[] | XmlNode,
+  tagName: string,
+  maxDepth = 50,
+): XmlNode | undefined {
+  if (maxDepth <= 0) return undefined;
   const arr = Array.isArray(nodes) ? nodes : [nodes];
   for (const node of arr) {
     if (node[tagName] !== undefined) return node;
@@ -80,7 +85,7 @@ function findElement(nodes: XmlNode[] | XmlNode, tagName: string): XmlNode | und
       if (key.startsWith('@_') || key.startsWith('#') || key === ':@') continue;
       const child = node[key];
       if (Array.isArray(child)) {
-        const found = findElement(child, tagName);
+        const found = findElement(child, tagName, maxDepth - 1);
         if (found) return found;
       }
     }

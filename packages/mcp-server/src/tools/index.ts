@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { resolve, relative, isAbsolute } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
@@ -129,10 +129,19 @@ function safeTool<T>(
   };
 }
 
+function findTable(project: PbipProject, tableName: string) {
+  const table = project.model.tables.find((t) => t.name === tableName);
+  if (!table) {
+    throw new Error(`Table '${tableName}' not found in project`);
+  }
+  return table;
+}
+
 function resolveRdlPath(rdlPath: string): string {
   const cwd = process.cwd();
   const resolved = resolve(cwd, rdlPath);
-  if (!resolved.startsWith(cwd)) {
+  const rel = relative(cwd, resolved);
+  if (rel.startsWith('..') || isAbsolute(rel)) {
     throw new Error('RDL path must be within the working directory');
   }
   if (!resolved.toLowerCase().endsWith('.rdl')) {
@@ -242,7 +251,7 @@ export function registerTools(
         args.isHidden,
       );
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -269,7 +278,7 @@ export function registerTools(
         isHidden: args.isHidden,
       });
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -289,7 +298,7 @@ export function registerTools(
       const project = await getProjectForWrite(args.projectPath);
       const result = deleteMeasure(project, args.measureName);
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -310,8 +319,8 @@ export function registerTools(
       const result = moveMeasure(project, args.measureName, args.targetTable);
 
       // Write both source and target tables
-      const sourceTable = project.model.tables.find((t) => t.name === result.sourceTable)!;
-      const targetTable = project.model.tables.find((t) => t.name === result.targetTable)!;
+      const sourceTable = findTable(project, result.sourceTable);
+      const targetTable = findTable(project, result.targetTable);
       await writeTableFile(project, sourceTable);
       await writeTableFile(project, targetTable);
 
@@ -354,7 +363,7 @@ export function registerTools(
       return jsonResponse({
         success: true,
         table: result.table.name,
-        itemCount: result.table.calculationGroup!.items.length,
+        itemCount: result.table.calculationGroup?.items.length ?? 0,
       });
     }),
   );
@@ -374,7 +383,7 @@ export function registerTools(
         args.formatStringExpression,
       );
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -586,7 +595,7 @@ export function registerTools(
       );
 
       if (!args.dryRun && result.measuresFormatted > 0) {
-        const table = project.model.tables.find((t) => t.name === args.tableName)!;
+        const table = findTable(project, args.tableName);
         await writeTableFile(project, table);
         invalidateCache(project.pbipPath);
       }
@@ -689,7 +698,7 @@ export function registerTools(
         args.statusThresholds,
       );
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -717,7 +726,7 @@ export function registerTools(
         args.displayFolder,
       );
 
-      const table = project.model.tables.find((t) => t.name === result.table)!;
+      const table = findTable(project, result.table);
       await writeTableFile(project, table);
       invalidateCache(project.pbipPath);
 
@@ -786,7 +795,7 @@ export function registerTools(
       const result = organizeFolders(project, args.tableName, args.rules, args.dryRun);
 
       if (!args.dryRun && result.changes.length > 0) {
-        const table = project.model.tables.find((t) => t.name === result.table)!;
+        const table = findTable(project, result.table);
         await writeTableFile(project, table);
         invalidateCache(project.pbipPath);
       }

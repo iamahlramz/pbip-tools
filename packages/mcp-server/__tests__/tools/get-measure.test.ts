@@ -18,14 +18,12 @@ beforeAll(async () => {
 describe('getMeasure', () => {
   it('should get Total Products from minimal with expression containing COUNTROWS', () => {
     const result = getMeasure(minimalProject, 'Total Products');
-    expect(result).not.toHaveProperty('error');
     expect(result.name).toBe('Total Products');
     expect(result.expression).toContain('COUNTROWS');
   });
 
   it('should get Total Sales from standard with DAX expression, format string, and display folder', () => {
     const result = getMeasure(standardProject, 'Total Sales');
-    expect(result).not.toHaveProperty('error');
     expect(result.name).toBe('Total Sales');
     expect(result.expression).toBeDefined();
     expect(result.expression).toContain('SUMX');
@@ -33,10 +31,8 @@ describe('getMeasure', () => {
     expect(result.displayFolder).toBe('Sales');
   });
 
-  it('should return an error for a non-existent measure name', () => {
-    const result = getMeasure(standardProject, 'NonExistentMeasure');
-    expect(result).toHaveProperty('error');
-    expect(result.error).toContain('NonExistentMeasure');
-    expect(result.error).toContain('not found');
+  it('should throw for a non-existent measure name', () => {
+    expect(() => getMeasure(standardProject, 'NonExistentMeasure')).toThrow('NonExistentMeasure');
+    expect(() => getMeasure(standardProject, 'NonExistentMeasure')).toThrow('not found');
   });
 });

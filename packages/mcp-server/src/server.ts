@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { resolve, relative, isAbsolute } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
 import {
@@ -26,7 +26,8 @@ export function createServer() {
       // Validate that resolved path doesn't escape the working directory
       const cwd = process.cwd();
       const resolved = resolve(cwd, projectPath);
-      if (!resolved.startsWith(cwd)) {
+      const rel = relative(cwd, resolved);
+      if (rel.startsWith('..') || isAbsolute(rel)) {
         throw new Error('Project path must be within the working directory');
       }
       return resolved;

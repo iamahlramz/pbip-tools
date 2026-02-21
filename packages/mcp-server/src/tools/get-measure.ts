@@ -14,7 +14,7 @@ export function getMeasure(project: PbipProject, measureName: string) {
   }
 
   if (!foundMeasure) {
-    return { error: `Measure '${measureName}' not found` };
+    throw new Error(`Measure '${measureName}' not found`);
   }
 
   // Extract referenced measures and columns from DAX
