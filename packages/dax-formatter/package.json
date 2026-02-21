@@ -1,6 +1,6 @@
 {
   "name": "@pbip-tools/dax-formatter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DAX expression formatter and validator for Power BI — DaxFormatter.com API client + offline validation",
   "type": "module",
   "main": "./dist/index.js",

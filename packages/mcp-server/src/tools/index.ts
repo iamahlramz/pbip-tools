@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
 import { writeTableFile, writeRoleFile, deleteRoleFile } from '@pbip-tools/project-discovery';
@@ -33,6 +35,9 @@ import {
   FormatDaxSchema,
   ValidateDaxSchema,
   FormatMeasuresSchema,
+  // RDL tool schemas
+  RdlGetInfoSchema,
+  RdlListDatasetsSchema,
   // Compound tool schemas
   GenKpiSuiteSchema,
   GenTimeIntelligenceSchema,
@@ -79,6 +84,10 @@ import { formatDaxTool } from './format-dax.js';
 import { validateDaxTool } from './validate-dax.js';
 import { formatMeasures } from './format-measures.js';
 
+// RDL tool implementations
+import { rdlGetInfo } from './rdl-get-info.js';
+import { rdlListDatasets } from './rdl-list-datasets.js';
+
 // Compound tool implementations
 import { genKpiSuite } from './gen-kpi-suite.js';
 import { genTimeIntelligence } from './gen-time-intelligence.js';
@@ -110,6 +119,18 @@ function safeTool<T>(
       };
     }
   };
+}
+
+function resolveRdlPath(rdlPath: string): string {
+  const cwd = process.cwd();
+  const resolved = resolve(cwd, rdlPath);
+  if (!resolved.startsWith(cwd)) {
+    throw new Error('RDL path must be within the working directory');
+  }
+  if (!resolved.toLowerCase().endsWith('.rdl')) {
+    throw new Error('File must have .rdl extension');
+  }
+  return resolved;
 }
 
 export function registerTools(
@@ -566,6 +587,32 @@ export function registerTools(
         success: true,
         ...result,
       });
+    }),
+  );
+
+  // =============================================
+  // RDL PAGINATED REPORT TOOLS (2)
+  // =============================================
+
+  server.tool(
+    'pbip_rdl_get_info',
+    'Parse an RDL paginated report file and return report summary: schema version, data sources, datasets, parameters, sections',
+    RdlGetInfoSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlGetInfo(xml, rdlPath));
+    }),
+  );
+
+  server.tool(
+    'pbip_rdl_list_datasets',
+    'List all datasets in an RDL paginated report with DAX/SQL queries, query type detection, and field definitions',
+    RdlListDatasetsSchema.shape,
+    safeTool(async (args) => {
+      const rdlPath = resolveRdlPath(args.rdlPath);
+      const xml = await readFile(rdlPath, 'utf-8');
+      return jsonResponse(rdlListDatasets(xml, rdlPath));
     }),
   );
 

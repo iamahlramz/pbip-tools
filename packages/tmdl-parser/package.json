@@ -1,6 +1,6 @@
 {
   "name": "@pbip-tools/tmdl-parser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TMDL file parser and serializer for Power BI PBIP projects",
   "type": "module",
   "main": "./dist/index.js",

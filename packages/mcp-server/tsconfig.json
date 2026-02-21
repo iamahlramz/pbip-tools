@@ -10,6 +10,7 @@
     { "path": "../tmdl-parser" },
     { "path": "../visual-handler" },
     { "path": "../dax-formatter" },
+    { "path": "../rdl-parser" },
     { "path": "../project-discovery" }
   ]
 }

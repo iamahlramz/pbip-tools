@@ -1,6 +1,6 @@
 {
   "name": "@pbip-tools/mcp-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server exposing Power BI PBIP project tools for AI assistants",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,6 +30,7 @@
     "@pbip-tools/visual-handler": "0.1.0",
     "@pbip-tools/project-discovery": "0.1.0",
     "@pbip-tools/dax-formatter": "0.1.0",
+    "@pbip-tools/rdl-parser": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.27.0",
     "zod": "^3.25.0"
   },

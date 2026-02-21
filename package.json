@@ -10,6 +10,7 @@
     "packages/visual-handler",
     "packages/project-discovery",
     "packages/dax-formatter",
+    "packages/rdl-parser",
     "packages/mcp-server"
   ],
   "scripts": {

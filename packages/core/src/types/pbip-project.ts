@@ -1,4 +1,5 @@
 import type { SemanticModel } from './tmdl.js';
+import type { RdlReport } from './rdl.js';
 
 export interface PbipProject {
   name: string;
@@ -6,6 +7,8 @@ export interface PbipProject {
   semanticModelPath: string;
   reportPath?: string;
   model: SemanticModel;
+  rdlReports?: RdlReport[];
+  paginatedReportPaths?: string[];
 }
 
 export interface PbipFileContent {

@@ -1,7 +1,7 @@
 {
-  "name": "@pbip-tools/visual-handler",
-  "version": "0.2.0",
-  "description": "Visual.json handler for Power BI PBIP reports — binding extraction, updating, and auditing",
+  "name": "@pbip-tools/rdl-parser",
+  "version": "0.1.0",
+  "description": "RDL (Report Definition Language) parser and serializer for Power BI paginated reports",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,10 +22,8 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@pbip-tools/core": "0.1.0"
-  },
-  "devDependencies": {
-    "vitest": "^3.0.0"
+    "@pbip-tools/core": "0.2.0",
+    "fast-xml-parser": "^5.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -33,7 +31,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/iamahlramz/pbip-tools.git",
-    "directory": "packages/visual-handler"
+    "directory": "packages/rdl-parser"
   },
   "publishConfig": {
     "access": "public"
@@ -41,9 +39,12 @@
   "keywords": [
     "power-bi",
     "pbip",
-    "visual",
-    "bindings",
-    "report"
+    "rdl",
+    "paginated-report",
+    "report-builder",
+    "ssrs",
+    "parser",
+    "xml"
   ],
   "license": "MIT"
 }

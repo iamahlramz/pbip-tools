@@ -332,6 +332,20 @@ export const ValidateDaxSchema = z.object({
   expression: expression.describe('DAX expression to validate offline'),
 });
 
+// --- RDL tool schemas ---
+
+const rdlPath = z.string().min(1).max(1024).describe('Path to the .rdl paginated report file');
+
+export const RdlGetInfoSchema = z.object({
+  rdlPath,
+});
+
+export const RdlListDatasetsSchema = z.object({
+  rdlPath,
+});
+
+// --- DAX formatter tool schemas (continued) ---
+
 export const FormatMeasuresSchema = z.object({
   projectPath,
   tableName: tableName.describe('Name of the table whose measures to format'),
