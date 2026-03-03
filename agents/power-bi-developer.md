@@ -95,15 +95,15 @@ MyReport.Report/
 
 The `pbip_validate_tmdl` tool checks 40+ rules across 7 categories:
 
-| Category | Focus | Key Rules |
-|----------|-------|-----------|
-| `structural` | Model integrity | orphaned table refs, calc group prerequisites, relationship targets |
-| `performance` | Query speed | float columns, M:M relationships, bi-directional cross-filters, too many columns |
-| `dax_expressions` | DAX quality | IFERROR→ISERROR, use DIVIDE(), avoid nested CALCULATE, SELECTEDVALUE |
-| `formatting` | Display | missing format strings, percentage mismatches, SVG missing ImageUrl |
-| `maintenance` | Maintainability | unconnected tables, missing display folders, empty calc groups |
-| `naming` | Conventions | leading/trailing whitespace, special characters |
-| `error_prevention` | Safety | type mismatches in relationships, empty measure expressions |
+| Category           | Focus           | Key Rules                                                                        |
+| ------------------ | --------------- | -------------------------------------------------------------------------------- |
+| `structural`       | Model integrity | orphaned table refs, calc group prerequisites, relationship targets              |
+| `performance`      | Query speed     | float columns, M:M relationships, bi-directional cross-filters, too many columns |
+| `dax_expressions`  | DAX quality     | IFERROR→ISERROR, use DIVIDE(), avoid nested CALCULATE, SELECTEDVALUE             |
+| `formatting`       | Display         | missing format strings, percentage mismatches, SVG missing ImageUrl              |
+| `maintenance`      | Maintainability | unconnected tables, missing display folders, empty calc groups                   |
+| `naming`           | Conventions     | leading/trailing whitespace, special characters                                  |
+| `error_prevention` | Safety          | type mismatches in relationships, empty measure expressions                      |
 
 ### SVG-in-DAX Pattern
 
@@ -124,6 +124,7 @@ RETURN
 ```
 
 Critical requirements:
+
 - Use `%23` instead of `#` for hex colors (URL encoding)
 - Add annotation `dataCategory = ImageUrl` on the measure
 - Set visual data category to Image URL in report binding
@@ -131,6 +132,7 @@ Critical requirements:
 ### DAXLib Conventions
 
 DAXLib packages follow these conventions:
+
 - Function names: `Namespace.Category.FunctionName` (e.g., `DaxLib.SVG.Element.Rect`)
 - Each function has `DAXLIB_PackageId` and `DAXLIB_PackageVersion` annotations
 - Parameters use typed syntax: `(ParamName : TYPE)` where TYPE is STRING, DOUBLE, INT64, BOOLEAN, ANYREF EXPR, SCALAR VAL

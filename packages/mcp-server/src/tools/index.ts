@@ -278,13 +278,20 @@ export function registerTools(
     CreateRelationshipSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = createRelationship(project, args.fromTable, args.fromColumn, args.toTable, args.toColumn, {
-        name: args.name,
-        fromCardinality: args.fromCardinality,
-        toCardinality: args.toCardinality,
-        crossFilteringBehavior: args.crossFilteringBehavior,
-        isActive: args.isActive,
-      });
+      const result = createRelationship(
+        project,
+        args.fromTable,
+        args.fromColumn,
+        args.toTable,
+        args.toColumn,
+        {
+          name: args.name,
+          fromCardinality: args.fromCardinality,
+          toCardinality: args.toCardinality,
+          crossFilteringBehavior: args.crossFilteringBehavior,
+          isActive: args.isActive,
+        },
+      );
       await writeRelationshipsFile(project, project.model.relationships);
       invalidateCache(project.pbipPath);
       return jsonResponse(result);
@@ -769,11 +776,10 @@ export function registerTools(
   // RDL PAGINATED REPORT TOOLS (6)
   // =============================================
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function registerRdlTool(
     name: string,
     description: string,
-    schema: any,
+    schema: Record<string, unknown>,
     handler: (xml: string, path: string) => unknown,
   ) {
     server.tool(
@@ -1126,9 +1132,7 @@ export function registerTools(
     'Get recent dataset refresh history from Microsoft Fabric (requires Fabric env vars)',
     GetRefreshStatusSchema.shape,
     safeTool(async (args) => {
-      return jsonResponse(
-        await fabricGetRefreshStatus(args.workspaceId, args.datasetId, args.top),
-      );
+      return jsonResponse(await fabricGetRefreshStatus(args.workspaceId, args.datasetId, args.top));
     }),
   );
 }

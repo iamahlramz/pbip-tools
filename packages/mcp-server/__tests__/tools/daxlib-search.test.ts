@@ -11,11 +11,14 @@ describe('searchDaxlibs', () => {
   it('should filter by keyword', () => {
     const result = searchDaxlibs('svg');
     expect(result.resultCount).toBeGreaterThan(0);
-    expect(result.packages.every((p) =>
-      p.packageId.includes('svg') ||
-      p.description.toLowerCase().includes('svg') ||
-      p.tags.some((t) => t.includes('svg'))
-    )).toBe(true);
+    expect(
+      result.packages.every(
+        (p) =>
+          p.packageId.includes('svg') ||
+          p.description.toLowerCase().includes('svg') ||
+          p.tags.some((t) => t.includes('svg')),
+      ),
+    ).toBe(true);
   });
 
   it('should filter by tag', () => {

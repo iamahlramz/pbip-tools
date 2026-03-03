@@ -1,6 +1,5 @@
 import type { PbipProject, FunctionNode } from '@pbip-tools/core';
 import { findCatalogEntry } from '../data/daxlib-catalog.js';
-import { parseTmdl } from '@pbip-tools/tmdl-parser';
 
 export function installDaxlib(project: PbipProject, packageId: string) {
   const entry = findCatalogEntry(packageId);
@@ -66,7 +65,10 @@ function parseFunctionsFromTmdl(
     // Parse parameters
     const parameters = paramsStr
       ? paramsStr.split(',').map((p) => {
-          const parts = p.trim().split(':').map((s) => s.trim());
+          const parts = p
+            .trim()
+            .split(':')
+            .map((s) => s.trim());
           return { name: parts[0], dataType: parts[1] || 'variant' };
         })
       : [];

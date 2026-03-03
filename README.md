@@ -55,13 +55,13 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 
 ### Visual & Report Tools (5)
 
-| Tool                          | Description                                                               |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| `pbip_list_visuals`           | List all visuals across pages with types and binding counts               |
-| `pbip_get_visual_bindings`    | Get measure/column bindings for a visual or page                          |
+| Tool                          | Description                                                                |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| `pbip_list_visuals`           | List all visuals across pages with types and binding counts                |
+| `pbip_get_visual_bindings`    | Get measure/column bindings for a visual or page                           |
 | `pbip_audit_bindings`         | Find broken bindings referencing missing tables/measures/columns + summary |
-| `pbip_update_visual_bindings` | Batch update bindings after measure moves or table renames                |
-| `pbip_list_visual_types`      | Browse visual type registry with data roles and categories                |
+| `pbip_update_visual_bindings` | Batch update bindings after measure moves or table renames                 |
+| `pbip_list_visual_types`      | Browse visual type registry with data roles and categories                 |
 
 ### DAX Tools (3)
 
@@ -73,76 +73,77 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 
 ### Audit & Validation (4)
 
-| Tool                       | Description                                                           |
-| -------------------------- | --------------------------------------------------------------------- |
-| `pbip_validate_tmdl`       | Validate model with 40+ BPA rules across 7 categories                 |
-| `pbip_audit_dependencies`  | DAX dependency graph in JSON, DOT (Graphviz), or adjacency list format |
-| `pbip_audit_unused_measures` | Find measures not referenced by any other measure                    |
-| `pbip_audit_bindings`      | Cross-reference visual bindings with semantic model                    |
+| Tool                         | Description                                                            |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `pbip_validate_tmdl`         | Validate model with 40+ BPA rules across 7 categories                  |
+| `pbip_audit_dependencies`    | DAX dependency graph in JSON, DOT (Graphviz), or adjacency list format |
+| `pbip_audit_unused_measures` | Find measures not referenced by any other measure                      |
+| `pbip_audit_bindings`        | Cross-reference visual bindings with semantic model                    |
 
 ### Organization & Generation (4)
 
-| Tool                          | Description                                                   |
-| ----------------------------- | ------------------------------------------------------------- |
-| `pbip_organize_folders`       | Auto-organize measures into display folders by naming patterns |
-| `pbip_gen_data_dictionary`    | Generate markdown data dictionary from semantic model          |
-| `pbip_gen_time_intelligence`  | Generate time intelligence measures (YTD, YoY, etc.)          |
-| `pbip_gen_kpi_suite`          | Generate KPI measure suites from base measures                |
+| Tool                         | Description                                                    |
+| ---------------------------- | -------------------------------------------------------------- |
+| `pbip_organize_folders`      | Auto-organize measures into display folders by naming patterns |
+| `pbip_gen_data_dictionary`   | Generate markdown data dictionary from semantic model          |
+| `pbip_gen_time_intelligence` | Generate time intelligence measures (YTD, YoY, etc.)           |
+| `pbip_gen_kpi_suite`         | Generate KPI measure suites from base measures                 |
 
 ### SVG Templates (1)
 
-| Tool                     | Description                                                          |
-| ------------------------ | -------------------------------------------------------------------- |
-| `pbip_create_svg_measure` | Generate SVG visualization measures from 5 built-in templates       |
+| Tool                      | Description                                                   |
+| ------------------------- | ------------------------------------------------------------- |
+| `pbip_create_svg_measure` | Generate SVG visualization measures from 5 built-in templates |
 
 **Available templates:** progress-bar, kpi-card, status-icon, toggle-switch, button
 
 ### DAXLib Package Manager (4)
 
-| Tool                         | Description                                           |
-| ---------------------------- | ----------------------------------------------------- |
-| `pbip_search_daxlibs`        | Search DAXLib catalog by keyword or tag                |
-| `pbip_install_daxlib`        | Install a DAXLib package into your semantic model      |
-| `pbip_remove_daxlib`         | Remove an installed DAXLib package                     |
+| Tool                          | Description                                           |
+| ----------------------------- | ----------------------------------------------------- |
+| `pbip_search_daxlibs`         | Search DAXLib catalog by keyword or tag               |
+| `pbip_install_daxlib`         | Install a DAXLib package into your semantic model     |
+| `pbip_remove_daxlib`          | Remove an installed DAXLib package                    |
 | `pbip_list_installed_daxlibs` | List DAXLib packages currently installed in the model |
 
 ### Fabric API (4)
 
-| Tool                        | Description                                  |
-| --------------------------- | -------------------------------------------- |
-| `pbip_list_workspaces`      | List Fabric workspaces                       |
-| `pbip_deploy_to_workspace`  | Deploy semantic model to a Fabric workspace  |
-| `pbip_trigger_refresh`      | Trigger dataset refresh in Fabric            |
-| `pbip_get_refresh_status`   | Get refresh history and status               |
+| Tool                       | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| `pbip_list_workspaces`     | List Fabric workspaces                      |
+| `pbip_deploy_to_workspace` | Deploy semantic model to a Fabric workspace |
+| `pbip_trigger_refresh`     | Trigger dataset refresh in Fabric           |
+| `pbip_get_refresh_status`  | Get refresh history and status              |
 
 Requires env vars: `FABRIC_TENANT_ID`, `FABRIC_CLIENT_ID`, `FABRIC_CLIENT_SECRET`
 
 ### RDL/Paginated Reports (6)
 
-| Tool                       | Description                                         |
-| -------------------------- | --------------------------------------------------- |
-| `pbip_rdl_get_info`        | Get paginated report metadata                       |
-| `pbip_rdl_get_sections`    | List report sections/groups                          |
-| `pbip_rdl_get_parameters`  | Extract report parameters                            |
-| `pbip_rdl_extract_queries` | Extract dataset queries from paginated reports       |
-| `pbip_rdl_list_datasets`   | List embedded datasets in a paginated report         |
-| `pbip_rdl_round_trip`      | Parse and re-serialize RDL for validation            |
+| Tool                       | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `pbip_rdl_get_info`        | Get paginated report metadata                  |
+| `pbip_rdl_get_sections`    | List report sections/groups                    |
+| `pbip_rdl_get_parameters`  | Extract report parameters                      |
+| `pbip_rdl_extract_queries` | Extract dataset queries from paginated reports |
+| `pbip_rdl_list_datasets`   | List embedded datasets in a paginated report   |
+| `pbip_rdl_round_trip`      | Parse and re-serialize RDL for validation      |
 
 ## Validation Rules
 
 The `pbip_validate_tmdl` tool checks 40+ Best Practice Analyzer rules:
 
-| Category            | Rules | Examples                                                    |
-| ------------------- | ----- | ----------------------------------------------------------- |
-| `structural`        | 6     | Orphaned table refs, calc group prerequisites, missing lineage tags |
-| `performance`       | 5     | Float columns, M:M relationships, bi-directional cross-filters, too many columns |
-| `dax_expressions`   | 4     | Use DIVIDE(), IFERROR→ISERROR, avoid nested CALCULATE, hardcoded years |
-| `formatting`        | 3     | Missing format strings, SVG missing ImageUrl, percentage mismatches |
-| `maintenance`       | 4     | Unconnected tables, duplicate measure names, missing display folders |
-| `naming`            | 2     | Leading/trailing whitespace, special characters              |
-| `error_prevention`  | 2     | Type mismatches in relationships, empty measure expressions  |
+| Category           | Rules | Examples                                                                         |
+| ------------------ | ----- | -------------------------------------------------------------------------------- |
+| `structural`       | 6     | Orphaned table refs, calc group prerequisites, missing lineage tags              |
+| `performance`      | 5     | Float columns, M:M relationships, bi-directional cross-filters, too many columns |
+| `dax_expressions`  | 4     | Use DIVIDE(), IFERROR→ISERROR, avoid nested CALCULATE, hardcoded years           |
+| `formatting`       | 3     | Missing format strings, SVG missing ImageUrl, percentage mismatches              |
+| `maintenance`      | 4     | Unconnected tables, duplicate measure names, missing display folders             |
+| `naming`           | 2     | Leading/trailing whitespace, special characters                                  |
+| `error_prevention` | 2     | Type mismatches in relationships, empty measure expressions                      |
 
 Filter by category and minimum severity:
+
 ```
 pbip_validate_tmdl(projectPath, categories: ["performance", "dax_expressions"], minSeverity: "warning")
 ```
@@ -295,15 +296,15 @@ The parser handles the full TMDL specification:
 
 ## Packages
 
-| Package                                                       | Description                                                |
-| ------------------------------------------------------------- | ---------------------------------------------------------- |
-| [`@pbip-tools/core`](packages/core)                           | Core types and constants                                   |
-| [`@pbip-tools/tmdl-parser`](packages/tmdl-parser)             | TMDL file parser and serializer                            |
-| [`@pbip-tools/visual-handler`](packages/visual-handler)       | Visual.json binding extraction and updating                |
-| [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator |
+| Package                                                       | Description                                                 |
+| ------------------------------------------------------------- | ----------------------------------------------------------- |
+| [`@pbip-tools/core`](packages/core)                           | Core types and constants                                    |
+| [`@pbip-tools/tmdl-parser`](packages/tmdl-parser)             | TMDL file parser and serializer                             |
+| [`@pbip-tools/visual-handler`](packages/visual-handler)       | Visual.json binding extraction and updating                 |
+| [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator  |
 | [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, security filtering, and writing |
-| [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL/RDLX paginated report parser                          |
-| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 58 tools for AI assistants                 |
+| [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL/RDLX paginated report parser                            |
+| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 58 tools for AI assistants                  |
 
 ## License
 

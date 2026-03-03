@@ -1,4 +1,4 @@
-import type { PbipProject, ColumnNode, MeasureNode, TableNode } from '@pbip-tools/core';
+import type { PbipProject } from '@pbip-tools/core';
 
 export type BpaCategory =
   | 'structural'
@@ -114,9 +114,7 @@ function validateCalcGroups(project: PbipProject, issues: TmdlValidationIssue[])
       });
     }
 
-    const nameCol = table.columns.find(
-      (c) => c.sourceColumn === 'Name' && c.dataType === 'string',
-    );
+    const nameCol = table.columns.find((c) => c.sourceColumn === 'Name' && c.dataType === 'string');
     if (!nameCol) {
       issues.push({
         severity: 'error',
@@ -310,7 +308,8 @@ function validatePerformance(project: PbipProject, issues: TmdlValidationIssue[]
     // P2: Calculated columns with aggregation functions
     for (const col of table.columns) {
       if (col.columnType === 'calculated' && col.expression) {
-        const aggPattern = /\b(SUM|AVERAGE|COUNT|COUNTROWS|MIN|MAX|SUMX|AVERAGEX|COUNTX|MAXX|MINX)\s*\(/i;
+        const aggPattern =
+          /\b(SUM|AVERAGE|COUNT|COUNTROWS|MIN|MAX|SUMX|AVERAGEX|COUNTX|MAXX|MINX)\s*\(/i;
         if (aggPattern.test(col.expression)) {
           issues.push({
             severity: 'warning',
@@ -364,10 +363,7 @@ function validatePerformance(project: PbipProject, issues: TmdlValidationIssue[]
   // P6: summarizeBy: sum on ID/key columns
   for (const table of project.model.tables) {
     for (const col of table.columns) {
-      if (
-        col.summarizeBy === 'sum' &&
-        /(?:ID|Key|Code|Num)$/i.test(col.name)
-      ) {
+      if (col.summarizeBy === 'sum' && /(?:ID|Key|Code|Num)$/i.test(col.name)) {
         issues.push({
           severity: 'warning',
           rule: 'perf_summarize_id_column',
@@ -436,10 +432,13 @@ function validateDaxExpressions(project: PbipProject, issues: TmdlValidationIssu
 
   for (const { label, expression } of exprs) {
     // D1: Use DIVIDE instead of /
-    if (/[^\/]\/[^\/\*]/.test(expression) && !/DIVIDE/i.test(expression)) {
+    if (/[^/]\/[^/*]/.test(expression) && !/DIVIDE/i.test(expression)) {
       // Check for actual division (not comments or string)
-      const stripped = expression.replace(/"[^"]*"/g, '').replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
-      if (/[^<>!]=?\s*\// .test(stripped) || /\)\s*\//.test(stripped) || /\]\s*\//.test(stripped)) {
+      const stripped = expression
+        .replace(/"[^"]*"/g, '')
+        .replace(/\/\/.*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+      if (/[^<>!]=?\s*\//.test(stripped) || /\)\s*\//.test(stripped) || /\]\s*\//.test(stripped)) {
         issues.push({
           severity: 'warning',
           rule: 'dax_use_divide_function',
@@ -587,11 +586,7 @@ function validateFormatting(project: PbipProject, issues: TmdlValidationIssue[])
 
     for (const col of table.columns) {
       // F4: Integer column with decimal format
-      if (
-        col.dataType === 'int64' &&
-        col.formatString &&
-        /\.0+/.test(col.formatString)
-      ) {
+      if (col.dataType === 'int64' && col.formatString && /\.0+/.test(col.formatString)) {
         issues.push({
           severity: 'info',
           rule: 'fmt_integer_decimal_format',
@@ -621,7 +616,11 @@ function validateFormatting(project: PbipProject, issues: TmdlValidationIssue[])
   }
 }
 
-function hasAnnotation(node: { annotations?: Array<{ name: string; value: string }> }, name: string, value: string): boolean {
+function hasAnnotation(
+  node: { annotations?: Array<{ name: string; value: string }> },
+  name: string,
+  value: string,
+): boolean {
   return node.annotations?.some((a) => a.name === name && a.value === value) ?? false;
 }
 
@@ -834,8 +833,7 @@ function validateErrorPrevention(project: PbipProject, issues: TmdlValidationIss
   // E3: USERELATIONSHIP referencing active relationship (redundant)
   const exprs = getAllExpressions(project);
   for (const { label, expression } of exprs) {
-    const useRelMatches = expression.matchAll(/\bUSERELATIONSHIP\s*\(/gi);
-    for (const _match of useRelMatches) {
+    if (/\bUSERELATIONSHIP\s*\(/i.test(expression)) {
       issues.push({
         severity: 'info',
         rule: 'err_userelationship_check',
@@ -843,7 +841,6 @@ function validateErrorPrevention(project: PbipProject, issues: TmdlValidationIss
         entity: label,
         category: 'error_prevention',
       });
-      break; // Only one warning per expression
     }
   }
 

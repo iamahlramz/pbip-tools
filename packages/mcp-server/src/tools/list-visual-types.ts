@@ -15,9 +15,7 @@ export function listVisualTypes(visualType?: string, category?: string) {
 
   let filtered = VISUAL_REGISTRY;
   if (category) {
-    filtered = filtered.filter(
-      (v) => v.category.toLowerCase() === category.toLowerCase(),
-    );
+    filtered = filtered.filter((v) => v.category.toLowerCase() === category.toLowerCase());
   }
 
   const categories = [...new Set(VISUAL_REGISTRY.map((v) => v.category))].sort();

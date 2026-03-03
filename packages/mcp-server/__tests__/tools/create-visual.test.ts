@@ -59,8 +59,7 @@ describe('createVisual', () => {
     expect(result.bindingCount).toBe(2);
 
     const visualJson = JSON.parse(await readFile(result.path, 'utf-8'));
-    const select =
-      visualJson.visual.query.Commands[0].SemanticQueryDataShapeCommand.Query.Select;
+    const select = visualJson.visual.query.Commands[0].SemanticQueryDataShapeCommand.Query.Select;
     expect(select).toHaveLength(2);
     expect(select[0].Measure.Property).toBe('Total Sales');
     expect(select[1].Column.Property).toBe('Month');

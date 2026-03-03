@@ -107,9 +107,7 @@ describe('validateTmdl', () => {
       });
 
       const result = validateTmdl(project);
-      const issue = result.issues.find(
-        (i) => i.rule === 'calc_group_missing_discourage_implicit',
-      );
+      const issue = result.issues.find((i) => i.rule === 'calc_group_missing_discourage_implicit');
       expect(issue).toBeDefined();
       expect(issue!.severity).toBe('error');
     });
@@ -342,9 +340,7 @@ describe('validateTmdl', () => {
       });
 
       const result = validateTmdl(project, ['error_prevention']);
-      const issue = result.issues.find(
-        (i) => i.rule === 'err_empty_measure_expression',
-      );
+      const issue = result.issues.find((i) => i.rule === 'err_empty_measure_expression');
       expect(issue).toBeDefined();
       expect(issue!.severity).toBe('error');
     });
@@ -354,9 +350,7 @@ describe('validateTmdl', () => {
       project.model.tables.push({
         kind: 'table',
         name: 'TypeMismatchA',
-        columns: [
-          { kind: 'column', name: 'Key', dataType: 'int64' },
-        ],
+        columns: [{ kind: 'column', name: 'Key', dataType: 'int64' }],
         measures: [],
         hierarchies: [],
         partitions: [],
@@ -364,9 +358,7 @@ describe('validateTmdl', () => {
       project.model.tables.push({
         kind: 'table',
         name: 'TypeMismatchB',
-        columns: [
-          { kind: 'column', name: 'Key', dataType: 'string' },
-        ],
+        columns: [{ kind: 'column', name: 'Key', dataType: 'string' }],
         measures: [],
         hierarchies: [],
         partitions: [],

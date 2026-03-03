@@ -143,10 +143,7 @@ describe('deleteRelationship', () => {
     createRelationship(project, 'FactSales', 'SalesKey', 'DimCustomer', 'CustomerKey');
     const before = project.model.relationships.length;
 
-    const result = deleteRelationship(
-      project,
-      'FactSales.SalesKey -> DimCustomer.CustomerKey',
-    );
+    const result = deleteRelationship(project, 'FactSales.SalesKey -> DimCustomer.CustomerKey');
     expect(result.from).toBe('FactSales.SalesKey');
     expect(result.to).toBe('DimCustomer.CustomerKey');
     expect(project.model.relationships.length).toBe(before - 1);

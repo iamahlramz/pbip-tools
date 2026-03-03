@@ -2,10 +2,7 @@ import type { PbipProject } from '@pbip-tools/core';
 
 export function listInstalledDaxlibs(project: PbipProject) {
   // Group functions by DAXLIB_PackageId annotation
-  const packages = new Map<
-    string,
-    { version: string; functions: string[] }
-  >();
+  const packages = new Map<string, { version: string; functions: string[] }>();
 
   for (const fn of project.model.functions) {
     const pkgAnnotation = fn.annotations?.find((a) => a.name === 'DAXLIB_PackageId');

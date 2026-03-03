@@ -444,10 +444,14 @@ export const CreateSvgMeasureSchema = z.object({
     .string()
     .min(1)
     .max(256)
-    .describe('SVG template ID (e.g. "progress-bar", "kpi-card", "status-icon", "toggle-switch", "button")'),
+    .describe(
+      'SVG template ID (e.g. "progress-bar", "kpi-card", "status-icon", "toggle-switch", "button")',
+    ),
   params: z
     .record(z.unknown())
-    .describe('Template parameters (varies by template — call without params to see required fields)'),
+    .describe(
+      'Template parameters (varies by template — call without params to see required fields)',
+    ),
 });
 
 // --- Visual registry schemas ---
@@ -473,12 +477,20 @@ export const SearchDaxlibsSchema = z.object({
     .max(1024)
     .optional()
     .describe('Search term to match against package names, descriptions, and tags'),
-  tag: z.string().max(256).optional().describe('Filter by tag (e.g. "svg", "time-intelligence", "formatting")'),
+  tag: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Filter by tag (e.g. "svg", "time-intelligence", "formatting")'),
 });
 
 export const InstallDaxlibSchema = z.object({
   projectPath,
-  packageId: z.string().min(1).max(256).describe('DAXLib package ID to install (e.g. "daxlib.svg")'),
+  packageId: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('DAXLib package ID to install (e.g. "daxlib.svg")'),
 });
 
 export const RemoveDaxlibSchema = z.object({
@@ -496,11 +508,7 @@ export const ListWorkspacesSchema = z.object({});
 
 export const DeployToWorkspaceSchema = z.object({
   projectPath,
-  workspaceId: z
-    .string()
-    .min(1)
-    .max(256)
-    .describe('Fabric workspace ID (GUID) to deploy to'),
+  workspaceId: z.string().min(1).max(256).describe('Fabric workspace ID (GUID) to deploy to'),
   itemName: z
     .string()
     .min(1)
@@ -561,23 +569,21 @@ export const CreateRelationshipSchema = z.object({
   fromColumn: z.string().min(1).max(256).describe('Source column name'),
   toTable: tableName.describe('Target (one-side / lookup) table name'),
   toColumn: z.string().min(1).max(256).describe('Target column name'),
-  name: z.string().max(256).optional().describe('Relationship name (auto-generated UUID if omitted)'),
+  name: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Relationship name (auto-generated UUID if omitted)'),
   fromCardinality: z
     .enum(['one', 'many'])
     .optional()
     .describe('Source cardinality (default: many)'),
-  toCardinality: z
-    .enum(['one', 'many'])
-    .optional()
-    .describe('Target cardinality (default: one)'),
+  toCardinality: z.enum(['one', 'many']).optional().describe('Target cardinality (default: one)'),
   crossFilteringBehavior: z
     .enum(['oneDirection', 'bothDirections', 'automatic'])
     .optional()
     .describe('Cross-filter direction (default: oneDirection)'),
-  isActive: z
-    .boolean()
-    .optional()
-    .describe('Whether relationship is active (default: true)'),
+  isActive: z.boolean().optional().describe('Whether relationship is active (default: true)'),
 });
 
 export const DeleteRelationshipSchema = z.object({

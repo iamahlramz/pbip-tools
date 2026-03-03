@@ -72,15 +72,15 @@ describe('createSvgMeasure', () => {
   });
 
   it('should throw for unknown template', () => {
-    expect(() =>
-      createSvgMeasure(project, 'Sales', 'Test', 'nonexistent', {}),
-    ).toThrow("SVG template 'nonexistent' not found");
+    expect(() => createSvgMeasure(project, 'Sales', 'Test', 'nonexistent', {})).toThrow(
+      "SVG template 'nonexistent' not found",
+    );
   });
 
   it('should throw for missing required param', () => {
-    expect(() =>
-      createSvgMeasure(project, 'Sales', 'Test', 'progress-bar', {}),
-    ).toThrow("Required parameter 'valueMeasure' missing");
+    expect(() => createSvgMeasure(project, 'Sales', 'Test', 'progress-bar', {})).toThrow(
+      "Required parameter 'valueMeasure' missing",
+    );
   });
 
   it('should generate valid DAX for all templates', () => {

@@ -16,10 +16,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   // Clean up any created test pages
-  const testPageDir = resolve(
-    FIXTURES,
-    'standard/AdventureWorks.Report/definition/pages/TestPage',
-  );
+  const testPageDir = resolve(FIXTURES, 'standard/AdventureWorks.Report/definition/pages/TestPage');
   try {
     await rm(testPageDir, { recursive: true });
   } catch {

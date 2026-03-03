@@ -17,7 +17,8 @@ export const DAXLIB_CATALOG: DaxLibCatalogEntry[] = [
     packageId: 'daxlib.svg',
     version: '1.0.0',
     author: 'daxlib',
-    description: 'SVG helper functions for building data:image/svg+xml DAX measures. Includes Rect, Circle, Text, Line, Path, and Svg container.',
+    description:
+      'SVG helper functions for building data:image/svg+xml DAX measures. Includes Rect, Circle, Text, Line, Path, and Svg container.',
     tags: ['svg', 'visualization', 'image'],
     functionCount: 7,
     tmdlContent: `\tfunction Svg(Content: string, Width: int64, Height: int64) =
@@ -81,7 +82,8 @@ export const DAXLIB_CATALOG: DaxLibCatalogEntry[] = [
     packageId: 'daxlib.formatstring',
     version: '1.0.0',
     author: 'daxlib',
-    description: 'String formatting helper functions. FormatNumber, FormatPercent, FormatCurrency, PadLeft, PadRight.',
+    description:
+      'String formatting helper functions. FormatNumber, FormatPercent, FormatCurrency, PadLeft, PadRight.',
     tags: ['formatting', 'string', 'utility'],
     functionCount: 5,
     tmdlContent: `\tfunction FormatNumber(Value: double, Decimals: int64) =
@@ -145,7 +147,8 @@ export const DAXLIB_CATALOG: DaxLibCatalogEntry[] = [
     packageId: 'edwardcharles.nativehtml',
     version: '1.0.0',
     author: 'Edward Charles',
-    description: 'Native HTML measure generation for Power BI visuals. HTML formatting helpers for rich text display.',
+    description:
+      'Native HTML measure generation for Power BI visuals. HTML formatting helpers for rich text display.',
     tags: ['html', 'formatting', 'visualization'],
     functionCount: 4,
     tmdlContent: `\tfunction HtmlBold(Content: string) =
@@ -172,7 +175,8 @@ export const DAXLIB_CATALOG: DaxLibCatalogEntry[] = [
     packageId: 'everyday.kpi',
     version: '1.0.0',
     author: 'Everyday BI',
-    description: 'KPI status indicator functions. StatusColor, StatusIcon, TrendArrow, VarianceFormat.',
+    description:
+      'KPI status indicator functions. StatusColor, StatusIcon, TrendArrow, VarianceFormat.',
     tags: ['kpi', 'status', 'indicators'],
     functionCount: 4,
     tmdlContent: `\tfunction StatusColor(Value: double, Target: double) =
@@ -205,7 +209,5 @@ export const DAXLIB_CATALOG: DaxLibCatalogEntry[] = [
 ];
 
 export function findCatalogEntry(packageId: string): DaxLibCatalogEntry | undefined {
-  return DAXLIB_CATALOG.find(
-    (e) => e.packageId.toLowerCase() === packageId.toLowerCase(),
-  );
+  return DAXLIB_CATALOG.find((e) => e.packageId.toLowerCase() === packageId.toLowerCase());
 }

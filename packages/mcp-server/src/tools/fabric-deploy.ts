@@ -71,11 +71,7 @@ function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
   return parts;
 }
 
-export async function fabricDeploy(
-  project: PbipProject,
-  workspaceId: string,
-  itemName?: string,
-) {
+export async function fabricDeploy(project: PbipProject, workspaceId: string, itemName?: string) {
   const config = getFabricConfig();
   const token = await getAccessToken(config);
 
@@ -89,7 +85,9 @@ export async function fabricDeploy(
   );
 
   if (!listResponse.ok) {
-    throw new Error(`Failed to list workspace items: ${listResponse.status} ${listResponse.statusText}`);
+    throw new Error(
+      `Failed to list workspace items: ${listResponse.status} ${listResponse.statusText}`,
+    );
   }
 
   const listData = (await listResponse.json()) as {

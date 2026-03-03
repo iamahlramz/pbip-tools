@@ -34,7 +34,9 @@ async function getAccessToken(config: FabricConfig): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to acquire Fabric access token: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to acquire Fabric access token: ${response.status} ${response.statusText}`,
+    );
   }
 
   const data = (await response.json()) as { access_token: string };
@@ -53,7 +55,9 @@ export async function fabricListWorkspaces() {
     throw new Error(`Failed to list workspaces: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as { value: Array<{ id: string; displayName: string; type: string }> };
+  const data = (await response.json()) as {
+    value: Array<{ id: string; displayName: string; type: string }>;
+  };
 
   return {
     workspaceCount: data.value.length,

@@ -2,142 +2,142 @@
 # Location: libs/pbip-tools/agent-context.yaml
 
 project:
-  name: "PBIP Tools"
-  slug: "pbip-tools"
-  type: "library"
-  status: "active"
-  platform: "ANY"
-  description: "MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 58 tools for semantic model authoring, validation, and deployment"
+  name: 'PBIP Tools'
+  slug: 'pbip-tools'
+  type: 'library'
+  status: 'active'
+  platform: 'ANY'
+  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 58 tools for semantic model authoring, validation, and deployment'
 
 stack:
-  languages: ["TypeScript"]
+  languages: ['TypeScript']
   frontend:
-    framework: ""
-    build_tool: "tsc"
-    styling: ""
-    state_management: ""
-    routing: ""
+    framework: ''
+    build_tool: 'tsc'
+    styling: ''
+    state_management: ''
+    routing: ''
   backend:
-    framework: "MCP SDK (@modelcontextprotocol/sdk)"
-    runtime: "Node.js"
-    api_style: "MCP (Model Context Protocol)"
+    framework: 'MCP SDK (@modelcontextprotocol/sdk)'
+    runtime: 'Node.js'
+    api_style: 'MCP (Model Context Protocol)'
   database:
-    primary: ""
-    orm: ""
-    migrations: ""
-    cache: "in-memory LRU (projectCache)"
+    primary: ''
+    orm: ''
+    migrations: ''
+    cache: 'in-memory LRU (projectCache)'
   auth:
-    provider: ""
+    provider: ''
     methods: []
-    session_type: ""
-  queue: ""
+    session_type: ''
+  queue: ''
   ai:
-    provider: "Anthropic Claude (via MCP)"
-    usage: "AI-assisted Power BI development"
+    provider: 'Anthropic Claude (via MCP)'
+    usage: 'AI-assisted Power BI development'
 
 architecture:
-  pattern: "layered"
+  pattern: 'layered'
   key_patterns:
-    - "Monorepo with Turborepo (7 packages)"
-    - "Parser-Serializer round-trip pattern (TMDL ↔ AST ↔ TMDL)"
-    - "safeTool() wrapper for MCP tool registration"
-    - "getProject()/getProjectForWrite() with LRU caching"
-    - "jsonResponse() for consistent MCP output"
-    - "Zod schemas for tool input validation"
-  adr_location: ""
-  architecture_doc: ""
+    - 'Monorepo with Turborepo (7 packages)'
+    - 'Parser-Serializer round-trip pattern (TMDL ↔ AST ↔ TMDL)'
+    - 'safeTool() wrapper for MCP tool registration'
+    - 'getProject()/getProjectForWrite() with LRU caching'
+    - 'jsonResponse() for consistent MCP output'
+    - 'Zod schemas for tool input validation'
+  adr_location: ''
+  architecture_doc: ''
 
 packages:
   core:
-    path: "packages/core"
-    purpose: "Shared TypeScript types (PbipProject, TableNode, MeasureNode, FunctionNode, etc.)"
-    exports: "Type definitions only — no runtime code"
+    path: 'packages/core'
+    purpose: 'Shared TypeScript types (PbipProject, TableNode, MeasureNode, FunctionNode, etc.)'
+    exports: 'Type definitions only — no runtime code'
   tmdl-parser:
-    path: "packages/tmdl-parser"
-    purpose: "Lexer + recursive-descent parser for TMDL files, plus serializers"
-    exports: "parse*, serialize* functions for database, model, tables, relationships, functions, roles"
+    path: 'packages/tmdl-parser'
+    purpose: 'Lexer + recursive-descent parser for TMDL files, plus serializers'
+    exports: 'parse*, serialize* functions for database, model, tables, relationships, functions, roles'
   visual-handler:
-    path: "packages/visual-handler"
-    purpose: "PBIR visual JSON parsing, binding extraction, and visual updates"
-    exports: "extractBindings, parseVisual, updateVisualBindings"
+    path: 'packages/visual-handler'
+    purpose: 'PBIR visual JSON parsing, binding extraction, and visual updates'
+    exports: 'extractBindings, parseVisual, updateVisualBindings'
   dax-formatter:
-    path: "packages/dax-formatter"
-    purpose: "DAX expression formatter using daxformatter.com API"
-    exports: "formatDax()"
+    path: 'packages/dax-formatter'
+    purpose: 'DAX expression formatter using daxformatter.com API'
+    exports: 'formatDax()'
   project-discovery:
-    path: "packages/project-discovery"
-    purpose: "PBIP file discovery, project loading, config, security filtering, file writing"
-    exports: "discoverProjects, loadProject, writeTableFile, writeModelFile, writeFunctionsFile, writeRoleFile"
+    path: 'packages/project-discovery'
+    purpose: 'PBIP file discovery, project loading, config, security filtering, file writing'
+    exports: 'discoverProjects, loadProject, writeTableFile, writeModelFile, writeFunctionsFile, writeRoleFile'
   mcp-server:
-    path: "packages/mcp-server"
-    purpose: "MCP server with 58 registered tools — the main entry point"
-    exports: "MCP tool handlers, schemas, data catalogs"
+    path: 'packages/mcp-server'
+    purpose: 'MCP server with 58 registered tools — the main entry point'
+    exports: 'MCP tool handlers, schemas, data catalogs'
   rdl-parser:
-    path: "packages/rdl-parser"
-    purpose: "RDL/RDLX (paginated report) XML parser"
-    exports: "parseRdl, getRdlInfo, extractRdlQueries"
+    path: 'packages/rdl-parser'
+    purpose: 'RDL/RDLX (paginated report) XML parser'
+    exports: 'parseRdl, getRdlInfo, extractRdlQueries'
 
 tool_categories:
-  project_discovery: "pbip_get_project_info"
-  semantic_model_read: "pbip_list_tables, pbip_list_measures, pbip_get_measure, pbip_list_relationships, pbip_list_roles, pbip_get_role, pbip_list_display_folders"
-  semantic_model_write: "pbip_create_measure, pbip_update_measure, pbip_delete_measure, pbip_move_measure, pbip_create_calc_group, pbip_add_calc_item, pbip_create_role, pbip_update_role, pbip_delete_role"
-  visual_tools: "pbip_list_visuals, pbip_get_visual_bindings, pbip_update_visual_bindings, pbip_list_visual_types"
-  dax_tools: "pbip_format_dax, pbip_format_measures, pbip_validate_dax, pbip_search_measures"
-  audit_tools: "pbip_audit_dependencies, pbip_audit_bindings, pbip_audit_unused_measures"
-  validation: "pbip_validate_tmdl (40+ BPA rules across 7 categories)"
-  organization: "pbip_organize_folders, pbip_gen_data_dictionary"
-  generators: "pbip_gen_time_intelligence, pbip_gen_kpi_suite, pbip_create_svg_measure"
-  daxlib: "pbip_search_daxlibs, pbip_install_daxlib, pbip_remove_daxlib, pbip_list_installed_daxlibs"
-  fabric_api: "pbip_list_workspaces, pbip_deploy_to_workspace, pbip_trigger_refresh, pbip_get_refresh_status"
-  rdl_tools: "pbip_rdl_get_info, pbip_rdl_get_sections, pbip_rdl_get_parameters, pbip_rdl_extract_queries, pbip_rdl_list_datasets, pbip_rdl_round_trip"
+  project_discovery: 'pbip_get_project_info'
+  semantic_model_read: 'pbip_list_tables, pbip_list_measures, pbip_get_measure, pbip_list_relationships, pbip_list_roles, pbip_get_role, pbip_list_display_folders'
+  semantic_model_write: 'pbip_create_measure, pbip_update_measure, pbip_delete_measure, pbip_move_measure, pbip_create_calc_group, pbip_add_calc_item, pbip_create_role, pbip_update_role, pbip_delete_role'
+  visual_tools: 'pbip_list_visuals, pbip_get_visual_bindings, pbip_update_visual_bindings, pbip_list_visual_types'
+  dax_tools: 'pbip_format_dax, pbip_format_measures, pbip_validate_dax, pbip_search_measures'
+  audit_tools: 'pbip_audit_dependencies, pbip_audit_bindings, pbip_audit_unused_measures'
+  validation: 'pbip_validate_tmdl (40+ BPA rules across 7 categories)'
+  organization: 'pbip_organize_folders, pbip_gen_data_dictionary'
+  generators: 'pbip_gen_time_intelligence, pbip_gen_kpi_suite, pbip_create_svg_measure'
+  daxlib: 'pbip_search_daxlibs, pbip_install_daxlib, pbip_remove_daxlib, pbip_list_installed_daxlibs'
+  fabric_api: 'pbip_list_workspaces, pbip_deploy_to_workspace, pbip_trigger_refresh, pbip_get_refresh_status'
+  rdl_tools: 'pbip_rdl_get_info, pbip_rdl_get_sections, pbip_rdl_get_parameters, pbip_rdl_extract_queries, pbip_rdl_list_datasets, pbip_rdl_round_trip'
 
 security:
-  model: "file-system based (security-filter.ts)"
-  sensitive_data: ["fabric_credentials"]
-  secrets_management: "env_files"
-  auth_boundary: "Fabric API auth via FABRIC_TENANT_ID/CLIENT_ID/CLIENT_SECRET env vars; MCP transport is stdio (trusted local)"
+  model: 'file-system based (security-filter.ts)'
+  sensitive_data: ['fabric_credentials']
+  secrets_management: 'env_files'
+  auth_boundary: 'Fabric API auth via FABRIC_TENANT_ID/CLIENT_ID/CLIENT_SECRET env vars; MCP transport is stdio (trusted local)'
 
 deployment:
-  target: "npm-registry"
+  target: 'npm-registry'
   containerized: false
-  ci_cd: "manual"
+  ci_cd: 'manual'
   ports:
-    api: ""
-    client: ""
+    api: ''
+    client: ''
 
 testing:
-  framework: "Vitest"
-  coverage_target: "80%"
-  test_types: ["unit", "integration"]
-  test_location: "__tests__/"
+  framework: 'Vitest'
+  coverage_target: '80%'
+  test_types: ['unit', 'integration']
+  test_location: '__tests__/'
 
 monetization:
-  model: "free"
+  model: 'free'
   tiers: []
-  payment_provider: ""
+  payment_provider: ''
 
 related_projects: []
 
 custom_context:
   key_concepts:
-    - "PBIP: Power BI Project format — directory-based, version-control-friendly alternative to .pbix"
-    - "TMDL: Tabular Model Definition Language — text format for Power BI semantic models"
-    - "PBIR: Power BI Report format — JSON-based visual definitions in report/ directory"
-    - "BPA: Best Practice Analyzer — 40+ validation rules for model quality (structural, performance, DAX, formatting, maintenance, naming, error prevention)"
-    - "DAXLib: Package manager ecosystem for reusable DAX User-Defined Functions"
-    - "SVG-in-DAX: Pattern for embedding SVG visualizations as DAX measures with dataCategory: ImageUrl"
-    - "Calculation Groups: TMDL tables with calculationGroup property for reusable DAX transformations"
-    - "Lineage Tags: UUIDs tracking entity origin for Power BI service synchronization"
+    - 'PBIP: Power BI Project format — directory-based, version-control-friendly alternative to .pbix'
+    - 'TMDL: Tabular Model Definition Language — text format for Power BI semantic models'
+    - 'PBIR: Power BI Report format — JSON-based visual definitions in report/ directory'
+    - 'BPA: Best Practice Analyzer — 40+ validation rules for model quality (structural, performance, DAX, formatting, maintenance, naming, error prevention)'
+    - 'DAXLib: Package manager ecosystem for reusable DAX User-Defined Functions'
+    - 'SVG-in-DAX: Pattern for embedding SVG visualizations as DAX measures with dataCategory: ImageUrl'
+    - 'Calculation Groups: TMDL tables with calculationGroup property for reusable DAX transformations'
+    - 'Lineage Tags: UUIDs tracking entity origin for Power BI service synchronization'
   critical_rules:
-    - "Always round-trip TMDL through parser → AST → serializer to preserve formatting"
-    - "Never modify TMDL files directly — always go through project-writer functions"
-    - "SVG measures must have annotation dataCategory=ImageUrl to render in Power BI"
-    - "Calculation groups require discourageImplicitMeasures=true in model"
-    - "DAXLib packages are identified by DAXLIB_PackageId/DAXLIB_PackageVersion annotations on functions"
-    - "Use structuredClone() for test isolation when mutating loaded projects"
+    - 'Always round-trip TMDL through parser → AST → serializer to preserve formatting'
+    - 'Never modify TMDL files directly — always go through project-writer functions'
+    - 'SVG measures must have annotation dataCategory=ImageUrl to render in Power BI'
+    - 'Calculation groups require discourageImplicitMeasures=true in model'
+    - 'DAXLib packages are identified by DAXLIB_PackageId/DAXLIB_PackageVersion annotations on functions'
+    - 'Use structuredClone() for test isolation when mutating loaded projects'
   known_pitfalls:
-    - "TMDL parser must handle triple-backtick expressions (```) in function definitions"
-    - "Visual JSON uses camelCase property names but TMDL uses PascalCase"
+    - 'TMDL parser must handle triple-backtick expressions (```) in function definitions'
+    - 'Visual JSON uses camelCase property names but TMDL uses PascalCase'
     - "Fixture project tables: DimCustomer, DimDate, FactSales, Time Comparison, _DisplayMeasures, _Measures (not 'Sales')"
-    - "serializeFunctions() expects FunctionNode[] not the full model — extract project.model.functions first"
-    - "Fabric API requires OAuth2 client_credentials flow — cannot use interactive auth in MCP context"
+    - 'serializeFunctions() expects FunctionNode[] not the full model — extract project.model.functions first'
+    - 'Fabric API requires OAuth2 client_credentials flow — cannot use interactive auth in MCP context'

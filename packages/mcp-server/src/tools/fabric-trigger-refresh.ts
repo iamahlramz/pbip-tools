@@ -18,7 +18,9 @@ export async function fabricTriggerRefresh(workspaceId: string, datasetId: strin
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to trigger refresh: ${response.status} ${response.statusText} — ${errorText}`);
+    throw new Error(
+      `Failed to trigger refresh: ${response.status} ${response.statusText} — ${errorText}`,
+    );
   }
 
   return {

@@ -23,18 +23,14 @@ export const VISUAL_REGISTRY: VisualTypeDefinition[] = [
     displayName: 'Card (Legacy)',
     category: 'Cards',
     description: 'Single value card visual (legacy). Use cardVisual for new reports.',
-    dataRoles: [
-      { name: 'Fields', displayName: 'Fields', kind: 'GroupingOrMeasure', maxCount: 1 },
-    ],
+    dataRoles: [{ name: 'Fields', displayName: 'Fields', kind: 'GroupingOrMeasure', maxCount: 1 }],
   },
   {
     visualType: 'cardVisual',
     displayName: 'Card (New)',
     category: 'Cards',
     description: 'Multi-value card with callout values, labels, and accent bar.',
-    dataRoles: [
-      { name: 'Data', displayName: 'Data', kind: 'GroupingOrMeasure' },
-    ],
+    dataRoles: [{ name: 'Data', displayName: 'Data', kind: 'GroupingOrMeasure' }],
     supportsHighlight: true,
   },
   {
@@ -42,9 +38,7 @@ export const VISUAL_REGISTRY: VisualTypeDefinition[] = [
     displayName: 'Multi-row Card',
     category: 'Cards',
     description: 'Displays multiple data values in card-style rows.',
-    dataRoles: [
-      { name: 'Fields', displayName: 'Fields', kind: 'GroupingOrMeasure' },
-    ],
+    dataRoles: [{ name: 'Fields', displayName: 'Fields', kind: 'GroupingOrMeasure' }],
   },
   // --- Charts ---
   {
@@ -159,9 +153,7 @@ export const VISUAL_REGISTRY: VisualTypeDefinition[] = [
     displayName: 'Table',
     category: 'Tables',
     description: 'Tabular grid with sorting, filtering, and conditional formatting.',
-    dataRoles: [
-      { name: 'Values', displayName: 'Columns', kind: 'GroupingOrMeasure' },
-    ],
+    dataRoles: [{ name: 'Values', displayName: 'Columns', kind: 'GroupingOrMeasure' }],
     supportsHighlight: true,
   },
   {
@@ -182,15 +174,14 @@ export const VISUAL_REGISTRY: VisualTypeDefinition[] = [
     displayName: 'Slicer (Legacy)',
     category: 'Slicers',
     description: 'Filter control (legacy). Use advancedSlicerVisual for new reports.',
-    dataRoles: [
-      { name: 'Values', displayName: 'Field', kind: 'Grouping', maxCount: 1 },
-    ],
+    dataRoles: [{ name: 'Values', displayName: 'Field', kind: 'Grouping', maxCount: 1 }],
   },
   {
     visualType: 'advancedSlicerVisual',
     displayName: 'Slicer (New)',
     category: 'Slicers',
-    description: 'Modern slicer with list, dropdown, tile, and relative date modes. Supports image bindings.',
+    description:
+      'Modern slicer with list, dropdown, tile, and relative date modes. Supports image bindings.',
     dataRoles: [
       { name: 'Values', displayName: 'Field', kind: 'Grouping' },
       { name: 'Image', displayName: 'Image', kind: 'GroupingOrMeasure', maxCount: 1 },
@@ -201,16 +192,15 @@ export const VISUAL_REGISTRY: VisualTypeDefinition[] = [
     displayName: 'List Slicer',
     category: 'Slicers',
     description: 'Horizontal or vertical button slicer.',
-    dataRoles: [
-      { name: 'Values', displayName: 'Field', kind: 'Grouping' },
-    ],
+    dataRoles: [{ name: 'Values', displayName: 'Field', kind: 'Grouping' }],
   },
   // --- Other ---
   {
     visualType: 'image',
     displayName: 'Image',
     category: 'Other',
-    description: 'Displays an image from URL or base64 data. Used for SVG DAX measures with dataCategory=ImageUrl.',
+    description:
+      'Displays an image from URL or base64 data. Used for SVG DAX measures with dataCategory=ImageUrl.',
     dataRoles: [
       { name: 'Values', displayName: 'Image URL', kind: 'GroupingOrMeasure', maxCount: 1 },
     ],
