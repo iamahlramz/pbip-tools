@@ -7,6 +7,8 @@ export {
   writeTableFile,
   deleteTableFile,
   writeModelFile,
+  writeFunctionsFile,
+  writeRelationshipsFile,
   writeRoleFile,
   deleteRoleFile,
 } from './project-writer.js';

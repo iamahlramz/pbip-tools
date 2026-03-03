@@ -14,8 +14,18 @@ beforeAll(async () => {
 });
 
 describe('auditBindings', () => {
+  it('should return summary with counts', async () => {
+    const result = await auditBindings(standardProject);
+    expect(result.summary).toBeDefined();
+    expect(result.summary.totalBindings).toBeGreaterThan(0);
+    expect(result.summary.issueCount).toBe(2);
+    expect(result.summary.validBindings).toBe(result.summary.totalBindings - 2);
+    expect(result.summary.byIssueType).toBeDefined();
+  });
+
   it('should return known issues for the standard fixture (DimDate.Month + _DisplayMeasures.Price Subtitle)', async () => {
-    const issues = await auditBindings(standardProject);
+    const result = await auditBindings(standardProject);
+    const { issues } = result;
 
     // The standard fixture has 2 known mismatches:
     // 1. DimDate.Month column does not exist (model has MonthName/MonthNumber, not Month)
@@ -36,25 +46,46 @@ describe('auditBindings', () => {
   });
 
   it('should detect missing_table when a referenced table is removed from the model', async () => {
-    // Deep clone the project and remove _DisplayMeasures table from the model
     const modified: PbipProject = structuredClone(standardProject);
     modified.model.tables = modified.model.tables.filter((t) => t.name !== '_DisplayMeasures');
 
-    const issues = await auditBindings(modified);
+    const result = await auditBindings(modified);
+    const { issues } = result;
     expect(issues.length).toBeGreaterThan(0);
 
-    // Filter to only _DisplayMeasures issues (there will also be the pre-existing DimDate.Month issue)
     const displayMeasureIssues = issues.filter((i) => i.binding.entity === '_DisplayMeasures');
     expect(displayMeasureIssues.length).toBeGreaterThan(0);
 
-    // All _DisplayMeasures issues should be missing_table since the whole table was removed
     for (const issue of displayMeasureIssues) {
       expect(issue.issue).toBe('missing_table');
       expect(issue.binding.entity).toBe('_DisplayMeasures');
     }
 
-    // visual02 references _DisplayMeasures.Sales Color, visual03 references _DisplayMeasures.Price Subtitle
     const affectedVisuals = [...new Set(displayMeasureIssues.map((i) => i.visual.visualId))].sort();
     expect(affectedVisuals).toEqual(['visual02', 'visual03']);
+  });
+
+  it('should include valid bindings when includeValid is true', async () => {
+    const result = await auditBindings(standardProject, true);
+    expect(result.validBindings).toBeDefined();
+    expect(result.validBindings!.length).toBeGreaterThan(0);
+
+    for (const vb of result.validBindings!) {
+      expect(vb.entity).toBeDefined();
+      expect(vb.property).toBeDefined();
+      expect(vb.fieldType).toBeDefined();
+    }
+  });
+
+  it('should not include valid bindings by default', async () => {
+    const result = await auditBindings(standardProject);
+    expect(result.validBindings).toBeUndefined();
+  });
+
+  it('should have correct byIssueType breakdown', async () => {
+    const result = await auditBindings(standardProject);
+    const { byIssueType } = result.summary;
+    expect(byIssueType.missing_column).toBe(1);
+    expect(byIssueType.missing_measure).toBe(1);
   });
 });

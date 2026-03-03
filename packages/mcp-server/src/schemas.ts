@@ -194,6 +194,12 @@ export const GetVisualBindingsSchema = z.object({
 
 export const AuditBindingsSchema = z.object({
   projectPath,
+  includeValid: z
+    .boolean()
+    .optional()
+    .describe(
+      'When true, return all bindings (valid + issues) for a complete binding inventory. Default false (issues only).',
+    ),
 });
 
 export const UpdateVisualBindingsSchema = z.object({
@@ -406,9 +412,129 @@ export const RdlRoundTripSchema = z.object({
 
 export const ValidateTmdlSchema = z.object({
   projectPath,
+  categories: z
+    .array(
+      z.enum([
+        'structural',
+        'performance',
+        'dax_expressions',
+        'formatting',
+        'maintenance',
+        'naming',
+        'error_prevention',
+      ]),
+    )
+    .optional()
+    .describe('Filter results to specific BPA categories (default: all)'),
+  minSeverity: z
+    .enum(['error', 'warning', 'info'])
+    .optional()
+    .describe('Minimum severity to include (default: all)'),
 });
 
 // --- DAX formatter tool schemas (continued) ---
+
+// --- SVG template tool schemas ---
+
+export const CreateSvgMeasureSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table to add the SVG measure to'),
+  measureName: measureName.describe('Name for the new SVG measure'),
+  templateId: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('SVG template ID (e.g. "progress-bar", "kpi-card", "status-icon", "toggle-switch", "button")'),
+  params: z
+    .record(z.unknown())
+    .describe('Template parameters (varies by template — call without params to see required fields)'),
+});
+
+// --- Visual registry schemas ---
+
+export const ListVisualTypesSchema = z.object({
+  visualType: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Get details for a specific visual type (e.g. "cardVisual", "lineChart")'),
+  category: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Filter by category (e.g. "Charts", "Cards", "Slicers", "Tables")'),
+});
+
+// --- DAXLib package manager schemas ---
+
+export const SearchDaxlibsSchema = z.object({
+  query: z
+    .string()
+    .max(1024)
+    .optional()
+    .describe('Search term to match against package names, descriptions, and tags'),
+  tag: z.string().max(256).optional().describe('Filter by tag (e.g. "svg", "time-intelligence", "formatting")'),
+});
+
+export const InstallDaxlibSchema = z.object({
+  projectPath,
+  packageId: z.string().min(1).max(256).describe('DAXLib package ID to install (e.g. "daxlib.svg")'),
+});
+
+export const RemoveDaxlibSchema = z.object({
+  projectPath,
+  packageId: z.string().min(1).max(256).describe('DAXLib package ID to remove'),
+});
+
+export const ListInstalledDaxlibsSchema = z.object({
+  projectPath,
+});
+
+// --- Fabric API tool schemas ---
+
+export const ListWorkspacesSchema = z.object({});
+
+export const DeployToWorkspaceSchema = z.object({
+  projectPath,
+  workspaceId: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('Fabric workspace ID (GUID) to deploy to'),
+  itemName: z
+    .string()
+    .min(1)
+    .max(256)
+    .optional()
+    .describe('Name for the deployed item (default: project name)'),
+});
+
+export const TriggerRefreshSchema = z.object({
+  workspaceId: z.string().min(1).max(256).describe('Fabric workspace ID'),
+  datasetId: z.string().min(1).max(256).describe('Dataset/Semantic model ID'),
+});
+
+export const GetRefreshStatusSchema = z.object({
+  workspaceId: z.string().min(1).max(256).describe('Fabric workspace ID'),
+  datasetId: z.string().min(1).max(256).describe('Dataset/Semantic model ID'),
+  top: z.number().optional().default(5).describe('Number of recent refresh entries to return'),
+});
+
+// --- Dependency graph enhancement schema ---
+
+export const AuditDependenciesEnhancedSchema = z.object({
+  projectPath,
+  measureName: measureName
+    .optional()
+    .describe(
+      'If provided, returns dependency tree for this measure only; otherwise returns full graph',
+    ),
+  outputFormat: z
+    .enum(['json', 'dot', 'adjacency'])
+    .optional()
+    .default('json')
+    .describe('Output format: json (default), dot (Graphviz DOT), adjacency (adjacency list)'),
+});
 
 export const FormatMeasuresSchema = z.object({
   projectPath,
@@ -425,4 +551,42 @@ export const FormatMeasuresSchema = z.object({
     .optional()
     .default(false)
     .describe('If true, returns formatted results without writing to disk'),
+});
+
+// --- Relationship write schemas ---
+
+export const CreateRelationshipSchema = z.object({
+  projectPath,
+  fromTable: tableName.describe('Source (many-side) table name'),
+  fromColumn: z.string().min(1).max(256).describe('Source column name'),
+  toTable: tableName.describe('Target (one-side / lookup) table name'),
+  toColumn: z.string().min(1).max(256).describe('Target column name'),
+  name: z.string().max(256).optional().describe('Relationship name (auto-generated UUID if omitted)'),
+  fromCardinality: z
+    .enum(['one', 'many'])
+    .optional()
+    .describe('Source cardinality (default: many)'),
+  toCardinality: z
+    .enum(['one', 'many'])
+    .optional()
+    .describe('Target cardinality (default: one)'),
+  crossFilteringBehavior: z
+    .enum(['oneDirection', 'bothDirections', 'automatic'])
+    .optional()
+    .describe('Cross-filter direction (default: oneDirection)'),
+  isActive: z
+    .boolean()
+    .optional()
+    .describe('Whether relationship is active (default: true)'),
+});
+
+export const DeleteRelationshipSchema = z.object({
+  projectPath,
+  relationshipName: z
+    .string()
+    .min(1)
+    .max(512)
+    .describe(
+      "Relationship name (UUID) or endpoint descriptor like 'FactSales.DateKey -> DimDate.DateKey'",
+    ),
 });

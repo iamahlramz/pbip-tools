@@ -16,10 +16,13 @@ export interface DependencyTreeResult {
   circularRefs: string[];
 }
 
+export type OutputFormat = 'json' | 'dot' | 'adjacency';
+
 export function auditDependencies(
   project: PbipProject,
   measureName?: string,
-): MeasureDependency[] | DependencyTreeResult {
+  outputFormat: OutputFormat = 'json',
+): MeasureDependency[] | DependencyTreeResult | string {
   // Build a map of all measures with their expressions
   const measureMap = new Map<string, { table: string; expression: string }>();
   for (const table of project.model.tables) {
@@ -55,7 +58,7 @@ export function auditDependencies(
     const circularRefs = findCircularRefs(measureName, dependsOn);
     const depth = calculateDepth(measureName, dependsOn, new Set());
 
-    return {
+    const treeResult: DependencyTreeResult = {
       measure: measureName,
       table: entry.table,
       dependsOn: deps,
@@ -63,6 +66,13 @@ export function auditDependencies(
       depth,
       circularRefs,
     };
+
+    if (outputFormat === 'json') return treeResult;
+    // For tree result, still return JSON for dot/adjacency since it's a single node
+    if (outputFormat === 'dot') {
+      return treeResultToDot(treeResult);
+    }
+    return treeResultToAdjacency(treeResult);
   }
 
   // Return full graph
@@ -76,7 +86,99 @@ export function auditDependencies(
     });
   }
 
+  if (outputFormat === 'dot') {
+    return toDot(result);
+  }
+  if (outputFormat === 'adjacency') {
+    return toAdjacencyList(result);
+  }
   return result;
+}
+
+function treeResultToDot(result: DependencyTreeResult): string {
+  const lines: string[] = ['digraph dependencies {', '  rankdir=LR;', '  node [shape=box];'];
+
+  const escape = (s: string) => s.replace(/"/g, '\\"');
+
+  // Highlight the target node
+  lines.push(`  "${escape(result.measure)}" [style=filled, fillcolor="#4F46E5", fontcolor=white];`);
+
+  // Dependencies (upstream)
+  for (const dep of result.dependsOn) {
+    lines.push(`  "${escape(dep)}" -> "${escape(result.measure)}";`);
+  }
+
+  // Consumers (downstream)
+  for (const consumer of result.usedBy) {
+    lines.push(`  "${escape(result.measure)}" -> "${escape(consumer)}";`);
+  }
+
+  // Circular refs
+  for (const circ of result.circularRefs) {
+    lines.push(`  "${escape(circ)}" [style=filled, fillcolor="#EF4444", fontcolor=white];`);
+  }
+
+  lines.push('}');
+  return lines.join('\n');
+}
+
+function treeResultToAdjacency(result: DependencyTreeResult): string {
+  const lines: string[] = [];
+  lines.push(`${result.measure} -> ${result.dependsOn.join(', ') || '(none)'}`);
+  for (const consumer of result.usedBy) {
+    lines.push(`${consumer} -> ${result.measure}`);
+  }
+  return lines.join('\n');
+}
+
+function toDot(dependencies: MeasureDependency[]): string {
+  const lines: string[] = ['digraph dependencies {', '  rankdir=LR;', '  node [shape=box];'];
+
+  const escape = (s: string) => s.replace(/"/g, '\\"');
+
+  // Group by table using subgraphs
+  const tableGroups = new Map<string, string[]>();
+  for (const dep of dependencies) {
+    if (!tableGroups.has(dep.table)) tableGroups.set(dep.table, []);
+    tableGroups.get(dep.table)!.push(dep.name);
+  }
+
+  let clusterIdx = 0;
+  for (const [table, measures] of tableGroups) {
+    lines.push(`  subgraph cluster_${clusterIdx++} {`);
+    lines.push(`    label="${escape(table)}";`);
+    lines.push('    style=dashed;');
+    for (const m of measures) {
+      lines.push(`    "${escape(m)}";`);
+    }
+    lines.push('  }');
+  }
+
+  // Add edges
+  for (const dep of dependencies) {
+    for (const target of dep.dependsOn) {
+      lines.push(`  "${escape(dep.name)}" -> "${escape(target)}";`);
+    }
+  }
+
+  lines.push('}');
+  return lines.join('\n');
+}
+
+function toAdjacencyList(dependencies: MeasureDependency[]): string {
+  const lines: string[] = [];
+  for (const dep of dependencies) {
+    if (dep.dependsOn.length > 0) {
+      lines.push(`${dep.name} -> ${dep.dependsOn.join(', ')}`);
+    }
+  }
+  // Add isolated nodes
+  for (const dep of dependencies) {
+    if (dep.dependsOn.length === 0 && dep.usedBy.length === 0) {
+      lines.push(`${dep.name} (isolated)`);
+    }
+  }
+  return lines.join('\n');
 }
 
 function extractMeasureReferences(expression: string): string[] {

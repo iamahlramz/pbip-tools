@@ -5,6 +5,8 @@ import type { PbipProject } from '@pbip-tools/core';
 import {
   writeTableFile,
   writeModelFile,
+  writeFunctionsFile,
+  writeRelationshipsFile,
   writeRoleFile,
   deleteRoleFile,
 } from '@pbip-tools/project-discovery';
@@ -58,9 +60,26 @@ import {
   GenKpiSuiteSchema,
   GenTimeIntelligenceSchema,
   AuditUnusedMeasuresSchema,
-  AuditDependenciesSchema,
+  AuditDependenciesEnhancedSchema,
   GenDataDictionarySchema,
   OrganizeFoldersSchema,
+  // SVG template schemas
+  CreateSvgMeasureSchema,
+  // Visual registry schemas
+  ListVisualTypesSchema,
+  // DAXLib schemas
+  SearchDaxlibsSchema,
+  InstallDaxlibSchema,
+  RemoveDaxlibSchema,
+  ListInstalledDaxlibsSchema,
+  // Fabric API schemas
+  ListWorkspacesSchema,
+  DeployToWorkspaceSchema,
+  TriggerRefreshSchema,
+  GetRefreshStatusSchema,
+  // Relationship write schemas
+  CreateRelationshipSchema,
+  DeleteRelationshipSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -125,6 +144,28 @@ import { auditDependencies } from './audit-dependencies.js';
 import { genDataDictionary } from './gen-data-dictionary.js';
 import { organizeFolders } from './organize-folders.js';
 
+// SVG template tool implementations
+import { createSvgMeasure } from './create-svg-measure.js';
+import { listSvgTemplates } from '../data/svg-templates.js';
+
+// Visual registry tool implementations
+import { listVisualTypes } from './list-visual-types.js';
+
+// DAXLib tool implementations
+import { searchDaxlibs } from './daxlib-search.js';
+import { installDaxlib } from './daxlib-install.js';
+import { removeDaxlib } from './daxlib-remove.js';
+import { listInstalledDaxlibs } from './daxlib-list-installed.js';
+
+// Relationship write tool implementations
+import { createRelationship, deleteRelationship } from './create-relationship.js';
+
+// Fabric API tool implementations
+import { fabricListWorkspaces } from './fabric-list-workspaces.js';
+import { fabricDeploy } from './fabric-deploy.js';
+import { fabricTriggerRefresh } from './fabric-trigger-refresh.js';
+import { fabricGetRefreshStatus } from './fabric-get-refresh-status.js';
+
 type ToolResponse = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
 function jsonResponse(data: unknown): ToolResponse {
@@ -178,7 +219,7 @@ export function registerTools(
   invalidateCache: (path: string) => void,
 ) {
   // =============================================
-  // READ-ONLY TOOLS (7)
+  // READ-ONLY TOOLS (9)
   // =============================================
 
   server.tool(
@@ -228,6 +269,38 @@ export function registerTools(
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
       return jsonResponse(listRelationships(project, args.tableName));
+    }),
+  );
+
+  server.tool(
+    'pbip_create_relationship',
+    'Create a relationship between two tables (e.g. FactSales.DateKey -> DimDate.DateKey)',
+    CreateRelationshipSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = createRelationship(project, args.fromTable, args.fromColumn, args.toTable, args.toColumn, {
+        name: args.name,
+        fromCardinality: args.fromCardinality,
+        toCardinality: args.toCardinality,
+        crossFilteringBehavior: args.crossFilteringBehavior,
+        isActive: args.isActive,
+      });
+      await writeRelationshipsFile(project, project.model.relationships);
+      invalidateCache(project.pbipPath);
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_relationship',
+    'Delete a relationship by name (UUID) or endpoint descriptor (e.g. FactSales.DateKey -> DimDate.DateKey)',
+    DeleteRelationshipSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteRelationship(project, args.relationshipName);
+      await writeRelationshipsFile(project, project.model.relationships);
+      invalidateCache(project.pbipPath);
+      return jsonResponse(result);
     }),
   );
 
@@ -359,13 +432,11 @@ export function registerTools(
       const project = await getProjectForWrite(args.projectPath);
       const result = moveMeasure(project, args.measureName, args.targetTable);
 
-      // Write both source and target tables
       const sourceTable = findTable(project, result.sourceTable);
       const targetTable = findTable(project, result.targetTable);
       await writeTableFile(project, sourceTable);
       await writeTableFile(project, targetTable);
 
-      // Update visual bindings if requested
       let bindingsResult = { filesModified: 0, totalUpdates: 0 };
       if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
         bindingsResult = await updateVisualBindings(project, result.bindingOps);
@@ -400,7 +471,6 @@ export function registerTools(
 
       await writeTableFile(project, result.table);
 
-      // Write model.tmdl if discourageImplicitMeasures or ref table was added
       if (result.modelUpdated) {
         await writeModelFile(project, project.model.model);
       }
@@ -509,20 +579,21 @@ export function registerTools(
 
   server.tool(
     'pbip_audit_bindings',
-    'Audit all visual bindings to find references to missing tables, measures, or columns',
+    'Audit all visual bindings to find references to missing tables, measures, or columns. Optionally include valid bindings for a complete inventory.',
     AuditBindingsSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      const issues = await auditBindings(project);
+      const result = await auditBindings(project, args.includeValid);
       return jsonResponse({
-        issueCount: issues.length,
-        issues: issues.map((i) => ({
+        summary: result.summary,
+        issues: result.issues.map((i) => ({
           visual: i.visual,
           entity: i.binding.entity,
           property: i.binding.property,
           fieldType: i.binding.fieldType,
           issue: i.issue,
         })),
+        ...(result.validBindings ? { validBindings: result.validBindings } : {}),
       });
     }),
   );
@@ -837,11 +908,14 @@ export function registerTools(
 
   server.tool(
     'pbip_audit_dependencies',
-    'Build measure-to-measure dependency graph by parsing [MeasureName] references in DAX expressions',
-    AuditDependenciesSchema.shape,
+    'Build measure dependency graph with optional DOT (Graphviz) or adjacency list output',
+    AuditDependenciesEnhancedSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      const result = auditDependencies(project, args.measureName);
+      const result = auditDependencies(project, args.measureName, args.outputFormat);
+      if (typeof result === 'string') {
+        return { content: [{ type: 'text' as const, text: result }] };
+      }
       return jsonResponse(result);
     }),
   );
@@ -898,12 +972,163 @@ export function registerTools(
 
   server.tool(
     'pbip_validate_tmdl',
-    'Validate TMDL semantic model for structural integrity: missing calc group prerequisites, orphaned table refs, broken relationships, duplicate lineageTags',
+    'Validate TMDL semantic model with 40+ Best Practice Analyzer rules across 7 categories: structural, performance, dax_expressions, formatting, maintenance, naming, error_prevention',
     ValidateTmdlSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      const result = validateTmdl(project);
+      const result = validateTmdl(project, args.categories, args.minSeverity);
       return jsonResponse(result);
+    }),
+  );
+
+  // =============================================
+  // SVG TEMPLATE TOOLS (1)
+  // =============================================
+
+  server.tool(
+    'pbip_create_svg_measure',
+    'Create a DAX measure that generates SVG visuals from built-in templates (progress-bar, kpi-card, status-icon, toggle-switch, button)',
+    CreateSvgMeasureSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = createSvgMeasure(
+        project,
+        args.tableName,
+        args.measureName,
+        args.templateId,
+        args.params,
+      );
+
+      const table = findTable(project, result.table);
+      await writeTableFile(project, table);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        measure: result.measure.name,
+        templateId: result.templateId,
+        templateName: result.templateName,
+        availableTemplates: listSvgTemplates().map((t) => ({
+          id: t.id,
+          name: t.displayName,
+        })),
+      });
+    }),
+  );
+
+  // =============================================
+  // VISUAL REGISTRY TOOLS (1)
+  // =============================================
+
+  server.tool(
+    'pbip_list_visual_types',
+    'List Power BI visual types with data role definitions — use to understand valid bindings for each visual type',
+    ListVisualTypesSchema.shape,
+    safeTool(async (args) => {
+      return jsonResponse(listVisualTypes(args.visualType, args.category));
+    }),
+  );
+
+  // =============================================
+  // DAXLIB PACKAGE MANAGER TOOLS (4)
+  // =============================================
+
+  server.tool(
+    'pbip_search_daxlibs',
+    'Search the DAXLib package catalog for reusable DAX function libraries (SVG, time intelligence, formatting, etc.)',
+    SearchDaxlibsSchema.shape,
+    safeTool(async (args) => {
+      return jsonResponse(searchDaxlibs(args.query, args.tag));
+    }),
+  );
+
+  server.tool(
+    'pbip_install_daxlib',
+    'Install a DAXLib package into the project — adds DAX UDF functions to functions.tmdl with package tracking annotations',
+    InstallDaxlibSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = installDaxlib(project, args.packageId);
+
+      await writeFunctionsFile(project, project.model.functions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        ...result,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_remove_daxlib',
+    'Remove a DAXLib package from the project — removes its DAX UDF functions from functions.tmdl',
+    RemoveDaxlibSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = removeDaxlib(project, args.packageId);
+
+      await writeFunctionsFile(project, project.model.functions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        ...result,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_list_installed_daxlibs',
+    'List all DAXLib packages currently installed in the project',
+    ListInstalledDaxlibsSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      return jsonResponse(listInstalledDaxlibs(project));
+    }),
+  );
+
+  // =============================================
+  // FABRIC API TOOLS (4)
+  // =============================================
+
+  server.tool(
+    'pbip_list_workspaces',
+    'List Microsoft Fabric workspaces accessible with configured credentials (requires FABRIC_TENANT_ID, FABRIC_CLIENT_ID, FABRIC_CLIENT_SECRET env vars)',
+    ListWorkspacesSchema.shape,
+    safeTool(async () => {
+      return jsonResponse(await fabricListWorkspaces());
+    }),
+  );
+
+  server.tool(
+    'pbip_deploy_to_workspace',
+    'Deploy a PBIP semantic model to a Microsoft Fabric workspace (requires Fabric env vars)',
+    DeployToWorkspaceSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      return jsonResponse(await fabricDeploy(project, args.workspaceId, args.itemName));
+    }),
+  );
+
+  server.tool(
+    'pbip_trigger_refresh',
+    'Trigger a dataset refresh in Microsoft Fabric (requires Fabric env vars)',
+    TriggerRefreshSchema.shape,
+    safeTool(async (args) => {
+      return jsonResponse(await fabricTriggerRefresh(args.workspaceId, args.datasetId));
+    }),
+  );
+
+  server.tool(
+    'pbip_get_refresh_status',
+    'Get recent dataset refresh history from Microsoft Fabric (requires Fabric env vars)',
+    GetRefreshStatusSchema.shape,
+    safeTool(async (args) => {
+      return jsonResponse(
+        await fabricGetRefreshStatus(args.workspaceId, args.datasetId, args.top),
+      );
     }),
   );
 }

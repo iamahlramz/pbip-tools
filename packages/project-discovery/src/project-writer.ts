@@ -1,8 +1,21 @@
 import { writeFile, unlink, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { PbipProject, TableNode, RoleNode, ModelNode } from '@pbip-tools/core';
+import type {
+  PbipProject,
+  TableNode,
+  RoleNode,
+  ModelNode,
+  FunctionNode,
+  RelationshipNode,
+} from '@pbip-tools/core';
 import { TMDL_FILES } from '@pbip-tools/core';
-import { serializeTable, serializeRole, serializeModel } from '@pbip-tools/tmdl-parser';
+import {
+  serializeTable,
+  serializeRole,
+  serializeModel,
+  serializeFunctions,
+  serializeRelationships,
+} from '@pbip-tools/tmdl-parser';
 
 const UNSAFE_NAME_PATTERN = /[/\\]/;
 
@@ -56,6 +69,30 @@ export async function writeRoleFile(project: PbipProject, role: RoleNode): Promi
   await mkdir(rolesDir, { recursive: true });
   const filePath = join(rolesDir, `${role.name}.tmdl`);
   const content = serializeRole(role);
+  await writeFile(filePath, content, 'utf-8');
+}
+
+/**
+ * Write the functions TMDL to disk. Overwrites existing functions.tmdl.
+ */
+export async function writeFunctionsFile(
+  project: PbipProject,
+  functions: FunctionNode[],
+): Promise<void> {
+  const filePath = join(project.semanticModelPath, 'definition', TMDL_FILES.FUNCTIONS);
+  const content = serializeFunctions(functions);
+  await writeFile(filePath, content, 'utf-8');
+}
+
+/**
+ * Write the relationships TMDL to disk. Overwrites existing relationships.tmdl.
+ */
+export async function writeRelationshipsFile(
+  project: PbipProject,
+  relationships: RelationshipNode[],
+): Promise<void> {
+  const filePath = join(project.semanticModelPath, 'definition', TMDL_FILES.RELATIONSHIPS);
+  const content = serializeRelationships(relationships);
   await writeFile(filePath, content, 'utf-8');
 }
 
