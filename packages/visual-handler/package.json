@@ -1,6 +1,6 @@
 {
   "name": "@pbip-tools/visual-handler",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Visual.json handler for Power BI PBIP reports — binding extraction, updating, and auditing",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@pbip-tools/core": "0.2.0"
+    "@pbip-tools/core": "0.3.0"
   },
   "devDependencies": {
     "vitest": "^3.0.0"
