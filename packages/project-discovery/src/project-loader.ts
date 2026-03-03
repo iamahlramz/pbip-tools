@@ -3,10 +3,13 @@ import { join, dirname, resolve, basename } from 'node:path';
 import type {
   PbipProject,
   PbipFileContent,
+  PbirDefinition,
+  PbirDatasetReference,
   SemanticModel,
   TableNode,
   RelationshipNode,
   ExpressionNode,
+  FunctionNode,
   CultureNode,
   RoleNode,
   DatabaseNode,
@@ -49,6 +52,7 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
   // Parse optional files
   const relationships = await parseRelationshipsFile(join(definitionDir, TMDL_FILES.RELATIONSHIPS));
   const expressions = await parseExpressionsFile(join(definitionDir, TMDL_FILES.EXPRESSIONS));
+  const functions = await parseFunctionsFile(join(definitionDir, TMDL_FILES.FUNCTIONS));
 
   // Parse directory-based TMDL files
   const tables = await parseTmdlDir<TableNode>(
@@ -73,6 +77,7 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
     tables,
     relationships,
     expressions,
+    functions,
     cultures,
     roles,
   };
@@ -86,6 +91,17 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
 
   if (reportPath) {
     project.reportPath = reportPath;
+
+    // Try to parse definition.pbir for the dataset reference chain
+    const pbirRef = await parsePbirDefinition(reportPath);
+    if (pbirRef) {
+      project.pbirReference = pbirRef;
+
+      // If no semantic model was found in .pbip artifacts, resolve from byPath
+      if (!semanticModelDir && pbirRef.byPath?.path) {
+        semanticModelDir = resolve(reportPath, pbirRef.byPath.path);
+      }
+    }
   }
 
   return project;
@@ -137,6 +153,20 @@ async function parseExpressionsFile(filePath: string): Promise<ExpressionNode[]>
   return result.nodes;
 }
 
+async function parseFunctionsFile(filePath: string): Promise<FunctionNode[]> {
+  try {
+    await stat(filePath);
+  } catch {
+    return [];
+  }
+  const text = await readFile(filePath, 'utf-8');
+  const result = parseTmdl(text, 'function', filePath);
+  if (result.type !== 'function') {
+    throw new Error(`Expected function parse result from ${filePath}`);
+  }
+  return result.nodes;
+}
+
 async function parseTmdlDir<T>(
   dir: string,
   dirPrefix: string,
@@ -163,4 +193,23 @@ async function parseTmdlDir<T>(
   }
 
   return nodes;
+}
+
+async function parsePbirDefinition(reportPath: string): Promise<PbirDatasetReference | undefined> {
+  const pbirPath = join(reportPath, 'definition.pbir');
+  try {
+    await stat(pbirPath);
+  } catch {
+    return undefined;
+  }
+  try {
+    const raw = await readFile(pbirPath, 'utf-8');
+    const content: PbirDefinition = JSON.parse(raw);
+    if (content.datasetReference) {
+      return content.datasetReference;
+    }
+  } catch {
+    // Malformed definition.pbir — skip silently
+  }
+  return undefined;
 }

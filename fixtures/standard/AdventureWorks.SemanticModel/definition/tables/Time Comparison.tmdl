@@ -35,11 +35,19 @@ table 'Time Comparison'
 					SELECTEDMEASUREFORMATSTRING()
 				)
 
-	column 'Time Calculation'
+	column 'Time Comparison'
 		dataType: string
 		lineageTag: 60000000-0000-0000-0000-000000000002
 		summarizeBy: none
-		isHidden
 		sourceColumn: Name
+		sortByColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ordinal
+		dataType: int64
+		lineageTag: 60000000-0000-0000-0000-000000000003
+		isHidden
+		sourceColumn: Ordinal
 
 		annotation SummarizationSetBy = Automatic

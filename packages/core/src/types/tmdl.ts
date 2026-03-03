@@ -289,6 +289,23 @@ export interface RoleMemberNode extends TmdlNode {
   identityProvider?: string;
 }
 
+// --- Function (DAX UDF) ---
+
+export interface FunctionParameter {
+  name: string;
+  dataType: string;
+}
+
+export interface FunctionNode extends TmdlNode {
+  kind: 'function';
+  name: string;
+  expression: string;
+  parameters?: FunctionParameter[];
+  lineageTag?: string;
+  annotations?: AnnotationNode[];
+  properties?: PropertyNode[];
+}
+
 // --- Unknown (forward compatibility) ---
 
 export interface UnknownNode extends TmdlNode {
@@ -305,6 +322,7 @@ export interface SemanticModel {
   tables: TableNode[];
   relationships: RelationshipNode[];
   expressions: ExpressionNode[];
+  functions: FunctionNode[];
   cultures: CultureNode[];
   roles: RoleNode[];
 }

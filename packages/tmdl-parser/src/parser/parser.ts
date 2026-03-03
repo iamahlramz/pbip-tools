@@ -4,6 +4,7 @@ import type {
   TableNode,
   RelationshipNode,
   ExpressionNode,
+  FunctionNode,
   CultureNode,
   RoleNode,
   TmdlFileType,
@@ -14,6 +15,7 @@ import { parseModel } from './model-parser.js';
 import { parseTable } from './table-parser.js';
 import { parseRelationships } from './relationship-parser.js';
 import { parseExpressions } from './expression-parser.js';
+import { parseFunctions } from './function-parser.js';
 import { parseCulture } from './culture-parser.js';
 import { parseRole } from './role-parser.js';
 import type { ParseWarning } from '../errors.js';
@@ -24,6 +26,7 @@ export type ParseResult =
   | { type: 'table'; node: TableNode; warnings: ParseWarning[] }
   | { type: 'relationship'; nodes: RelationshipNode[]; warnings: ParseWarning[] }
   | { type: 'expression'; nodes: ExpressionNode[]; warnings: ParseWarning[] }
+  | { type: 'function'; nodes: FunctionNode[]; warnings: ParseWarning[] }
   | { type: 'culture'; node: CultureNode; warnings: ParseWarning[] }
   | { type: 'role'; node: RoleNode; warnings: ParseWarning[] };
 
@@ -42,6 +45,8 @@ export function parseTmdl(text: string, fileType: TmdlFileType, file?: string): 
       return { type: 'relationship', nodes: parseRelationships(tokens, warnings, file), warnings };
     case 'expression':
       return { type: 'expression', nodes: parseExpressions(tokens, warnings), warnings };
+    case 'function':
+      return { type: 'function', nodes: parseFunctions(tokens, warnings), warnings };
     case 'culture':
       return { type: 'culture', node: parseCulture(tokens, warnings, file), warnings };
     case 'role':
@@ -55,6 +60,7 @@ export function detectFileType(filename: string): TmdlFileType | null {
   if (lower === 'model.tmdl') return 'model';
   if (lower === 'relationships.tmdl') return 'relationship';
   if (lower === 'expressions.tmdl') return 'expression';
+  if (lower === 'functions.tmdl') return 'function';
   if (lower.startsWith('cultures/') || lower.startsWith('cultures\\')) return 'culture';
   if (lower.startsWith('tables/') || lower.startsWith('tables\\')) return 'table';
   if (lower.startsWith('roles/') || lower.startsWith('roles\\')) return 'role';

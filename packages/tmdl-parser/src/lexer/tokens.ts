@@ -21,6 +21,8 @@ export enum TokenType {
   ROLE = 'ROLE',
   TABLE_PERMISSION = 'TABLE_PERMISSION',
   MEMBER = 'MEMBER',
+  FUNCTION = 'FUNCTION',
+  CREATE_OR_REPLACE = 'CREATE_OR_REPLACE',
 
   // Property keywords
   PROPERTY = 'PROPERTY',
@@ -68,6 +70,8 @@ export const STRUCTURAL_KEYWORDS: Record<string, TokenType> = {
   role: TokenType.ROLE,
   tablePermission: TokenType.TABLE_PERMISSION,
   member: TokenType.MEMBER,
+  function: TokenType.FUNCTION,
+  createOrReplace: TokenType.CREATE_OR_REPLACE,
 };
 
 export const BOOLEAN_FLAGS = new Set([

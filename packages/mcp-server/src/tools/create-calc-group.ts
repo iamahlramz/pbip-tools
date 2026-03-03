@@ -11,7 +11,7 @@ export function createCalcGroup(
     formatStringExpression?: string;
   }[],
   precedence?: number,
-): { table: TableNode } {
+): { table: TableNode; modelUpdated: boolean } {
   const existing = project.model.tables.find((t) => t.name === tableName);
   if (existing) {
     throw new Error(`Table '${tableName}' already exists`);
@@ -29,7 +29,24 @@ export function createCalcGroup(
     kind: 'table',
     name: tableName,
     lineageTag: randomUUID(),
-    columns: [],
+    columns: [
+      {
+        kind: 'column',
+        name: tableName,
+        dataType: 'string',
+        sourceColumn: 'Name',
+        sortByColumn: 'Ordinal',
+        lineageTag: randomUUID(),
+      },
+      {
+        kind: 'column',
+        name: 'Ordinal',
+        dataType: 'int64',
+        isHidden: true,
+        sourceColumn: 'Ordinal',
+        lineageTag: randomUUID(),
+      },
+    ],
     measures: [],
     hierarchies: [],
     partitions: [],
@@ -42,5 +59,25 @@ export function createCalcGroup(
 
   project.model.tables.push(table);
 
-  return { table };
+  // Ensure discourageImplicitMeasures is set on the model (required for calc groups)
+  let modelUpdated = false;
+  if (!project.model.model.discourageImplicitMeasures) {
+    project.model.model.discourageImplicitMeasures = true;
+    modelUpdated = true;
+  }
+
+  // Add ref table entry to model if not already present
+  if (!project.model.model.tableRefs) {
+    project.model.model.tableRefs = [];
+  }
+  const hasRef = project.model.model.tableRefs.some((r) => r.name === tableName);
+  if (!hasRef) {
+    project.model.model.tableRefs.push({
+      kind: 'tableRef',
+      name: tableName,
+    });
+    modelUpdated = true;
+  }
+
+  return { table, modelUpdated };
 }

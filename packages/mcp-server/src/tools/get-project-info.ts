@@ -24,7 +24,10 @@ export function getProjectInfo(project: PbipProject) {
       columns: totalColumns,
       relationships: model.relationships.length,
       expressions: model.expressions.length,
+      functions: model.functions.length,
       cultures: model.cultures.length,
+      roles: model.roles.length,
     },
+    pbirReference: project.pbirReference ?? null,
   };
 }

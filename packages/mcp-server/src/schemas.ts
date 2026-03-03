@@ -63,6 +63,15 @@ export const ListDisplayFoldersSchema = z.object({
   tableName: tableName.optional().describe('Filter folders by table name'),
 });
 
+export const ListFunctionsSchema = z.object({
+  projectPath,
+});
+
+export const GetFunctionSchema = z.object({
+  projectPath,
+  functionName: z.string().min(1).max(512).describe('Name of the DAX UDF to retrieve'),
+});
+
 // --- Measure write tool schemas ---
 
 export const CreateMeasureSchema = z.object({
@@ -135,6 +144,39 @@ export const AddCalcItemSchema = z.object({
     .max(100000)
     .optional()
     .describe('DAX format string expression'),
+});
+
+// --- Report/visual management schemas ---
+
+export const CreatePageSchema = z.object({
+  projectPath,
+  pageId: z.string().min(1).max(256).describe('Unique page identifier (e.g. "ReportSection3")'),
+  displayName: z.string().max(256).optional().describe('Human-readable page name'),
+  width: z.number().optional().describe('Page width in pixels (default: 1280)'),
+  height: z.number().optional().describe('Page height in pixels (default: 720)'),
+});
+
+export const CreateVisualSchema = z.object({
+  projectPath,
+  pageId: z.string().min(1).max(256).describe('Page ID where the visual will be created'),
+  visualId: z.string().min(1).max(256).describe('Unique visual ID (e.g. "visual05")'),
+  visualType: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('Visual type (e.g. "card", "lineChart", "barChart", "tableEx", "slicer")'),
+  title: z.string().max(1024).optional().describe('Visual title text'),
+  bindings: z
+    .array(
+      z.object({
+        role: z.string().min(1).max(256).describe('Data role name (e.g. "Values", "Category")'),
+        entity: z.string().min(1).max(256).describe('Table name'),
+        property: z.string().min(1).max(256).describe('Measure or column name'),
+        fieldType: z.enum(['Measure', 'Column']).describe('Type of the field binding'),
+      }),
+    )
+    .optional()
+    .describe('Initial data bindings for the visual'),
 });
 
 // --- Visual handler tool schemas ---
@@ -358,6 +400,12 @@ export const RdlExtractQueriesSchema = z.object({
 
 export const RdlRoundTripSchema = z.object({
   rdlPath,
+});
+
+// --- TMDL validation tool schema ---
+
+export const ValidateTmdlSchema = z.object({
+  projectPath,
 });
 
 // --- DAX formatter tool schemas (continued) ---

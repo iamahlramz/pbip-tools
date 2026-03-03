@@ -24,6 +24,8 @@ export type {
   Cardinality,
   SecurityFilteringBehavior,
   ExpressionNode,
+  FunctionNode,
+  FunctionParameter,
   CultureNode,
   CalculationGroupNode,
   CalculationItemNode,
@@ -38,7 +40,14 @@ export type {
   SemanticModel,
 } from './tmdl.js';
 
-export type { PbipProject, PbipFileContent, PbipArtifact, TmdlFileType } from './pbip-project.js';
+export type {
+  PbipProject,
+  PbipFileContent,
+  PbipArtifact,
+  PbirDefinition,
+  PbirDatasetReference,
+  TmdlFileType,
+} from './pbip-project.js';
 
 export type {
   VisualBinding,

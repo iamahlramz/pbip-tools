@@ -9,6 +9,7 @@ export const TMDL_FILES = {
   MODEL: 'model.tmdl',
   RELATIONSHIPS: 'relationships.tmdl',
   EXPRESSIONS: 'expressions.tmdl',
+  FUNCTIONS: 'functions.tmdl',
   TABLES_DIR: 'tables',
   CULTURES_DIR: 'cultures',
   ROLES_DIR: 'roles',

@@ -11,6 +11,7 @@ export {
   serializeTable,
   serializeRelationships,
   serializeExpressions,
+  serializeFunctions,
   serializeCulture,
   serializeRole,
 } from './serializer/index.js';

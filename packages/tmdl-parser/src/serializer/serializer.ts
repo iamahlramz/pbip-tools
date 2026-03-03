@@ -4,6 +4,7 @@ import type {
   TableNode,
   RelationshipNode,
   ExpressionNode,
+  FunctionNode,
   CultureNode,
   RoleNode,
   ColumnNode,
@@ -385,6 +386,39 @@ function serializeExpression(expr: ExpressionNode): string[] {
 
   if (expr.annotations) {
     lines.push(...serializeAnnotations(expr.annotations, 1));
+  }
+
+  return lines;
+}
+
+export function serializeFunctions(nodes: FunctionNode[]): string {
+  const lines: string[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    if (i > 0) lines.push('');
+    lines.push(...serializeFunction(nodes[i]));
+  }
+  return lines.join('\n') + '\n';
+}
+
+function serializeFunction(func: FunctionNode): string[] {
+  const lines: string[] = [];
+
+  if (func.docComment) {
+    for (const docLine of func.docComment.split('\n')) {
+      lines.push(`/// ${docLine}`);
+    }
+  }
+
+  const exprLines = func.expression.split('\n');
+  lines.push(`function ${quoteName(func.name)} =`);
+  for (const el of exprLines) {
+    lines.push(`${indent(1)}${el}`);
+  }
+
+  if (func.lineageTag) lines.push(`${indent(1)}lineageTag: ${func.lineageTag}`);
+
+  if (func.annotations) {
+    lines.push(...serializeAnnotations(func.annotations, 0));
   }
 
   return lines;

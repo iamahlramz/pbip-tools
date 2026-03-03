@@ -104,6 +104,12 @@ describe('loadProject', () => {
     it('should set report path', () => {
       expect(project.reportPath).toContain('AdventureWorks.Report');
     });
+
+    it('should parse definition.pbir reference', () => {
+      expect(project.pbirReference).toBeDefined();
+      expect(project.pbirReference!.byPath).toBeDefined();
+      expect(project.pbirReference!.byPath!.path).toBe('../AdventureWorks.SemanticModel');
+    });
   });
 
   it('should throw for a non-existent .pbip file', async () => {

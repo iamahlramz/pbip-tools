@@ -212,7 +212,11 @@ export function tokenize(text: string): Token[] {
       ctx.state = 'DAX_MULTILINE';
       ctx.expressionIndent = indent;
       ctx.blockStartIndent = indent;
-    } else if (token.type === TokenType.MEASURE || token.type === TokenType.EXPRESSION) {
+    } else if (
+      token.type === TokenType.MEASURE ||
+      token.type === TokenType.EXPRESSION ||
+      token.type === TokenType.FUNCTION
+    ) {
       // Check if expression value starts with ``` or ends with =
       if (token.value !== undefined) {
         const val = token.value.trim();
@@ -323,10 +327,11 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
     } else if (
       token.type === TokenType.MEASURE ||
       token.type === TokenType.EXPRESSION ||
+      token.type === TokenType.FUNCTION ||
       token.type === TokenType.CALCULATION_ITEM ||
       token.type === TokenType.TABLE_PERMISSION
     ) {
-      // `measure 'Name' = VALUE` or `tablePermission Store = DAX`
+      // `measure 'Name' = VALUE` or `function 'Name' = (body)` or `tablePermission Store = DAX`
       const eqIndex = rest.indexOf('=');
       if (eqIndex >= 0) {
         token.name = unquoteName(rest.substring(0, eqIndex).trim());
@@ -362,7 +367,8 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
       }
     } else if (
       token.type === TokenType.CALCULATION_GROUP ||
-      token.type === TokenType.DATA_ACCESS_OPTIONS
+      token.type === TokenType.DATA_ACCESS_OPTIONS ||
+      token.type === TokenType.CREATE_OR_REPLACE
     ) {
       // No name
     } else if (token.type === TokenType.QUERY_GROUP) {

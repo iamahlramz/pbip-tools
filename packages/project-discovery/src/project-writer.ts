@@ -1,8 +1,8 @@
 import { writeFile, unlink, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { PbipProject, TableNode, RoleNode } from '@pbip-tools/core';
+import type { PbipProject, TableNode, RoleNode, ModelNode } from '@pbip-tools/core';
 import { TMDL_FILES } from '@pbip-tools/core';
-import { serializeTable, serializeRole } from '@pbip-tools/tmdl-parser';
+import { serializeTable, serializeRole, serializeModel } from '@pbip-tools/tmdl-parser';
 
 const UNSAFE_NAME_PATTERN = /[/\\]/;
 
@@ -36,6 +36,15 @@ export async function deleteTableFile(project: PbipProject, tableName: string): 
     `${tableName}.tmdl`,
   );
   await unlink(filePath);
+}
+
+/**
+ * Write the model's TMDL to disk. Overwrites existing model.tmdl.
+ */
+export async function writeModelFile(project: PbipProject, model: ModelNode): Promise<void> {
+  const filePath = join(project.semanticModelPath, 'definition', TMDL_FILES.MODEL);
+  const content = serializeModel(model);
+  await writeFile(filePath, content, 'utf-8');
 }
 
 /**

@@ -2,7 +2,12 @@ import { resolve, relative, isAbsolute } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
-import { writeTableFile, writeRoleFile, deleteRoleFile } from '@pbip-tools/project-discovery';
+import {
+  writeTableFile,
+  writeModelFile,
+  writeRoleFile,
+  deleteRoleFile,
+} from '@pbip-tools/project-discovery';
 import {
   // Read-only schemas
   GetProjectInfoSchema,
@@ -12,6 +17,8 @@ import {
   ListRelationshipsSchema,
   SearchMeasuresSchema,
   ListDisplayFoldersSchema,
+  ListFunctionsSchema,
+  GetFunctionSchema,
   // Measure write schemas
   CreateMeasureSchema,
   UpdateMeasureSchema,
@@ -20,6 +27,9 @@ import {
   // Calc group schemas
   CreateCalcGroupSchema,
   AddCalcItemSchema,
+  // Report/visual management schemas
+  CreatePageSchema,
+  CreateVisualSchema,
   // Visual handler schemas
   ListVisualsSchema,
   GetVisualBindingsSchema,
@@ -42,6 +52,8 @@ import {
   RdlGetSectionsSchema,
   RdlExtractQueriesSchema,
   RdlRoundTripSchema,
+  // Validation tool schema
+  ValidateTmdlSchema,
   // Compound tool schemas
   GenKpiSuiteSchema,
   GenTimeIntelligenceSchema,
@@ -59,6 +71,8 @@ import { getMeasure } from './get-measure.js';
 import { listRelationships } from './list-relationships.js';
 import { searchMeasures } from './search-measures.js';
 import { listDisplayFolders } from './list-display-folders.js';
+import { listFunctions } from './list-functions.js';
+import { getFunction } from './get-function.js';
 
 // Measure write tool implementations
 import { createMeasure } from './create-measure.js';
@@ -69,6 +83,10 @@ import { moveMeasure } from './move-measure.js';
 // Calc group tool implementations
 import { createCalcGroup } from './create-calc-group.js';
 import { addCalcItem } from './add-calc-item.js';
+
+// Report/visual management tool implementations
+import { createPage } from './create-page.js';
+import { createVisual } from './create-visual.js';
 
 // Visual handler tool implementations
 import { listVisuals } from './list-visuals.js';
@@ -95,6 +113,9 @@ import { rdlGetParameters } from './rdl-get-parameters.js';
 import { rdlGetSections } from './rdl-get-sections.js';
 import { rdlExtractQueries } from './rdl-extract-queries.js';
 import { rdlRoundTrip } from './rdl-round-trip.js';
+
+// Validation tool implementations
+import { validateTmdl } from './validate-tmdl.js';
 
 // Compound tool implementations
 import { genKpiSuite } from './gen-kpi-suite.js';
@@ -230,6 +251,26 @@ export function registerTools(
     }),
   );
 
+  server.tool(
+    'pbip_list_functions',
+    'List all DAX User Defined Functions (UDFs) with parameter signatures',
+    ListFunctionsSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      return jsonResponse(listFunctions(project));
+    }),
+  );
+
+  server.tool(
+    'pbip_get_function',
+    'Get full DAX UDF detail: expression body, parameters, doc comments, and annotations',
+    GetFunctionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      return jsonResponse(getFunction(project, args.functionName));
+    }),
+  );
+
   // =============================================
   // MEASURE WRITE TOOLS (4)
   // =============================================
@@ -358,12 +399,19 @@ export function registerTools(
       const result = createCalcGroup(project, args.tableName, args.items, args.precedence);
 
       await writeTableFile(project, result.table);
+
+      // Write model.tmdl if discourageImplicitMeasures or ref table was added
+      if (result.modelUpdated) {
+        await writeModelFile(project, project.model.model);
+      }
+
       invalidateCache(project.pbipPath);
 
       return jsonResponse({
         success: true,
         table: result.table.name,
         itemCount: result.table.calculationGroup?.items.length ?? 0,
+        modelUpdated: result.modelUpdated,
       });
     }),
   );
@@ -393,6 +441,45 @@ export function registerTools(
         item: result.item.name,
         ordinal: result.item.ordinal,
       });
+    }),
+  );
+
+  // =============================================
+  // REPORT/VISUAL MANAGEMENT TOOLS (2)
+  // =============================================
+
+  server.tool(
+    'pbip_create_page',
+    'Create a new report page with page.json and empty visuals directory',
+    CreatePageSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = await createPage(project, {
+        pageId: args.pageId,
+        displayName: args.displayName,
+        width: args.width,
+        height: args.height,
+      });
+      invalidateCache(project.pbipPath);
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  server.tool(
+    'pbip_create_visual',
+    'Create a new visual in a report page with optional initial data bindings',
+    CreateVisualSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = await createVisual(project, {
+        pageId: args.pageId,
+        visualId: args.visualId,
+        visualType: args.visualType,
+        title: args.title,
+        bindings: args.bindings,
+      });
+      invalidateCache(project.pbipPath);
+      return jsonResponse({ success: true, ...result });
     }),
   );
 
@@ -802,6 +889,21 @@ export function registerTools(
         applied: result.applied,
         changes: result.changes,
       });
+    }),
+  );
+
+  // =============================================
+  // VALIDATION TOOLS (1)
+  // =============================================
+
+  server.tool(
+    'pbip_validate_tmdl',
+    'Validate TMDL semantic model for structural integrity: missing calc group prerequisites, orphaned table refs, broken relationships, duplicate lineageTags',
+    ValidateTmdlSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProject(args.projectPath);
+      const result = validateTmdl(project);
+      return jsonResponse(result);
     }),
   );
 }

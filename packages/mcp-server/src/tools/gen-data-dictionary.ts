@@ -14,8 +14,18 @@ export function genDataDictionary(
     throw new Error(`Table '${tableName}' not found in the model`);
   }
 
+  const functions = tableName
+    ? []
+    : project.model.functions.map((fn) => ({
+        name: fn.name,
+        parameters: fn.parameters?.map((p) => ({ name: p.name, dataType: p.dataType })) ?? [],
+        docComment: fn.docComment ?? null,
+        ...(includeExpressions ? { expression: fn.expression } : {}),
+      }));
+
   const dictionary = {
     modelName: project.model.database.name,
+    functions,
     tables: tables.map((table) => ({
       name: table.name,
       isHidden: table.isHidden ?? false,
@@ -74,6 +84,23 @@ export function genDataDictionary(
   const lines: string[] = [];
   lines.push(`# Data Dictionary: ${dictionary.modelName}`);
   lines.push('');
+
+  if (dictionary.functions.length > 0) {
+    lines.push('## DAX Functions (UDFs)');
+    lines.push('| Name | Parameters |');
+    lines.push('|------|-----------|');
+    for (const fn of dictionary.functions) {
+      const params =
+        fn.parameters.length > 0
+          ? fn.parameters.map((p) => `${p.name}: ${p.dataType}`).join(', ')
+          : '(none)';
+      lines.push(`| ${fn.name} | ${params} |`);
+      if (includeExpressions && 'expression' in fn && fn.expression) {
+        lines.push(`| | \`${fn.expression.split('\n')[0]}...\` |`);
+      }
+    }
+    lines.push('');
+  }
 
   for (const table of dictionary.tables) {
     lines.push(`## ${table.name}${table.isHidden ? ' (hidden)' : ''}`);

@@ -6,6 +6,7 @@ export { applySecurityFilter } from './security-filter.js';
 export {
   writeTableFile,
   deleteTableFile,
+  writeModelFile,
   writeRoleFile,
   deleteRoleFile,
 } from './project-writer.js';

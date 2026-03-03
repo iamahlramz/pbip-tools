@@ -83,10 +83,15 @@ describe('parser-calcgroup', () => {
     const tableColumns = node.columns;
     const allColumns = [...tableColumns, ...cgColumns];
 
-    const timeCalcCol = allColumns.find((c) => c.name === 'Time Calculation');
-    expect(timeCalcCol).toBeDefined();
-    expect(timeCalcCol!.dataType).toBe('string');
-    expect(timeCalcCol!.isHidden).toBe(true);
-    expect(timeCalcCol!.sourceColumn).toBe('Name');
+    const nameCol = allColumns.find((c) => c.name === 'Time Comparison');
+    expect(nameCol).toBeDefined();
+    expect(nameCol!.dataType).toBe('string');
+    expect(nameCol!.sourceColumn).toBe('Name');
+
+    const ordinalCol = allColumns.find((c) => c.name === 'Ordinal');
+    expect(ordinalCol).toBeDefined();
+    expect(ordinalCol!.dataType).toBe('int64');
+    expect(ordinalCol!.isHidden).toBe(true);
+    expect(ordinalCol!.sourceColumn).toBe('Ordinal');
   });
 });
