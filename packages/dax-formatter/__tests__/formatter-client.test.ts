@@ -106,12 +106,22 @@ describe('formatDax', () => {
       expect(body.SkipSpaceAfterFunctionName).toBe(1);
     });
 
-    it('should handle response with no formatted field', async () => {
+    it('should report error when API returns no formatted field', async () => {
       mockFetch({ errors: [] });
 
       const result = await formatDax('SUM(Table[Col])');
       expect(result.formatted).toBeNull();
-      expect(result.errors).toHaveLength(0);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].message).toContain('empty result');
+    });
+
+    it('should report error when API returns empty formatted string', async () => {
+      mockFetch({ formatted: '', errors: [] });
+
+      const result = await formatDax('SUM(Table[Col])');
+      expect(result.formatted).toBeNull();
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].message).toContain('empty result');
     });
   });
 });

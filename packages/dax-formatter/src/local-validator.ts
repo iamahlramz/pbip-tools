@@ -16,6 +16,9 @@ export function validateDax(expression: string): DaxValidationResult {
   checkDelimiterBalance(expression, issues);
   checkUnclosedStrings(expression, issues);
   checkUnknownFunctions(expression, issues);
+  checkTrailingOperator(expression, issues);
+  checkEmptyOperands(expression, issues);
+  checkNoDaxConstructs(expression, issues);
 
   const valid = issues.every((i) => i.severity !== 'error');
   return { valid, issues };
@@ -334,4 +337,158 @@ function isInsideStringOrComment(expression: string, targetOffset: number): bool
   }
 
   return inString || inLineComment || inBlockComment;
+}
+
+function checkTrailingOperator(expression: string, issues: DaxValidationIssue[]): void {
+  // Strip comments and strings, then remove closing delimiters and whitespace from end
+  const stripped = stripCommentsAndStrings(expression);
+  // Remove trailing whitespace and closing delimiters to find the last meaningful token
+  const trimmed = stripped.replace(/[\s)\]}]*$/, '');
+  if (trimmed.length === 0) return;
+
+  // DAX operators that cannot be the last meaningful token
+  if (/[+\-*/&<>=,]$/.test(trimmed)) {
+    const lines = expression.split('\n');
+    issues.push({
+      severity: 'error',
+      message: 'Expression ends with an incomplete operator',
+      line: lines.length,
+      column: lines[lines.length - 1].length,
+    });
+  }
+}
+
+function checkEmptyOperands(expression: string, issues: DaxValidationIssue[]): void {
+  // Detect patterns like "= )" or "+ )" — operator followed by closing delimiter
+  // But skip ",," which is valid DAX (BLANK() shorthand in IF)
+  const stripped = stripCommentsAndStrings(expression);
+
+  const lineStarts: number[] = [0];
+  for (let i = 0; i < expression.length; i++) {
+    if (expression[i] === '\n') lineStarts.push(i + 1);
+  }
+
+  // Match operators (not comma) followed by optional whitespace then )
+  const pattern = /[+\-*/&<>=]\s*\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(stripped)) !== null) {
+    const offset = match.index;
+    if (isInsideStringOrComment(expression, offset)) continue;
+
+    const line = lineStarts.findIndex((start, idx) => {
+      const nextStart = lineStarts[idx + 1] ?? expression.length + 1;
+      return offset >= start && offset < nextStart;
+    });
+    const column = offset - lineStarts[line] + 1;
+
+    issues.push({
+      severity: 'error',
+      message: 'Missing operand before closing parenthesis',
+      line: line + 1,
+      column,
+    });
+  }
+}
+
+function checkNoDaxConstructs(expression: string, issues: DaxValidationIssue[]): void {
+  const stripped = stripCommentsAndStrings(expression).trim();
+  if (stripped.length === 0) return;
+
+  // DAX expressions must contain at least one of:
+  // - Function call: IDENTIFIER(
+  // - Column/measure reference: [Name] or Table[Name]
+  // - Numeric literal
+  // - DAX keyword: VAR, RETURN, DEFINE, EVALUATE, TRUE, FALSE, BLANK
+  const hasFunction = /\b[A-Za-z][A-Za-z0-9.]*\s*\(/.test(stripped);
+  const hasColumnRef = /\[/.test(stripped);
+  const hasNumeric = /\b\d+(\.\d+)?\b/.test(stripped);
+  const hasKeyword = /\b(VAR|RETURN|DEFINE|EVALUATE|TRUE|FALSE|BLANK)\b/i.test(stripped);
+
+  if (!hasFunction && !hasColumnRef && !hasNumeric && !hasKeyword) {
+    issues.push({
+      severity: 'error',
+      message: 'Expression contains no recognizable DAX constructs (no functions, column references, or keywords)',
+      line: 1,
+      column: 1,
+    });
+  }
+}
+
+function stripCommentsAndStrings(expression: string): string {
+  let result = '';
+  let inString = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let stringStart = false;
+
+  for (let i = 0; i < expression.length; i++) {
+    const ch = expression[i];
+    const next = i + 1 < expression.length ? expression[i + 1] : '';
+
+    if (ch === '\n') {
+      inLineComment = false;
+      result += ch;
+      continue;
+    }
+
+    if (inLineComment) {
+      result += ' ';
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        result += '  ';
+        i++;
+      } else {
+        result += ' ';
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (ch === '"') {
+        if (next === '"') {
+          result += '  ';
+          i++;
+          continue;
+        }
+        inString = false;
+        result += ' ';
+        continue;
+      }
+      // Replace first char of string content with _ as a value placeholder
+      if (stringStart) {
+        result += '_';
+        stringStart = false;
+      } else {
+        result += ' ';
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      stringStart = true;
+      result += ' ';
+      continue;
+    }
+    if (ch === '/' && next === '/') {
+      inLineComment = true;
+      result += '  ';
+      i++;
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      result += '  ';
+      i++;
+      continue;
+    }
+
+    result += ch;
+  }
+
+  return result;
 }

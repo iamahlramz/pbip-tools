@@ -134,6 +134,63 @@ describe('validateDax', () => {
     });
   });
 
+  describe('trailing operator detection', () => {
+    it('should report trailing + operator', () => {
+      const result = validateDax('SUM(fact[Amount]) + ');
+      expect(result.valid).toBe(false);
+      const errors = result.issues.filter((i) => i.severity === 'error');
+      expect(errors.some((e) => e.message.includes('incomplete operator'))).toBe(true);
+    });
+
+    it('should report trailing = operator', () => {
+      const result = validateDax('[Col] = ');
+      expect(result.valid).toBe(false);
+    });
+
+    it('should not flag trailing operator inside a comment', () => {
+      const result = validateDax('SUM(fact[Amount]) // + ');
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  describe('empty operand detection', () => {
+    it('should report missing operand before )', () => {
+      const result = validateDax('CALCULATE([Revenue], FILTER(ALL(dim), dim[X] = ))');
+      expect(result.valid).toBe(false);
+      const errors = result.issues.filter((i) => i.severity === 'error');
+      expect(errors.some((e) => e.message.includes('Missing operand'))).toBe(true);
+    });
+
+    it('should allow double comma (BLANK() shorthand)', () => {
+      const result = validateDax('IF(ISBLANK([Revenue]),, [Revenue] / [Cost])');
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  describe('no DAX constructs detection', () => {
+    it('should report plain text as invalid', () => {
+      const result = validateDax('THIS IS NOT DAX AT ALL');
+      expect(result.valid).toBe(false);
+      const errors = result.issues.filter((i) => i.severity === 'error');
+      expect(errors.some((e) => e.message.includes('no recognizable DAX'))).toBe(true);
+    });
+
+    it('should accept expression with column reference only', () => {
+      const result = validateDax('[Revenue]');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept expression with numeric literal', () => {
+      const result = validateDax('42');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept TRUE/FALSE keywords', () => {
+      const result = validateDax('TRUE');
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe('complex real-world expressions', () => {
     it('should validate a VAR/RETURN pattern', () => {
       const dax = `

@@ -171,8 +171,22 @@ function parseSingleResponse(data: DaxFormatterSingleResponse): DaxFormatResult 
     return { formatted: null, errors };
   }
 
+  // Treat empty or missing formatted string as an error
+  if (!data.formatted) {
+    return {
+      formatted: null,
+      errors: [
+        {
+          line: null,
+          column: null,
+          message: 'DaxFormatter API returned an empty result — the expression may be invalid or the API may be unavailable',
+        },
+      ],
+    };
+  }
+
   return {
-    formatted: data.formatted ?? null,
+    formatted: data.formatted,
     errors: [],
   };
 }
