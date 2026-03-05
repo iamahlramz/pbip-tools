@@ -14,7 +14,7 @@ import { registerPrompts } from './prompts/index.js';
 export function createServer() {
   const server = new McpServer({
     name: 'pbip-tools',
-    version: '0.1.0',
+    version: '0.3.0',
   });
 
   // Dual cache: filtered for read tools, unfiltered for write tools

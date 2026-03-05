@@ -40,7 +40,7 @@ A full KPI family for a base measure, which includes:
 2. Ask me what the **target expression** should be (e.g., a fixed value, another measure, a calculated goal)
 3. Ask me for a **KPI name prefix** (e.g., "Revenue" creates "Revenue Target", "Revenue Variance", etc.)
 4. Ask about **custom status thresholds** if the defaults (80%/95%) don't fit
-5. Then use \`pbip_gen_kpi_suite\` to create all measures at once
+5. Then use \`pbip_create_measure\` to create each KPI measure one at a time (Target, Variance, Variance %, Status Color, Gauge Max)
 6. Confirm the measures were created successfully`,
         },
       },

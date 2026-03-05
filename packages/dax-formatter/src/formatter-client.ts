@@ -5,7 +5,7 @@ const MULTI_ENDPOINT = 'https://www.daxformatter.com/api/daxformatter/daxtextfor
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_BATCH_SIZE = 50;
 const CALLER_APP = 'pbip-tools';
-const CALLER_VERSION = '0.1.0';
+const CALLER_VERSION = '0.3.0';
 
 /**
  * Format a single DAX expression via the DaxFormatter.com REST API.
