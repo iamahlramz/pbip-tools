@@ -1,5 +1,11 @@
 # @pbip-tools/project-discovery
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix v0.3.0 regressions: project discovery now follows .pbir byPath chain when .pbip has no semanticModel artifact, DAX validator adds structural checks (trailing operators, empty operands, no-DAX-construct detection), DAX formatter returns error instead of silent empty string, KPI wizard prompt references correct tool, and server version metadata corrected.
+
 ## 0.3.0
 
 ### Minor Changes
