@@ -6,14 +6,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesPath = resolve(__dirname, '../../..', 'fixtures');
 
 describe('discoverProjects', () => {
-  it('should find both minimal and standard fixture projects', async () => {
+  it('should find all fixture projects including report-only', async () => {
     const projects = await discoverProjects(fixturesPath);
 
-    expect(projects).toHaveLength(2);
+    expect(projects).toHaveLength(3);
 
-    // Sorted by name — AdventureWorks comes before Minimal
+    // Sorted by name — AdventureWorks, Minimal, ReportOnly
     expect(projects[0].name).toBe('AdventureWorks');
     expect(projects[1].name).toBe('Minimal');
+    expect(projects[2].name).toBe('ReportOnly');
   });
 
   it('should resolve semantic model paths from .pbip artifacts', async () => {
@@ -31,6 +32,15 @@ describe('discoverProjects', () => {
     const minimal = projects.find((p) => p.name === 'Minimal');
     expect(minimal).toBeDefined();
     expect(minimal!.reportPath).toContain('Minimal.Report');
+  });
+
+  it('should resolve semantic model via .pbir byPath when no semanticModel artifact', async () => {
+    const projects = await discoverProjects(fixturesPath);
+
+    const reportOnly = projects.find((p) => p.name === 'ReportOnly');
+    expect(reportOnly).toBeDefined();
+    expect(reportOnly!.semanticModelPath).toContain('ReportOnly.SemanticModel');
+    expect(reportOnly!.reportPath).toContain('ReportOnly.Report');
   });
 
   it('should return empty array for a directory with no .pbip files', async () => {

@@ -1,0 +1,16 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+
+	ref table Products
+	ref table _Measures
+
+	expression ServerURL = ```
+		"https://example.sharepoint.com/sites/data" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	```
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+		queryGroup: Parameters
+		resultType: text
+		annotation PBI_NavigationStepName = Navigation
+		annotation PBI_ResultType = Text

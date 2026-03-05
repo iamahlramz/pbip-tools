@@ -112,6 +112,39 @@ describe('loadProject', () => {
     });
   });
 
+  describe('report-only fixture (no semanticModel artifact in .pbip)', () => {
+    let project: PbipProject;
+
+    beforeAll(async () => {
+      project = await loadProject(resolve(fixturesPath, 'report-only/ReportOnly.pbip'));
+    });
+
+    it('should resolve semantic model via .pbir byPath chain', () => {
+      expect(project.semanticModelPath).toContain('ReportOnly.SemanticModel');
+    });
+
+    it('should set the project name', () => {
+      expect(project.name).toBe('ReportOnly');
+    });
+
+    it('should parse the database node', () => {
+      expect(project.model.database.name).toBe('ReportOnly');
+    });
+
+    it('should parse tables', () => {
+      expect(project.model.tables).toHaveLength(2);
+    });
+
+    it('should set report path', () => {
+      expect(project.reportPath).toContain('ReportOnly.Report');
+    });
+
+    it('should parse definition.pbir reference', () => {
+      expect(project.pbirReference).toBeDefined();
+      expect(project.pbirReference!.byPath!.path).toBe('../ReportOnly.SemanticModel');
+    });
+  });
+
   it('should throw for a non-existent .pbip file', async () => {
     await expect(loadProject(resolve(fixturesPath, 'nonexistent/Missing.pbip'))).rejects.toThrow();
   });

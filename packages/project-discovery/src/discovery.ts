@@ -1,7 +1,7 @@
 import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, resolve, basename, dirname } from 'node:path';
 import { PBIP_EXTENSION } from '@pbip-tools/core';
-import type { PbipFileContent } from '@pbip-tools/core';
+import type { PbipFileContent, PbirDefinition } from '@pbip-tools/core';
 
 export interface DiscoveredProject {
   name: string;
@@ -79,6 +79,20 @@ async function readPbipFile(pbipPath: string): Promise<DiscoveredProject | null>
         if (artifact.report?.path) {
           reportPath = resolve(pbipDir, artifact.report.path);
         }
+      }
+    }
+
+    // If no semanticModel artifact, resolve via .pbir byPath chain
+    if (!semanticModelPath && reportPath) {
+      try {
+        const pbirPath = join(reportPath, 'definition.pbir');
+        const pbirRaw = await readFile(pbirPath, 'utf-8');
+        const pbirContent: PbirDefinition = JSON.parse(pbirRaw);
+        if (pbirContent.datasetReference?.byPath?.path) {
+          semanticModelPath = resolve(reportPath, pbirContent.datasetReference.byPath.path);
+        }
+      } catch {
+        // No definition.pbir or malformed — leave semanticModelPath as null
       }
     }
 

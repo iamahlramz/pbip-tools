@@ -39,6 +39,14 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
     }
   }
 
+  // If no semanticModel artifact in .pbip, resolve via .pbir byPath chain
+  if (!semanticModelDir && reportPath) {
+    const pbirRef = await parsePbirDefinition(reportPath);
+    if (pbirRef?.byPath?.path) {
+      semanticModelDir = resolve(reportPath, pbirRef.byPath.path);
+    }
+  }
+
   if (!semanticModelDir) {
     throw new Error(`No semantic model artifact found in ${pbipPath}`);
   }
@@ -92,15 +100,10 @@ export async function loadProject(pbipPath: string): Promise<PbipProject> {
   if (reportPath) {
     project.reportPath = reportPath;
 
-    // Try to parse definition.pbir for the dataset reference chain
+    // Parse definition.pbir for the dataset reference metadata
     const pbirRef = await parsePbirDefinition(reportPath);
     if (pbirRef) {
       project.pbirReference = pbirRef;
-
-      // If no semantic model was found in .pbip artifacts, resolve from byPath
-      if (!semanticModelDir && pbirRef.byPath?.path) {
-        semanticModelDir = resolve(reportPath, pbirRef.byPath.path);
-      }
     }
   }
 

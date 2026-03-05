@@ -1,0 +1,10 @@
+table _Measures
+
+	measure 'Grand Total' =
+		SUMX(
+			Products,
+			Products[ProductKey]
+		)
+		formatString: #,0
+		lineageTag: eeeeeeee-ffff-0000-1111-222222222222
+		displayFolder: Totals

@@ -1,0 +1,41 @@
+table Products
+	lineageTag: 11111111-2222-3333-4444-555555555555
+
+	/// The unique product identifier
+	column ProductKey
+		dataType: int64
+		isKey
+		formatString: 0
+		lineageTag: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+	column ProductName
+		dataType: string
+		lineageTag: bbbbbbbb-cccc-dddd-eeee-ffffffffffff
+		summarizeBy: none
+		sourceColumn: ProductName
+
+	measure 'Total Products' = COUNTROWS(Products)
+		formatString: #,0
+		lineageTag: cccccccc-dddd-eeee-ffff-000000000000
+
+	measure 'Product Share' = ```
+		VAR _total = COUNTROWS(ALL(Products))
+		VAR _current = COUNTROWS(Products)
+		RETURN
+			DIVIDE(_current, _total, 0)
+		```
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: dddddddd-eeee-ffff-0000-111111111111
+		displayFolder: Ratios
+
+	partition Products = m
+		mode: import
+		source =
+			let
+				Source = SharePoint.Files(ServerURL, [ApiVersion = 15]),
+				#"Filtered Rows" = Table.SelectRows(Source, each [Name] = "Products.csv"),
+				#"Imported CSV" = Csv.Document(#"Filtered Rows"{0}[Content])
+			in
+				#"Imported CSV"
