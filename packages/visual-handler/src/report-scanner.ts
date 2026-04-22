@@ -3,21 +3,94 @@ import { join } from 'node:path';
 import type { PageInfo, VisualInfo } from '@pbip-tools/core';
 import { parseVisualFile } from './visual-parser.js';
 
-export async function findVisualFiles(reportPath: string): Promise<string[]> {
+export interface PageFilter {
+  /** Match pages by their directory name (e.g. 'ReportSection2'). */
+  pagePaths?: string[];
+  /** Match pages by the displayName in their page.json. */
+  pageDisplayNames?: string[];
+}
+
+export interface FindVisualFilesResult {
+  /** Absolute paths to visual.json files for all matched visuals. */
+  files: string[];
+  /** Page directory names that matched the filter. */
+  matchedPagePaths: string[];
+  /** Page directory names that exist but were excluded by the filter. */
+  excludedPagePaths: string[];
+  /** Any pagePaths supplied in the filter that do not exist in the report. */
+  unknownPagePaths: string[];
+  /** Any pageDisplayNames supplied in the filter that match no page.json. */
+  unknownPageDisplayNames: string[];
+}
+
+export async function findVisualFiles(
+  reportPath: string,
+  filter?: PageFilter,
+): Promise<string[]> {
+  const result = await findVisualFilesDetailed(reportPath, filter);
+  return result.files;
+}
+
+export async function findVisualFilesDetailed(
+  reportPath: string,
+  filter?: PageFilter,
+): Promise<FindVisualFilesResult> {
   const pagesDir = join(reportPath, 'definition', 'pages');
   const files: string[] = [];
+  const matchedPagePaths: string[] = [];
+  const excludedPagePaths: string[] = [];
 
   let pageEntries: string[];
   try {
     pageEntries = await readdir(pagesDir);
   } catch {
-    return [];
+    return {
+      files: [],
+      matchedPagePaths: [],
+      excludedPagePaths: [],
+      unknownPagePaths: filter?.pagePaths ?? [],
+      unknownPageDisplayNames: filter?.pageDisplayNames ?? [],
+    };
   }
+
+  const requestedPagePaths = new Set(filter?.pagePaths ?? []);
+  const requestedDisplayNames = new Set(filter?.pageDisplayNames ?? []);
+  const seenPagePaths = new Set<string>();
+  const seenDisplayNames = new Set<string>();
+  const hasFilter =
+    requestedPagePaths.size > 0 || requestedDisplayNames.size > 0;
 
   for (const pageId of pageEntries.sort()) {
     const pageDir = join(pagesDir, pageId);
     const pageStat = await stat(pageDir).catch(() => null);
     if (!pageStat?.isDirectory()) continue;
+
+    seenPagePaths.add(pageId);
+
+    let displayName: string | undefined;
+    if (requestedDisplayNames.size > 0) {
+      try {
+        const pageJson = JSON.parse(
+          await readFile(join(pageDir, 'page.json'), 'utf-8'),
+        ) as { displayName?: string };
+        displayName = pageJson.displayName;
+        if (displayName) seenDisplayNames.add(displayName);
+      } catch {
+        // page.json missing or unreadable — page has no displayName
+      }
+    }
+
+    const matches =
+      !hasFilter ||
+      requestedPagePaths.has(pageId) ||
+      (displayName !== undefined && requestedDisplayNames.has(displayName));
+
+    if (!matches) {
+      excludedPagePaths.push(pageId);
+      continue;
+    }
+
+    matchedPagePaths.push(pageId);
 
     const visualsDir = join(pageDir, 'visuals');
     let visualEntries: string[];
@@ -40,7 +113,20 @@ export async function findVisualFiles(reportPath: string): Promise<string[]> {
     }
   }
 
-  return files;
+  const unknownPagePaths = [...requestedPagePaths].filter(
+    (p) => !seenPagePaths.has(p),
+  );
+  const unknownPageDisplayNames = [...requestedDisplayNames].filter(
+    (d) => !seenDisplayNames.has(d),
+  );
+
+  return {
+    files,
+    matchedPagePaths,
+    excludedPagePaths,
+    unknownPagePaths,
+    unknownPageDisplayNames,
+  };
 }
 
 export async function scanReportPages(reportPath: string): Promise<PageInfo[]> {

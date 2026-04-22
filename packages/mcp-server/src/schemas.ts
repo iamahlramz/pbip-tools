@@ -213,7 +213,19 @@ export const UpdateVisualBindingsSchema = z.object({
         newProperty: z.string().min(1).max(256).describe('New measure/column name'),
       }),
     )
-    .describe('Binding update operations to apply across all visual.json files'),
+    .describe('Binding update operations to apply across visual.json files'),
+  pagePaths: z
+    .array(z.string().min(1).max(256))
+    .optional()
+    .describe(
+      'Optional page directory names to scope the sweep (e.g. "ReportSection2"). If omitted, all pages are scanned.',
+    ),
+  pageDisplayNames: z
+    .array(z.string().min(1).max(256))
+    .optional()
+    .describe(
+      'Optional page displayNames (from page.json) to scope the sweep. Combined with pagePaths as a union if both are supplied.',
+    ),
 });
 
 // --- RLS tool schemas ---

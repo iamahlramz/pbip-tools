@@ -607,16 +607,20 @@ export function registerTools(
 
   server.tool(
     'pbip_update_visual_bindings',
-    'Batch update visual.json bindings — use after moving/renaming measures or tables',
+    'Batch update visual.json bindings — use after moving/renaming measures or tables. Optionally scope to specific pages via pagePaths or pageDisplayNames (union if both supplied).',
     UpdateVisualBindingsSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = await updateVisualBindings(project, args.updates);
+      const result = await updateVisualBindings(project, args.updates, {
+        pagePaths: args.pagePaths,
+        pageDisplayNames: args.pageDisplayNames,
+      });
       invalidateCache(project.pbipPath);
       return jsonResponse({
         success: true,
         filesModified: result.filesModified,
         totalUpdates: result.totalUpdates,
+        pagesAffected: result.pagesAffected,
       });
     }),
   );
