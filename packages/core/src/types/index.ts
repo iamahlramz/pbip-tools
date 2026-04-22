@@ -64,6 +64,8 @@ export { DEFAULT_SECURITY_CONFIG } from './config.js';
 
 export type { FieldRef } from './field-ref.js';
 
+export type { ModelTarget, OfflineModelTarget, LiveModelTarget } from './model-target.js';
+
 export type {
   RdlSchemaVersion,
   RdlReport,
