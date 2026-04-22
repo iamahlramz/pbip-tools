@@ -567,31 +567,36 @@ export function registerTools(
 
   server.tool(
     'pbip_list_visuals',
-    'List all visuals across all report pages with visual types and binding counts',
+    'List all visuals across all report pages with visual types and binding counts. Optionally filter to a specific page or to one or more visualTypes.',
     ListVisualsSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      return jsonResponse(await listVisuals(project, args.pageId));
+      return jsonResponse(await listVisuals(project, args.pageId, args.visualType));
     }),
   );
 
   server.tool(
     'pbip_get_visual_bindings',
-    'Get detailed measure/column bindings for a specific visual or all visuals on a page',
+    'Get measure/column bindings for a specific visual or all visuals on a page. Set fields="minimal" for a flat per-visual summary (deduplicated measures/columns) that is faster to scan in audits; default "full" returns every binding with entity/property/fieldType/location.',
     GetVisualBindingsSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      return jsonResponse(await getVisualBindings(project, args.visualId, args.pageId));
+      return jsonResponse(
+        await getVisualBindings(project, args.visualId, args.pageId, args.fields),
+      );
     }),
   );
 
   server.tool(
     'pbip_audit_bindings',
-    'Audit all visual bindings to find references to missing tables, measures, or columns. Optionally include valid bindings for a complete inventory.',
+    'Audit visual bindings to find references to missing tables, measures, or columns. Optionally scope via pagePaths/pageDisplayNames and/or include valid bindings for a complete inventory.',
     AuditBindingsSchema.shape,
     safeTool(async (args) => {
       const project = await getProject(args.projectPath);
-      const result = await auditBindings(project, args.includeValid);
+      const result = await auditBindings(project, args.includeValid, {
+        pagePaths: args.pagePaths,
+        pageDisplayNames: args.pageDisplayNames,
+      });
       return jsonResponse({
         summary: result.summary,
         issues: result.issues.map((i) => ({

@@ -88,4 +88,70 @@ describe('auditBindings', () => {
     expect(byIssueType.missing_column).toBe(1);
     expect(byIssueType.missing_measure).toBe(1);
   });
+
+  it('reports pagesScanned in the summary', async () => {
+    const result = await auditBindings(standardProject);
+    expect(result.summary.pagesScanned.sort()).toEqual(['ReportSection2', 'ReportSectionMain']);
+  });
+
+  describe('page scoping', () => {
+    it('limits the audit to pagePaths', async () => {
+      // Both known issues live on ReportSectionMain (visual02 DimDate.Month +
+      // visual03 _DisplayMeasures.Price Subtitle). Scoping to ReportSection2
+      // should yield zero issues.
+      const result = await auditBindings(standardProject, false, {
+        pagePaths: ['ReportSection2'],
+      });
+      expect(result.summary.pagesScanned).toEqual(['ReportSection2']);
+      expect(result.issues).toEqual([]);
+    });
+
+    it('limits the audit to pageDisplayNames', async () => {
+      const result = await auditBindings(standardProject, false, {
+        pageDisplayNames: ['Details'],
+      });
+      expect(result.summary.pagesScanned).toEqual(['ReportSection2']);
+      expect(result.issues).toEqual([]);
+    });
+
+    it('scoping to ReportSectionMain surfaces the 2 known issues', async () => {
+      const result = await auditBindings(standardProject, false, {
+        pagePaths: ['ReportSectionMain'],
+      });
+      expect(result.summary.pagesScanned).toEqual(['ReportSectionMain']);
+      expect(result.issues).toHaveLength(2);
+    });
+
+    it('treats pagePaths + pageDisplayNames as a union', async () => {
+      const result = await auditBindings(standardProject, false, {
+        pagePaths: ['ReportSectionMain'],
+        pageDisplayNames: ['Details'],
+      });
+      expect(result.summary.pagesScanned.sort()).toEqual([
+        'ReportSection2',
+        'ReportSectionMain',
+      ]);
+    });
+
+    it('throws when an unknown pagePath is supplied', async () => {
+      await expect(
+        auditBindings(standardProject, false, { pagePaths: ['NoSuchPage'] }),
+      ).rejects.toThrow(/Unknown pagePaths/);
+    });
+
+    it('throws when an unknown pageDisplayName is supplied', async () => {
+      await expect(
+        auditBindings(standardProject, false, { pageDisplayNames: ['DoesNotExist'] }),
+      ).rejects.toThrow(/Unknown pageDisplayNames/);
+    });
+
+    it('preserves existing unscoped behaviour when filter is absent', async () => {
+      const result = await auditBindings(standardProject);
+      expect(result.summary.pagesScanned.sort()).toEqual([
+        'ReportSection2',
+        'ReportSectionMain',
+      ]);
+      expect(result.issues).toHaveLength(2);
+    });
+  });
 });

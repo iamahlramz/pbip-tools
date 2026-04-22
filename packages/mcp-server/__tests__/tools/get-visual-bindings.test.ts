@@ -2,7 +2,11 @@ import { loadProject } from '@pbip-tools/project-discovery';
 import type { PbipProject } from '@pbip-tools/core';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getVisualBindings } from '../../src/tools/get-visual-bindings.js';
+import {
+  getVisualBindings,
+  type FullVisualBindingsRow,
+  type MinimalVisualBindingsRow,
+} from '../../src/tools/get-visual-bindings.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, '../../../..', 'fixtures');
@@ -15,7 +19,7 @@ beforeAll(async () => {
 
 describe('getVisualBindings', () => {
   it('should return bindings for all 4 visuals when no filters are given', async () => {
-    const results = await getVisualBindings(standardProject);
+    const results = (await getVisualBindings(standardProject)) as FullVisualBindingsRow[];
     expect(results).toHaveLength(4);
 
     const ids = results.map((r) => r.visualId).sort();
@@ -23,7 +27,11 @@ describe('getVisualBindings', () => {
   });
 
   it('should filter by pageId and return the correct subset', async () => {
-    const results = await getVisualBindings(standardProject, undefined, 'ReportSectionMain');
+    const results = (await getVisualBindings(
+      standardProject,
+      undefined,
+      'ReportSectionMain',
+    )) as FullVisualBindingsRow[];
     expect(results).toHaveLength(3);
 
     const ids = results.map((r) => r.visualId).sort();
@@ -35,7 +43,7 @@ describe('getVisualBindings', () => {
   });
 
   it('should filter by visualId and return just that visual', async () => {
-    const results = await getVisualBindings(standardProject, 'visual04');
+    const results = (await getVisualBindings(standardProject, 'visual04')) as FullVisualBindingsRow[];
     expect(results).toHaveLength(1);
 
     const visual = results[0];
@@ -49,5 +57,52 @@ describe('getVisualBindings', () => {
     const entities = visual.bindings.map((b) => b.entity);
     expect(entities).toContain('DimCustomer');
     expect(entities).toContain('_Measures');
+  });
+
+  describe('fields:"minimal" mode', () => {
+    it('returns a flat per-visual shape with deduped measures + columns (no `bindings` array)', async () => {
+      const results = (await getVisualBindings(
+        standardProject,
+        'visual04',
+        undefined,
+        'minimal',
+      )) as MinimalVisualBindingsRow[];
+
+      expect(results).toHaveLength(1);
+      const row = results[0];
+      expect(row).toHaveProperty('measures');
+      expect(row).toHaveProperty('columns');
+      expect(row).not.toHaveProperty('bindings');
+      expect(row.measures).toEqual(['_Measures.Total Sales']);
+      expect(row.columns).toEqual(
+        expect.arrayContaining(['DimCustomer.CustomerName', 'DimCustomer.Region']),
+      );
+    });
+
+    it('returns one row per visual across all pages when unfiltered', async () => {
+      const results = (await getVisualBindings(
+        standardProject,
+        undefined,
+        undefined,
+        'minimal',
+      )) as MinimalVisualBindingsRow[];
+      expect(results).toHaveLength(4);
+      for (const row of results) {
+        expect(Array.isArray(row.measures)).toBe(true);
+        expect(Array.isArray(row.columns)).toBe(true);
+      }
+    });
+
+    it('dedupes repeated references (visual02 has Total Sales in projection + sort → once only)', async () => {
+      const results = (await getVisualBindings(
+        standardProject,
+        'visual02',
+        undefined,
+        'minimal',
+      )) as MinimalVisualBindingsRow[];
+      const row = results[0];
+      const totalSalesCount = row.measures.filter((m) => m === '_Measures.Total Sales').length;
+      expect(totalSalesCount).toBe(1);
+    });
   });
 });

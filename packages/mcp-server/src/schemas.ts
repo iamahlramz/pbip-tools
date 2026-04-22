@@ -184,12 +184,25 @@ export const CreateVisualSchema = z.object({
 export const ListVisualsSchema = z.object({
   projectPath,
   pageId: z.string().max(256).optional().describe('Filter visuals by page ID'),
+  visualType: z
+    .array(z.string().min(1).max(128))
+    .optional()
+    .describe(
+      'Filter to visuals whose visualType is in this list (e.g. ["gauge", "card"]). Pages with no matching visuals are dropped.',
+    ),
 });
 
 export const GetVisualBindingsSchema = z.object({
   projectPath,
   visualId: z.string().max(256).optional().describe('Get bindings for a specific visual'),
   pageId: z.string().max(256).optional().describe('Get bindings for all visuals on a page'),
+  fields: z
+    .enum(['minimal', 'full'])
+    .optional()
+    .default('full')
+    .describe(
+      'Response detail: "full" returns every binding with entity/property/fieldType/location (default). "minimal" returns a flat per-visual summary with deduplicated measures/columns — faster for audits.',
+    ),
 });
 
 export const AuditBindingsSchema = z.object({
@@ -200,6 +213,16 @@ export const AuditBindingsSchema = z.object({
     .describe(
       'When true, return all bindings (valid + issues) for a complete binding inventory. Default false (issues only).',
     ),
+  pagePaths: z
+    .array(z.string().min(1).max(256))
+    .optional()
+    .describe(
+      'Optional page directory names to scope the audit (e.g. "ReportSection2"). Union with pageDisplayNames if both supplied.',
+    ),
+  pageDisplayNames: z
+    .array(z.string().min(1).max(256))
+    .optional()
+    .describe('Optional page displayNames (from page.json) to scope the audit.'),
 });
 
 export const UpdateVisualBindingsSchema = z.object({

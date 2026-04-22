@@ -47,4 +47,35 @@ describe('listVisuals', () => {
     expect(typeMap.get('visual03')).toBe('gauge');
     expect(typeMap.get('visual04')).toBe('tableEx');
   });
+
+  describe('visualType filter', () => {
+    it('returns only visuals matching a single visualType and drops empty pages', async () => {
+      const pages = await listVisuals(standardProject, undefined, ['gauge']);
+      expect(pages).toHaveLength(1);
+      expect(pages[0].pageId).toBe('ReportSectionMain');
+      expect(pages[0].visuals).toHaveLength(1);
+      expect(pages[0].visuals[0].visualType).toBe('gauge');
+    });
+
+    it('supports multiple visualTypes (union)', async () => {
+      const pages = await listVisuals(standardProject, undefined, ['card', 'tableEx']);
+      const flat = pages.flatMap((p) => p.visuals);
+      expect(flat.map((v) => v.visualType).sort()).toEqual(['card', 'tableEx']);
+    });
+
+    it('returns empty array when no visual matches', async () => {
+      const pages = await listVisuals(standardProject, undefined, ['pieChart']);
+      expect(pages).toEqual([]);
+    });
+
+    it('composes with pageId filter', async () => {
+      const pages = await listVisuals(standardProject, 'ReportSection2', ['gauge']);
+      expect(pages).toEqual([]);
+    });
+
+    it('treats empty array as "no filter" (all visuals returned)', async () => {
+      const pages = await listVisuals(standardProject, undefined, []);
+      expect(pages).toHaveLength(2);
+    });
+  });
 });

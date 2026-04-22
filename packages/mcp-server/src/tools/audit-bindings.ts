@@ -1,5 +1,5 @@
-import type { PbipProject, BindingAuditResult } from '@pbip-tools/core';
-import { scanReportPages } from '@pbip-tools/visual-handler';
+import type { PbipProject, BindingAuditResult, PageInfo } from '@pbip-tools/core';
+import { scanReportPages, type PageFilter } from '@pbip-tools/visual-handler';
 
 export interface BindingAuditOutput {
   summary: {
@@ -7,6 +7,7 @@ export interface BindingAuditOutput {
     validBindings: number;
     issueCount: number;
     byIssueType: Record<string, number>;
+    pagesScanned: string[];
   };
   issues: BindingAuditResult[];
   validBindings?: Array<{
@@ -21,12 +22,14 @@ export interface BindingAuditOutput {
 export async function auditBindings(
   project: PbipProject,
   includeValid = false,
+  filter?: PageFilter,
 ): Promise<BindingAuditOutput> {
   if (!project.reportPath) {
     throw new Error('No report path found in project');
   }
 
-  const pages = await scanReportPages(project.reportPath);
+  const allPages = await scanReportPages(project.reportPath);
+  const pages = applyPageFilter(allPages, filter);
 
   // Build lookup sets from the semantic model
   const tableNames = new Set(project.model.tables.map((t) => t.name));
@@ -98,6 +101,7 @@ export async function auditBindings(
       validBindings: totalBindings - issues.length,
       issueCount: issues.length,
       byIssueType,
+      pagesScanned: pages.map((p) => p.pageId),
     },
     issues,
   };
@@ -107,4 +111,37 @@ export async function auditBindings(
   }
 
   return result;
+}
+
+function applyPageFilter(pages: PageInfo[], filter?: PageFilter): PageInfo[] {
+  if (!filter) return pages;
+
+  const wantedPagePaths = new Set(filter.pagePaths ?? []);
+  const wantedDisplayNames = new Set(filter.pageDisplayNames ?? []);
+  const hasFilter = wantedPagePaths.size > 0 || wantedDisplayNames.size > 0;
+  if (!hasFilter) return pages;
+
+  const seenPagePaths = new Set(pages.map((p) => p.pageId));
+  const seenDisplayNames = new Set(
+    pages.map((p) => p.displayName).filter((n): n is string => n !== undefined),
+  );
+
+  const unknownPagePaths = [...wantedPagePaths].filter((p) => !seenPagePaths.has(p));
+  const unknownDisplayNames = [...wantedDisplayNames].filter((d) => !seenDisplayNames.has(d));
+
+  if (unknownPagePaths.length > 0) {
+    throw new Error(
+      `Unknown pagePaths supplied: ${unknownPagePaths.join(', ')}. ` +
+        `Available pages: ${[...seenPagePaths].join(', ') || '(none)'}`,
+    );
+  }
+  if (unknownDisplayNames.length > 0) {
+    throw new Error(`Unknown pageDisplayNames supplied: ${unknownDisplayNames.join(', ')}`);
+  }
+
+  return pages.filter(
+    (p) =>
+      wantedPagePaths.has(p.pageId) ||
+      (p.displayName !== undefined && wantedDisplayNames.has(p.displayName)),
+  );
 }
