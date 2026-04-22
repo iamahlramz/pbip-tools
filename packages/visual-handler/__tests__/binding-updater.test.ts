@@ -165,6 +165,143 @@ describe('updateBindingsInJson', () => {
     expect(result.updatedCount).toBe(0);
   });
 
+  it('should update Entity, Property, queryRef, and Name in a SINGLE pass (atomicity)', () => {
+    // Replicates a realistic visual.json slice: every binding site for a given
+    // measure appears in one visual, and they must all be updated together.
+    // If any site were missed, the visual would render with a broken binding.
+    const json = {
+      visual: {
+        query: {
+          queryState: {
+            Y: {
+              projections: [
+                {
+                  field: {
+                    Measure: {
+                      Expression: { SourceRef: { Entity: '_Measures' } },
+                      Property: 'Total Sales',
+                    },
+                  },
+                  queryRef: '_Measures.Total Sales',
+                  Name: '_Measures.Total Sales',
+                  nativeQueryRef: 'Total Sales',
+                },
+              ],
+            },
+          },
+          sortDefinition: {
+            sort: [
+              {
+                field: {
+                  Measure: {
+                    Expression: { SourceRef: { Entity: '_Measures' } },
+                    Property: 'Total Sales',
+                  },
+                },
+                direction: 'Descending',
+              },
+            ],
+          },
+        },
+        objects: {
+          dataPoint: [
+            {
+              properties: {
+                fill: {
+                  solid: {
+                    color: {
+                      expr: {
+                        Measure: {
+                          Expression: { SourceRef: { Entity: '_Measures' } },
+                          Property: 'Total Sales',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const result = updateBindingsInJson(json, [
+      {
+        oldEntity: '_Measures',
+        oldProperty: 'Total Sales',
+        newEntity: 'Metrics',
+        newProperty: 'Revenue',
+      },
+    ]);
+
+    const updated = result.json as any;
+
+    // Every primary binding site updated — no partial state.
+    const proj = updated.visual.query.queryState.Y.projections[0];
+    expect(proj.field.Measure.Expression.SourceRef.Entity).toBe('Metrics');
+    expect(proj.field.Measure.Property).toBe('Revenue');
+    expect(proj.queryRef).toBe('Metrics.Revenue');
+    expect(proj.Name).toBe('Metrics.Revenue');
+
+    // Nested in sortDefinition — reached via recursion.
+    const sort = updated.visual.query.sortDefinition.sort[0];
+    expect(sort.field.Measure.Expression.SourceRef.Entity).toBe('Metrics');
+    expect(sort.field.Measure.Property).toBe('Revenue');
+
+    // Nested inside objects.dataPoint.properties.fill.solid.color.expr.
+    const expr =
+      updated.visual.objects.dataPoint[0].properties.fill.solid.color.expr;
+    expect(expr.Measure.Expression.SourceRef.Entity).toBe('Metrics');
+    expect(expr.Measure.Property).toBe('Revenue');
+
+    // Intentional non-coverage: nativeQueryRef preserved as the user alias.
+    expect(proj.nativeQueryRef).toBe('Total Sales');
+
+    // Original input untouched (deep clone).
+    const origProj = (json as any).visual.query.queryState.Y.projections[0];
+    expect(origProj.field.Measure.Expression.SourceRef.Entity).toBe('_Measures');
+    expect(origProj.queryRef).toBe('_Measures.Total Sales');
+  });
+
+  it('should update bare Hierarchy bindings (not just HierarchyLevel)', () => {
+    const json = {
+      visual: {
+        query: {
+          queryState: {
+            Rows: {
+              projections: [
+                {
+                  field: {
+                    Hierarchy: {
+                      Expression: { SourceRef: { Entity: 'DimDate' } },
+                      Property: 'Calendar',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+
+    const result = updateBindingsInJson(json, [
+      {
+        oldEntity: 'DimDate',
+        oldProperty: 'Calendar',
+        newEntity: 'Calendar',
+        newProperty: 'Hierarchy',
+      },
+    ]);
+
+    const updated = result.json as any;
+    const proj = updated.visual.query.queryState.Rows.projections[0];
+    expect(proj.field.Hierarchy.Expression.SourceRef.Entity).toBe('Calendar');
+    expect(proj.field.Hierarchy.Property).toBe('Hierarchy');
+    expect(result.updatedCount).toBeGreaterThanOrEqual(1);
+  });
+
   it('should handle multiple update ops in one call', () => {
     const json = {
       visual: {

@@ -8,6 +8,20 @@ export interface UpdateResult {
 /**
  * Update all bindings in a visual.json object that match the given operations.
  * Returns a deep clone with updated bindings and a count of changes.
+ *
+ * Coverage — what this updates atomically in a single pass:
+ *   - field.Measure / Column / Aggregation / Hierarchy / HierarchyLevel →
+ *     Expression.SourceRef.Entity + Property in lockstep
+ *   - queryRef strings matching "{oldEntity}.{oldProperty}" → rewritten
+ *   - Name strings matching the same pattern → rewritten
+ *   - Nested bindings under sortDefinition.sort[], objects.*.properties.*, etc.
+ *     (via full recursive walk)
+ *
+ * Intentional non-coverage:
+ *   - nativeQueryRef: this is a user-display alias that Power BI Desktop
+ *     typically leaves alone when a measure is renamed (it may have been
+ *     customized). We preserve whatever value is there rather than forcing
+ *     a rewrite and surprising callers who have set custom aliases.
  */
 export function updateBindingsInJson(json: unknown, updates: BindingUpdateOp[]): UpdateResult {
   if (updates.length === 0) return { json, updatedCount: 0 };
@@ -38,7 +52,7 @@ function walkAndUpdate(obj: unknown, op: BindingUpdateOp): number {
   const record = obj as Record<string, unknown>;
 
   // Check for field type patterns
-  for (const fieldType of ['Measure', 'Column', 'Aggregation', 'HierarchyLevel']) {
+  for (const fieldType of ['Measure', 'Column', 'Aggregation', 'Hierarchy', 'HierarchyLevel']) {
     if (fieldType in record) {
       const fieldObj = record[fieldType] as Record<string, unknown> | undefined;
       if (fieldObj) {
