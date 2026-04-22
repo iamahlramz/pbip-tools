@@ -2,6 +2,7 @@ import { resolve, relative, isAbsolute } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
+import { serializeMeasureResponse } from './_measure-response.js';
 import {
   writeTableFile,
   writeModelFile,
@@ -199,6 +200,7 @@ function findTable(project: PbipProject, tableName: string) {
   return table;
 }
 
+
 function resolveRdlPath(rdlPath: string): string {
   const cwd = process.cwd();
   const resolved = resolve(cwd, rdlPath);
@@ -357,7 +359,7 @@ export function registerTools(
 
   server.tool(
     'pbip_create_measure',
-    'Create a new DAX measure in a table with optional format string, display folder, and description',
+    'Create a new DAX measure in a table with optional format string, display folder, and description. Returns the full created measure definition.',
     CreateMeasureSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
@@ -378,16 +380,14 @@ export function registerTools(
 
       return jsonResponse({
         success: true,
-        table: result.table,
-        measure: result.measure.name,
-        lineageTag: result.measure.lineageTag,
+        measure: serializeMeasureResponse(result.measure, result.table),
       });
     }),
   );
 
   server.tool(
     'pbip_update_measure',
-    'Update an existing measure: modify DAX expression, format string, display folder, description, or visibility',
+    'Update an existing measure: modify DAX expression, format string, display folder, description, or visibility. Returns the full updated measure definition.',
     UpdateMeasureSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
@@ -405,8 +405,7 @@ export function registerTools(
 
       return jsonResponse({
         success: true,
-        table: result.table,
-        measure: result.measure.name,
+        measure: serializeMeasureResponse(result.measure, result.table),
       });
     }),
   );
