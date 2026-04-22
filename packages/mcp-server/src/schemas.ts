@@ -327,6 +327,42 @@ export const GenTimeIntelligenceSchema = z.object({
   displayFolder: displayFolder.describe('Display folder for generated measures'),
 });
 
+export const GenSubtitleFamilySchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table that will hold the generated subtitle measures'),
+  items: z
+    .array(
+      z.object({
+        measureName: measureName.describe(
+          'Name of the subtitle measure to create (e.g. "SubT PrevDay Payment")',
+        ),
+        label: z
+          .string()
+          .min(1)
+          .max(256)
+          .describe('User-facing prefix before the colon (e.g. "Prev Day")'),
+        sourceMeasure: measureName.describe(
+          'Name of an existing base measure to wrap in FORMAT()',
+        ),
+        formatString: z
+          .string()
+          .max(128)
+          .optional()
+          .describe('Optional per-item DAX FORMAT string override'),
+      }),
+    )
+    .min(1)
+    .describe(
+      'Subtitle measures to create. Each generates `"{label}: " & FORMAT([{sourceMeasure}], "{formatString}")`.',
+    ),
+  formatString: z
+    .string()
+    .max(128)
+    .optional()
+    .describe('Default DAX FORMAT string applied when an item does not supply one (default "#,0")'),
+  displayFolder: displayFolder.describe('Display folder applied to every generated measure'),
+});
+
 export const AuditUnusedMeasuresSchema = z.object({
   projectPath,
   tableName: tableName.optional().describe('Filter to measures in this table only'),

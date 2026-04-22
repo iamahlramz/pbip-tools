@@ -60,6 +60,7 @@ import {
   // Compound tool schemas
   GenKpiSuiteSchema,
   GenTimeIntelligenceSchema,
+  GenSubtitleFamilySchema,
   AuditUnusedMeasuresSchema,
   AuditDependenciesEnhancedSchema,
   GenDataDictionarySchema,
@@ -140,6 +141,7 @@ import { validateTmdl } from './validate-tmdl.js';
 // Compound tool implementations
 import { genKpiSuite } from './gen-kpi-suite.js';
 import { genTimeIntelligence } from './gen-time-intelligence.js';
+import { genSubtitleFamily } from './gen-subtitle-family.js';
 import { auditUnusedMeasures } from './audit-unused-measures.js';
 import { auditDependencies } from './audit-dependencies.js';
 import { genDataDictionary } from './gen-data-dictionary.js';
@@ -897,6 +899,33 @@ export function registerTools(
         table: result.table,
         measuresCreated: result.measures.length,
         measures: result.measures,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_gen_subtitle_family',
+    'Bulk-create subtitle string measures matching `"{label}: " & FORMAT([{sourceMeasure}], "{formatString}")` — useful for gauge/KPI visual subtitles like "Prev Day: 27"',
+    GenSubtitleFamilySchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = genSubtitleFamily(
+        project,
+        args.tableName,
+        args.items,
+        args.formatString,
+        args.displayFolder,
+      );
+
+      const table = findTable(project, result.table);
+      await writeTableFile(project, table);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        measuresCreated: result.created.length,
+        measures: result.created,
       });
     }),
   );
