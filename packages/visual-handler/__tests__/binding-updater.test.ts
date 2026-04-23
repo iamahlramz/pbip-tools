@@ -264,7 +264,11 @@ describe('updateBindingsInJson', () => {
     expect(origProj.queryRef).toBe('_Measures.Total Sales');
   });
 
-  it('should update bare Hierarchy bindings (not just HierarchyLevel)', () => {
+  it('should NOT update bare Hierarchy fields (they use HierarchyIdentifier, not Entity+Property)', () => {
+    // Real Power BI Hierarchy bindings do not use the Entity+Property shape the
+    // walker handles — they use HierarchyIdentifier with a path array. The
+    // walker intentionally ignores the Hierarchy fieldType; renaming a
+    // hierarchy is handled at the HierarchyLevel granularity.
     const json = {
       visual: {
         query: {
@@ -297,9 +301,10 @@ describe('updateBindingsInJson', () => {
 
     const updated = result.json as any;
     const proj = updated.visual.query.queryState.Rows.projections[0];
-    expect(proj.field.Hierarchy.Expression.SourceRef.Entity).toBe('Calendar');
-    expect(proj.field.Hierarchy.Property).toBe('Hierarchy');
-    expect(result.updatedCount).toBeGreaterThanOrEqual(1);
+    // Unchanged — walker does not touch bare Hierarchy.
+    expect(proj.field.Hierarchy.Expression.SourceRef.Entity).toBe('DimDate');
+    expect(proj.field.Hierarchy.Property).toBe('Calendar');
+    expect(result.updatedCount).toBe(0);
   });
 
   it('should handle multiple update ops in one call', () => {

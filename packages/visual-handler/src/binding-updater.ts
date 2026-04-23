@@ -10,7 +10,7 @@ export interface UpdateResult {
  * Returns a deep clone with updated bindings and a count of changes.
  *
  * Coverage — what this updates atomically in a single pass:
- *   - field.Measure / Column / Aggregation / Hierarchy / HierarchyLevel →
+ *   - field.Measure / Column / Aggregation / HierarchyLevel →
  *     Expression.SourceRef.Entity + Property in lockstep
  *   - queryRef strings matching "{oldEntity}.{oldProperty}" → rewritten
  *   - Name strings matching the same pattern → rewritten
@@ -22,6 +22,10 @@ export interface UpdateResult {
  *     typically leaves alone when a measure is renamed (it may have been
  *     customized). We preserve whatever value is there rather than forcing
  *     a rewrite and surprising callers who have set custom aliases.
+ *   - bare Hierarchy bindings: real PBI output uses HierarchyIdentifier with
+ *     a path array, not the Entity+Property shape this walker handles. The
+ *     binding-extractor mirrors this omission; both agree to only touch
+ *     HierarchyLevel when a hierarchy is addressed in a rename.
  */
 export function updateBindingsInJson(json: unknown, updates: BindingUpdateOp[]): UpdateResult {
   if (updates.length === 0) return { json, updatedCount: 0 };
@@ -52,7 +56,11 @@ function walkAndUpdate(obj: unknown, op: BindingUpdateOp): number {
   const record = obj as Record<string, unknown>;
 
   // Check for field type patterns
-  for (const fieldType of ['Measure', 'Column', 'Aggregation', 'Hierarchy', 'HierarchyLevel']) {
+  // Note: bare `Hierarchy` bindings are intentionally NOT handled here — real
+  // Power BI output uses `HierarchyIdentifier` with a path array, not the
+  // `Entity + Property` shape `updateFieldBinding` expects. The extractor in
+  // binding-extractor.ts mirrors this (its fieldType union excludes Hierarchy).
+  for (const fieldType of ['Measure', 'Column', 'Aggregation', 'HierarchyLevel']) {
     if (fieldType in record) {
       const fieldObj = record[fieldType] as Record<string, unknown> | undefined;
       if (fieldObj) {
