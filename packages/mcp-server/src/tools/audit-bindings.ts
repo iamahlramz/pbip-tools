@@ -1,5 +1,10 @@
-import type { PbipProject, BindingAuditResult, PageInfo } from '@pbip-tools/core';
-import { scanReportPages, type PageFilter } from '@pbip-tools/visual-handler';
+import type { PbipProject, BindingAuditResult } from '@pbip-tools/core';
+import {
+  scanReportPages,
+  filterPagesByFilter,
+  formatPageList,
+  type PageFilter,
+} from '@pbip-tools/visual-handler';
 
 export interface BindingAuditOutput {
   summary: {
@@ -29,7 +34,22 @@ export async function auditBindings(
   }
 
   const allPages = await scanReportPages(project.reportPath);
-  const pages = applyPageFilter(allPages, filter);
+  const filtered = filterPagesByFilter(allPages, filter);
+
+  if (filtered.unknownPagePaths.length > 0) {
+    const availablePaths = allPages.map((p) => p.pageId);
+    throw new Error(
+      `Unknown pagePaths supplied: ${filtered.unknownPagePaths.join(', ')}. ` +
+        `Available pages: ${formatPageList(availablePaths)}`,
+    );
+  }
+  if (filtered.unknownPageDisplayNames.length > 0) {
+    throw new Error(
+      `Unknown pageDisplayNames supplied: ${filtered.unknownPageDisplayNames.join(', ')}`,
+    );
+  }
+
+  const pages = filtered.included;
 
   // Build lookup sets from the semantic model
   const tableNames = new Set(project.model.tables.map((t) => t.name));
@@ -113,35 +133,3 @@ export async function auditBindings(
   return result;
 }
 
-function applyPageFilter(pages: PageInfo[], filter?: PageFilter): PageInfo[] {
-  if (!filter) return pages;
-
-  const wantedPagePaths = new Set(filter.pagePaths ?? []);
-  const wantedDisplayNames = new Set(filter.pageDisplayNames ?? []);
-  const hasFilter = wantedPagePaths.size > 0 || wantedDisplayNames.size > 0;
-  if (!hasFilter) return pages;
-
-  const seenPagePaths = new Set(pages.map((p) => p.pageId));
-  const seenDisplayNames = new Set(
-    pages.map((p) => p.displayName).filter((n): n is string => n !== undefined),
-  );
-
-  const unknownPagePaths = [...wantedPagePaths].filter((p) => !seenPagePaths.has(p));
-  const unknownDisplayNames = [...wantedDisplayNames].filter((d) => !seenDisplayNames.has(d));
-
-  if (unknownPagePaths.length > 0) {
-    throw new Error(
-      `Unknown pagePaths supplied: ${unknownPagePaths.join(', ')}. ` +
-        `Available pages: ${[...seenPagePaths].join(', ') || '(none)'}`,
-    );
-  }
-  if (unknownDisplayNames.length > 0) {
-    throw new Error(`Unknown pageDisplayNames supplied: ${unknownDisplayNames.join(', ')}`);
-  }
-
-  return pages.filter(
-    (p) =>
-      wantedPagePaths.has(p.pageId) ||
-      (p.displayName !== undefined && wantedDisplayNames.has(p.displayName)),
-  );
-}

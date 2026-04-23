@@ -3,6 +3,7 @@ import { relative, sep } from 'node:path';
 import type { PbipProject, BindingUpdateOp } from '@pbip-tools/core';
 import {
   findVisualFilesDetailed,
+  formatPageList,
   updateBindingsInJson,
   type PageFilter,
 } from '@pbip-tools/visual-handler';
@@ -105,16 +106,6 @@ function inferPagePath(visualFilePath: string, reportPath: string): string | und
   const rel = relative(reportPath, visualFilePath).split(sep).join('/');
   const match = rel.match(/^definition\/pages\/([^/]+)\/visuals\//);
   return match?.[1];
-}
-
-/** Display cap for page lists in error messages (ADR-001 §5, H5 hardening). */
-const PAGE_LIST_DISPLAY_CAP = 20;
-
-function formatPageList(pages: string[]): string {
-  if (pages.length === 0) return '(none)';
-  if (pages.length <= PAGE_LIST_DISPLAY_CAP) return pages.join(', ');
-  const head = pages.slice(0, PAGE_LIST_DISPLAY_CAP).join(', ');
-  return `${head}, (+${pages.length - PAGE_LIST_DISPLAY_CAP} more)`;
 }
 
 function formatPathForError(absolutePath: string, reportPath: string): string {
