@@ -3,7 +3,7 @@ import type { PbipProject, BindingUpdateOp } from '@pbip-tools/core';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { updateVisualBindings } from '../../src/tools/update-visual-bindings.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -133,6 +133,37 @@ describe('updateVisualBindings', () => {
       expect(result.pagesAffected.sort()).toEqual(['ReportSection2', 'ReportSectionMain']);
       expect(await visualJsonContains('ReportSectionMain', 'visual01', 'Revenue')).toBe(true);
       expect(await visualJsonContains('ReportSection2', 'visual04', 'Revenue')).toBe(true);
+    });
+  });
+
+  describe('hardening', () => {
+    it('rejects a visual.json larger than the 5 MB safety cap (JSON-bomb DoS guard)', async () => {
+      const target = join(
+        tempReportPath,
+        'definition',
+        'pages',
+        'ReportSection2',
+        'visuals',
+        'visual04',
+        'visual.json',
+      );
+      const huge = '{"padding":"' + 'A'.repeat(6 * 1024 * 1024) + '"}';
+      await writeFile(target, huge, 'utf-8');
+
+      await expect(updateVisualBindings(project(), renameTotalSalesToRevenue())).rejects.toThrow(
+        /exceeding the .* safety cap/,
+      );
+    });
+
+    it('infers pagesAffected correctly regardless of reportPath separator style', async () => {
+      // Pass a reportPath with OS-native separators — inferPagePath uses
+      // path.relative so it should derive the page even if caller and
+      // fixture differ in trailing-slash or case styling.
+      const proj: PbipProject = { ...standardProject, reportPath: tempReportPath };
+      const result = await updateVisualBindings(proj, renameTotalSalesToRevenue(), {
+        pagePaths: ['ReportSectionMain'],
+      });
+      expect(result.pagesAffected).toEqual(['ReportSectionMain']);
     });
   });
 });
