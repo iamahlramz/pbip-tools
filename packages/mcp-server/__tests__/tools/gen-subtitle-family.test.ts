@@ -135,6 +135,143 @@ describe('genSubtitleFamily', () => {
       genSubtitleFamily(project, '_Measures', [
         { measureName: 'Total Sales', label: 'Oops', sourceMeasure: 'Total Sales' },
       ]),
-    ).toThrow(/already exists/);
+    ).toThrow(/already exist/);
+  });
+
+  describe('DAX injection hardening', () => {
+    // Regression tests for the exploit payloads surfaced by the post-
+    // implementation council review. Each is stored DAX injection: the
+    // generated measure expression is persisted to TMDL and executes
+    // at query time in Power BI / SSAS with the model's effective
+    // permissions.
+
+    it('escapes double quotes in label rather than allowing them to break out of the string literal', () => {
+      // The label contains bare `"` chars that WOULD close the outer DAX string
+      // literal and smuggle an EVALUATE if interpolated naively. After escape,
+      // every `"` becomes `""` (DAX's string-literal escape), so the entire
+      // label remains a single inert string between two boundary quotes.
+      const exploitLabel = 'x" & EVALUATE(SELECTCOLUMNS(FactSales,"s",[Amount])) & "';
+
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: 'SubT Exploit Label',
+            label: exploitLabel,
+            sourceMeasure: 'Total Sales',
+          },
+        ]),
+      ).not.toThrow();
+
+      const table = project.model.tables.find((t) => t.name === '_Measures')!;
+      const created = table.measures.find((m) => m.name === 'SubT Exploit Label')!;
+
+      // The exploit pattern (a bare `"` followed by ` & EVALUATE`) must NOT
+      // survive escaping — that bare-quote form is what would terminate the
+      // outer string literal and begin executable DAX.
+      expect(created.expression).not.toMatch(/[^"]"\s*&\s*EVALUATE/);
+
+      // The full escaped expression matches the safe template exactly.
+      const expected =
+        '"x"" & EVALUATE(SELECTCOLUMNS(FactSales,""s"",[Amount])) & "": " & ' +
+        'FORMAT([Total Sales], "#,0")';
+      expect(created.expression).toBe(expected);
+    });
+
+    it('rejects sourceMeasure containing `]` that would break out of the [...] reference', () => {
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: 'SubT Exploit Src',
+            label: 'Delta',
+            sourceMeasure: 'Total Sales] ; EVALUATE Foo',
+          },
+        ]),
+      ).toThrow(/DAX-reserved character/);
+    });
+
+    it('rejects formatString containing `"` that would break out of the FORMAT literal', () => {
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: 'SubT Exploit Fmt',
+            label: 'Delta',
+            sourceMeasure: 'Total Sales',
+            formatString: '") & [SecretMeasure] & FORMAT([x], "',
+          },
+        ]),
+      ).toThrow(/outside the allowed set/);
+    });
+
+    it('rejects label containing a control character (CR/LF/tab)', () => {
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: 'SubT Exploit CR',
+            label: 'Delta\nEVALUATE FactSales',
+            sourceMeasure: 'Total Sales',
+          },
+        ]),
+      ).toThrow(/control character/);
+    });
+
+    it('rejects formatString containing a tab character', () => {
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: 'SubT Fmt Tab',
+            label: 'Delta',
+            sourceMeasure: 'Total Sales',
+            formatString: '#\t,0',
+          },
+        ]),
+      ).toThrow(/outside the allowed set/);
+    });
+
+    it('rejects defaultFormatString containing an unescaped quote', () => {
+      expect(() =>
+        genSubtitleFamily(
+          project,
+          '_Measures',
+          [{ measureName: 'SubT OK', label: 'OK', sourceMeasure: 'Total Sales' }],
+          '"nonsense"',
+        ),
+      ).toThrow(/outside the allowed set/);
+    });
+
+    it('accepts a legitimate label that happens to contain a single quote char', () => {
+      // Single quotes are allowed in labels — they are NOT the DAX string
+      // delimiter. We only escape double quotes.
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          {
+            measureName: "SubT Apostrophe",
+            label: "Today's",
+            sourceMeasure: 'Total Sales',
+          },
+        ]),
+      ).not.toThrow();
+    });
+  });
+
+  describe('partial-state prevention', () => {
+    it('pre-flight rejects a collision in item[2] without mutating any measures', () => {
+      const original = project.model.tables.find((t) => t.name === '_Measures')!;
+      const originalCount = original.measures.length;
+
+      expect(() =>
+        genSubtitleFamily(project, '_Measures', [
+          { measureName: 'SubT NewOne', label: 'A', sourceMeasure: 'Total Sales' },
+          { measureName: 'SubT NewTwo', label: 'B', sourceMeasure: 'Total Sales' },
+          // Collides — pre-flight check must throw before the loop runs.
+          { measureName: 'Total Sales', label: 'C', sourceMeasure: 'Total Sales' },
+        ]),
+      ).toThrow(/already exist/);
+
+      // Nothing added, nothing mutated.
+      const after = project.model.tables.find((t) => t.name === '_Measures')!;
+      expect(after.measures.length).toBe(originalCount);
+      expect(after.measures.find((m) => m.name === 'SubT NewOne')).toBeUndefined();
+      expect(after.measures.find((m) => m.name === 'SubT NewTwo')).toBeUndefined();
+    });
   });
 });
