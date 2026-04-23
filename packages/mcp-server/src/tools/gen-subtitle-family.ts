@@ -1,6 +1,6 @@
-import type { PbipProject } from '@pbip-tools/core';
+import type { MeasureResponse, PbipProject } from '@pbip-tools/core';
 import { createMeasure } from './create-measure.js';
-import { serializeMeasureResponse, type MeasureResponse } from './_measure-response.js';
+import { serializeMeasureResponse } from '../shared/measure-response.js';
 
 export interface SubtitleFamilyItem {
   /** Name of the measure to create, e.g. "SubT PrevDay Payment". */

@@ -1,5 +1,5 @@
 import type { MeasureNode } from '@pbip-tools/core';
-import { serializeMeasureResponse } from '../../src/tools/_measure-response.js';
+import { serializeMeasureResponse } from '../../src/shared/measure-response.js';
 
 function baseMeasure(overrides: Partial<MeasureNode> = {}): MeasureNode {
   return {

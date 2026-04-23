@@ -66,6 +66,8 @@ export type { FieldRef } from './field-ref.js';
 
 export type { ModelTarget, OfflineModelTarget, LiveModelTarget } from './model-target.js';
 
+export type { MeasureResponse } from './measure-response.js';
+
 export type {
   RdlSchemaVersion,
   RdlReport,

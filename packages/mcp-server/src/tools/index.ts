@@ -2,7 +2,7 @@ import { resolve, relative, isAbsolute } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { PbipProject } from '@pbip-tools/core';
-import { serializeMeasureResponse } from './_measure-response.js';
+import { serializeMeasureResponse } from '../shared/measure-response.js';
 import {
   writeTableFile,
   writeModelFile,
