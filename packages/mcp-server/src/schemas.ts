@@ -297,6 +297,37 @@ export const DeleteRoleSchema = z.object({
   roleName: roleName.describe('Name of the role to delete'),
 });
 
+// --- Live-mode tool schemas (Phase B) ---
+
+const workspaceId = z
+  .string()
+  .min(1)
+  .max(128)
+  .describe('Fabric workspace ID (GUID).');
+const datasetId = z
+  .string()
+  .min(1)
+  .max(128)
+  .describe('Power BI dataset / semantic model ID (GUID).');
+
+export const LiveListModelSchema = z.object({
+  workspaceId,
+  datasetId,
+  includeExpressions: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include each measure\'s DAX expression in the response. Default false — opt in only when you need expressions; they may contain hardcoded constants worth treating as sensitive.',
+    ),
+  tableFilter: z
+    .array(z.string().min(1).max(256))
+    .optional()
+    .describe(
+      'Optional table-name allowlist. When supplied, measures, columns, and relationships are restricted to these tables.',
+    ),
+});
+
 // --- Compound tool schemas ---
 
 export const GenKpiSuiteSchema = z.object({

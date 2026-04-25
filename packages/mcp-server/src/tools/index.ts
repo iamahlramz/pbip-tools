@@ -79,6 +79,8 @@ import {
   DeployToWorkspaceSchema,
   TriggerRefreshSchema,
   GetRefreshStatusSchema,
+  // Live-mode schemas (Phase B)
+  LiveListModelSchema,
   // Relationship write schemas
   CreateRelationshipSchema,
   DeleteRelationshipSchema,
@@ -168,6 +170,9 @@ import { fabricListWorkspaces } from './fabric-list-workspaces.js';
 import { fabricDeploy } from './fabric-deploy.js';
 import { fabricTriggerRefresh } from './fabric-trigger-refresh.js';
 import { fabricGetRefreshStatus } from './fabric-get-refresh-status.js';
+
+// Live-mode tool implementations (Phase B)
+import { liveListModel } from './live-list-model.js';
 
 type ToolResponse = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
@@ -1170,6 +1175,26 @@ export function registerTools(
     GetRefreshStatusSchema.shape,
     safeTool(async (args) => {
       return jsonResponse(await fabricGetRefreshStatus(args.workspaceId, args.datasetId, args.top));
+    }),
+  );
+
+  // =============================================
+  // LIVE-MODE TOOLS (Phase B — INFO.* + executeQueries)
+  // =============================================
+
+  server.tool(
+    'pbip_live_list_model',
+    'Snapshot the schema of a deployed Power BI / Fabric semantic model via INFO.* DAX functions: tables, measures, columns, relationships, and roles. REQUIRES Premium / PPU / Fabric F-SKU capacity (Pro / shared returns CAPACITY_NOT_SUPPORTED). Set includeExpressions=true to retrieve measure DAX (off by default — measure expressions can contain hardcoded constants). Optional tableFilter restricts the response to specific tables.',
+    LiveListModelSchema.shape,
+    safeTool(async (args) => {
+      return jsonResponse(
+        await liveListModel({
+          workspaceId: args.workspaceId,
+          datasetId: args.datasetId,
+          includeExpressions: args.includeExpressions,
+          tableFilter: args.tableFilter,
+        }),
+      );
     }),
   );
 }
