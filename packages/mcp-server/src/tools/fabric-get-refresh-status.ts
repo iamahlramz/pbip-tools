@@ -1,35 +1,28 @@
-import { getFabricConfig, getAccessToken } from './fabric-list-workspaces.js';
+import {
+  POWER_BI_SCOPE,
+  fabricFetchJson,
+  getFabricConfig,
+} from '@pbip-tools/fabric-client';
+
+interface RawRefresh {
+  requestId: string;
+  id: string;
+  refreshType: string;
+  startTime: string;
+  endTime?: string;
+  status: string;
+  serviceExceptionJson?: string;
+}
 
 export async function fabricGetRefreshStatus(
   workspaceId: string,
   datasetId: string,
   top: number = 5,
 ) {
-  const config = getFabricConfig();
-  const token = await getAccessToken(config);
-
-  const response = await fetch(
-    `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/datasets/${datasetId}/refreshes?$top=${top}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to get refresh status: ${response.status} ${response.statusText}`);
-  }
-
-  const data = (await response.json()) as {
-    value: Array<{
-      requestId: string;
-      id: string;
-      refreshType: string;
-      startTime: string;
-      endTime?: string;
-      status: string;
-      serviceExceptionJson?: string;
-    }>;
-  };
+  const data = await fabricFetchJson<{ value: RawRefresh[] }>(getFabricConfig(), POWER_BI_SCOPE, {
+    url: `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/datasets/${datasetId}/refreshes?$top=${top}`,
+    method: 'GET',
+  });
 
   return {
     workspaceId,

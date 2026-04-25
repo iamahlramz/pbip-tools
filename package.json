@@ -11,6 +11,7 @@
     "packages/project-discovery",
     "packages/dax-formatter",
     "packages/rdl-parser",
+    "packages/fabric-client",
     "packages/mcp-server"
   ],
   "scripts": {

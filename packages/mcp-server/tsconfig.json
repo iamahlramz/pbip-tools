@@ -11,6 +11,7 @@
     { "path": "../visual-handler" },
     { "path": "../dax-formatter" },
     { "path": "../rdl-parser" },
-    { "path": "../project-discovery" }
+    { "path": "../project-discovery" },
+    { "path": "../fabric-client" }
   ]
 }

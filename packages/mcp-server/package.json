@@ -31,6 +31,7 @@
     "@pbip-tools/project-discovery": "0.3.1",
     "@pbip-tools/dax-formatter": "0.2.2",
     "@pbip-tools/rdl-parser": "0.1.1",
+    "@pbip-tools/fabric-client": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.27.0",
     "zod": "^3.25.0"
   },

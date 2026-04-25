@@ -7,7 +7,12 @@ import {
   serializeExpressions,
   serializeFunctions,
 } from '@pbip-tools/tmdl-parser';
-import { getFabricConfig, getAccessToken } from './fabric-list-workspaces.js';
+import {
+  FABRIC_SCOPE,
+  fabricFetchJson,
+  fabricFetchVoid,
+  getFabricConfig,
+} from '@pbip-tools/fabric-client';
 
 interface DefinitionPart {
   path: string;
@@ -18,21 +23,18 @@ interface DefinitionPart {
 function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
   const parts: DefinitionPart[] = [];
 
-  // database.tmdl
   parts.push({
     path: 'definition/database.tmdl',
     payload: Buffer.from(serializeDatabase(project.model.database)).toString('base64'),
     payloadType: 'InlineBase64',
   });
 
-  // model.tmdl
   parts.push({
     path: 'definition/model.tmdl',
     payload: Buffer.from(serializeModel(project.model.model)).toString('base64'),
     payloadType: 'InlineBase64',
   });
 
-  // tables
   for (const table of project.model.tables) {
     parts.push({
       path: `definition/tables/${table.name}.tmdl`,
@@ -41,7 +43,6 @@ function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
     });
   }
 
-  // relationships
   if (project.model.relationships.length > 0) {
     parts.push({
       path: 'definition/relationships.tmdl',
@@ -50,7 +51,6 @@ function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
     });
   }
 
-  // expressions
   if (project.model.expressions.length > 0) {
     parts.push({
       path: 'definition/expressions.tmdl',
@@ -59,7 +59,6 @@ function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
     });
   }
 
-  // functions
   if (project.model.functions.length > 0) {
     parts.push({
       path: 'definition/functions.tmdl',
@@ -73,89 +72,54 @@ function serializeToDefinitionParts(project: PbipProject): DefinitionPart[] {
 
 export async function fabricDeploy(project: PbipProject, workspaceId: string, itemName?: string) {
   const config = getFabricConfig();
-  const token = await getAccessToken(config);
-
   const name = itemName ?? project.name;
   const parts = serializeToDefinitionParts(project);
 
-  // Check if item already exists
-  const listResponse = await fetch(
-    `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items?type=SemanticModel`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-
-  if (!listResponse.ok) {
-    throw new Error(
-      `Failed to list workspace items: ${listResponse.status} ${listResponse.statusText}`,
-    );
-  }
-
-  const listData = (await listResponse.json()) as {
+  const listData = await fabricFetchJson<{
     value: Array<{ id: string; displayName: string }>;
-  };
+  }>(config, FABRIC_SCOPE, {
+    url: `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items?type=SemanticModel`,
+    method: 'GET',
+  });
+
   const existingItem = listData.value.find(
     (i) => i.displayName.toLowerCase() === name.toLowerCase(),
   );
 
   if (existingItem) {
-    // Update existing item definition
-    const updateResponse = await fetch(
-      `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items/${existingItem.id}/updateDefinition`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ definition: { parts } }),
-      },
-    );
-
-    if (!updateResponse.ok) {
-      throw new Error(
-        `Failed to update item definition: ${updateResponse.status} ${updateResponse.statusText}`,
-      );
-    }
+    // Fabric `updateDefinition` returns 200 OK or 202 Accepted with no body —
+    // use the void variant so an empty success isn't treated as an
+    // INVALID_RESPONSE.
+    await fabricFetchVoid(config, FABRIC_SCOPE, {
+      url: `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items/${existingItem.id}/updateDefinition`,
+      method: 'POST',
+      body: { definition: { parts } },
+    });
 
     return {
-      action: 'updated',
+      action: 'updated' as const,
       workspaceId,
       itemId: existingItem.id,
       itemName: name,
       partsCount: parts.length,
     };
-  } else {
-    // Create new item
-    const createResponse = await fetch(
-      `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          displayName: name,
-          type: 'SemanticModel',
-          definition: { parts },
-        }),
-      },
-    );
-
-    if (!createResponse.ok) {
-      throw new Error(
-        `Failed to create item: ${createResponse.status} ${createResponse.statusText}`,
-      );
-    }
-
-    const createData = (await createResponse.json()) as { id: string };
-
-    return {
-      action: 'created',
-      workspaceId,
-      itemId: createData.id,
-      itemName: name,
-      partsCount: parts.length,
-    };
   }
+
+  const createData = await fabricFetchJson<{ id: string }>(config, FABRIC_SCOPE, {
+    url: `https://api.fabric.microsoft.com/v1/workspaces/${workspaceId}/items`,
+    method: 'POST',
+    body: {
+      displayName: name,
+      type: 'SemanticModel',
+      definition: { parts },
+    },
+  });
+
+  return {
+    action: 'created' as const,
+    workspaceId,
+    itemId: createData.id,
+    itemName: name,
+    partsCount: parts.length,
+  };
 }
