@@ -100,7 +100,7 @@ security:
 deployment:
   target: 'npm-registry'
   containerized: false
-  ci_cd: 'manual'
+  ci_cd: 'github-actions + changesets (ci.yml, docs.yml, release.yml)'
   ports:
     api: ''
     client: ''

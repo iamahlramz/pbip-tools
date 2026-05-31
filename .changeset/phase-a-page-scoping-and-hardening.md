@@ -26,10 +26,20 @@
 - **`pbip_update_visual_bindings`** now applies a 5 MB hard cap on each `visual.json` read (JSON-bomb DoS guard) and uses `path.relative` for page-directory inference so mixed-case Windows drive letters, UNC paths, and trailing separators no longer silently fail.
 - **Error messages in `pbip_update_visual_bindings` and `pbip_audit_bindings`** cap page lists at 20 entries with a `(+N more)` hint, limiting metadata leakage in hosted-mode deployments.
 
+### Phase B beachhead (also in this release)
+
+- **`pbip_live_list_model` (new tool)** — first live-mode tool. Concurrent `INFO.TABLES / MEASURES / COLUMNS / RELATIONSHIPS / ROLES` against a deployed Power BI / Fabric semantic model, with ID→name joins, `tableFilter` allowlist, and `includeExpressions` opt-in (off by default — measure DAX is opt-in because expressions can contain hardcoded constants). Maps DAX engine errors to `CAPACITY_NOT_SUPPORTED` for Pro / shared capacity. Requires Premium / PPU / Fabric F-SKU.
+- **`@pbip-tools/fabric-client`** — new package consumed by all four existing `fabric-*` tools (migrated internally, public signatures preserved) plus the new `pbip_live_list_model`. See its own changeset entry for the package-level details. The four existing tools (`pbip_list_workspaces`, `pbip_deploy_to_workspace`, `pbip_trigger_refresh`, `pbip_get_refresh_status`) gain free retry/backoff, per-(tenant × scope) token caching, and bearer-redacting error responses with no signature change.
+
+### Deferred
+
+- **`pbip_live_run_dax` (B1)** — designed but not shipped. Requires a one-off SP + Premium-capacity verification before enabling. See `docs/PHASE_B_STATUS.md` for the gate-check procedure and the implementation spec.
+
 ### Docs
 
 - **ADR-001** — live-mode integration, `fabric-client` package boundary, and Phase B tool naming conventions (`pbip_live_*`).
 - **ADR-002** — TMDL write safety: mandates parser round-trip for every TMDL writer.
-- **ADR-003** — unified error response shape (`{error: {code, message, details?, ...}}`) for all tools; migration path is incremental, Phase A errors remain valid throughout.
+- **ADR-003** — unified error response shape (`{error: {code, message, details?, ...}}`) for all tools; migration path is incremental, Phase A errors remain valid throughout. The `safeTool` wrapper migration is deferred — `fabric-client` already emits the new shape via `FabricApiError.toJSON()`.
+- **`docs/PHASE_B_STATUS.md`** — records what shipped, what is deferred, the SP gate-check procedure, and the B1 design spec.
 
-All 288 mcp-server tests + 40 visual-handler tests + 513 workspace tests pass. Zero regressions in existing tool behaviour — every added parameter is optional.
+294 mcp-server + 42 visual-handler + 29 fabric-client tests pass. Zero regressions in existing tool behaviour — every added parameter is optional.
