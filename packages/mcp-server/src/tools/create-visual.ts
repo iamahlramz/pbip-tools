@@ -1,6 +1,7 @@
 import type { PbipProject } from '@pbip-tools/core';
 import { mkdir, writeFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { PBIR_VISUAL_CONTAINER_SCHEMA_URL } from '../shared/pbir-schemas.js';
 
 export interface VisualBindingInput {
   role: string;
@@ -57,7 +58,11 @@ export async function createVisual(
 }
 
 function buildVisualJson(options: CreateVisualOptions): Record<string, unknown> {
+  // `$schema` declared first so the URL appears at the top of the file, matching
+  // what Power BI Desktop emits and enabling VS Code IntelliSense / validation.
+  // See Issue #5 in libs/config/pbip-tools_issues.md.
   const visual: Record<string, unknown> = {
+    $schema: PBIR_VISUAL_CONTAINER_SCHEMA_URL,
     name: options.visualId,
     visual: {
       visualType: options.visualType,

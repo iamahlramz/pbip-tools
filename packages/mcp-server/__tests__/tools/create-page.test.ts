@@ -38,8 +38,9 @@ describe('createPage', () => {
     // Verify the file was created
     const pageJson = JSON.parse(await readFile(result.path, 'utf-8'));
     expect(pageJson.displayName).toBe('My Test Page');
-    expect(pageJson.width).toBe(1280);
-    expect(pageJson.height).toBe(720);
+    // Default canvas is Full HD (1920x1080); callers can still override.
+    expect(pageJson.width).toBe(1920);
+    expect(pageJson.height).toBe(1080);
   });
 
   it('should create visuals subdirectory', async () => {
@@ -75,5 +76,25 @@ describe('createPage', () => {
     await expect(createPage(noReportProject, { pageId: 'Test' })).rejects.toThrow(
       'No report path found',
     );
+  });
+
+  describe('PBIR $schema declaration (Issue #5)', () => {
+    it('emits the Microsoft-published page.json $schema URL as the first property', async () => {
+      const result = await createPage(project, { pageId: 'TestPage' });
+      const raw = await readFile(result.path, 'utf-8');
+      const parsed = JSON.parse(raw);
+
+      expect(parsed.$schema).toBe(
+        'https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json',
+      );
+
+      // Order matters for diff cleanliness — $schema should be the first key
+      // so the file resembles Power BI Desktop output.
+      const firstKey = Object.keys(parsed)[0];
+      expect(firstKey).toBe('$schema');
+
+      // And the raw text confirms it appears before displayName.
+      expect(raw.indexOf('"$schema"')).toBeLessThan(raw.indexOf('"displayName"'));
+    });
   });
 });

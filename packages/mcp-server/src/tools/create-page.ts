@@ -1,6 +1,7 @@
 import type { PbipProject } from '@pbip-tools/core';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { PBIR_PAGE_SCHEMA_URL } from '../shared/pbir-schemas.js';
 
 export interface CreatePageOptions {
   pageId: string;
@@ -30,11 +31,19 @@ export async function createPage(
   await mkdir(visualsDir, { recursive: true });
 
   const displayName = options.displayName ?? options.pageId;
+  // `$schema` declared first so the URL appears at the top of the file, matching
+  // what Power BI Desktop emits and enabling VS Code IntelliSense / validation.
+  // See Issue #5 in libs/config/pbip-tools_issues.md.
+  //
+  // Default canvas: 1920x1080 (Full HD). Matches Power BI Desktop's modern
+  // wide-aspect default and renders cleanly on 1080p / 4K displays.
+  // Callers can still override via options.width / options.height.
   const pageJson = {
+    $schema: PBIR_PAGE_SCHEMA_URL,
     displayName,
     displayOption: 0,
-    width: options.width ?? 1280,
-    height: options.height ?? 720,
+    width: options.width ?? 1920,
+    height: options.height ?? 1080,
   };
 
   const pageJsonPath = join(pageDir, 'page.json');
