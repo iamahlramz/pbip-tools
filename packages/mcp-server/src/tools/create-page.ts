@@ -2,6 +2,7 @@ import type { PbipProject } from '@pbip-tools/core';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PBIR_PAGE_SCHEMA_URL } from '../shared/pbir-schemas.js';
+import { safeJoinUnderRoot } from '../shared/path-safety.js';
 
 export interface CreatePageOptions {
   pageId: string;
@@ -24,7 +25,12 @@ export async function createPage(
     throw new Error('No report path found in project');
   }
 
-  const pageDir = join(project.reportPath, 'definition', 'pages', options.pageId);
+  // SECURITY (B4): pageId is interpolated into a filesystem path. Without
+  // validation, `pageId = "../../etc/passwd"` would write attacker-chosen
+  // content outside the report root. safeJoinUnderRoot enforces the PBIR
+  // identifier allowlist + final containment check.
+  const pagesRoot = join(project.reportPath, 'definition', 'pages');
+  const pageDir = safeJoinUnderRoot(pagesRoot, options.pageId, 'pageId');
   const visualsDir = join(pageDir, 'visuals');
 
   // Create the page directory and empty visuals subdirectory

@@ -1,6 +1,12 @@
 import type { MeasureResponse, PbipProject } from '@pbip-tools/core';
 import { createMeasure } from './create-measure.js';
 import { serializeMeasureResponse } from '../shared/measure-response.js';
+import {
+  escapeDaxStringLiteral,
+  validateBracketSafe,
+  validateFormatString,
+  validateLabel,
+} from '../shared/dax-validation.js';
 
 export interface SubtitleFamilyItem {
   /** Name of the measure to create, e.g. "SubT PrevDay Payment". */
@@ -16,52 +22,6 @@ export interface SubtitleFamilyItem {
 export interface SubtitleFamilyResult {
   table: string;
   created: MeasureResponse[];
-}
-
-// Control characters (0x00–0x1F) — includes tab, CR, LF, NUL. Rejected in all
-// DAX-bound user input to prevent string-literal breakouts and visual-rendering
-// glitches.
-const CONTROL_CHAR_PATTERN = /[\x00-\x1f]/;
-
-// Conservative FORMAT-string allowlist: Excel-style format chars + common
-// punctuation. Note the whitespace class is literal space only — tab / CR / LF
-// are deliberately rejected (they fall under CONTROL_CHAR_PATTERN via a sub-
-// tractive check too, but the regex alone is sufficient). Reject anything
-// outside this set, including unescaped `"` which would close the FORMAT
-// literal and allow DAX injection. Customer format strings with exotic chars
-// can fall back to pbip_create_measure directly.
-const SAFE_FORMAT_PATTERN = /^[A-Za-z0-9#0 .,:;%$\-/\\()@*+]*$/;
-
-function escapeDaxStringLiteral(value: string): string {
-  return value.replaceAll('"', '""');
-}
-
-function validateLabel(label: string): void {
-  if (CONTROL_CHAR_PATTERN.test(label)) {
-    throw new Error(
-      `label contains a control character (tab, CR, LF, or similar); supplied value was ${JSON.stringify(label)}`,
-    );
-  }
-}
-
-function validateSourceMeasure(name: string): void {
-  // sourceMeasure is interpolated into `[...]` inside DAX. `]` would terminate
-  // the reference; `[` hints at an attempt to nest references. Control chars
-  // break the expression across lines. An existence check runs separately; this
-  // is defense-in-depth against a malicious measure being present in the model.
-  if (name.includes(']') || name.includes('[') || CONTROL_CHAR_PATTERN.test(name)) {
-    throw new Error(
-      `sourceMeasure contains a DAX-reserved character ([, ], or control char); supplied value was ${JSON.stringify(name)}`,
-    );
-  }
-}
-
-function validateFormatString(fmt: string): void {
-  if (!SAFE_FORMAT_PATTERN.test(fmt)) {
-    throw new Error(
-      `formatString contains characters outside the allowed set [A-Za-z0-9#0.,:;%$-/\\() space]; supplied value was ${JSON.stringify(fmt)}`,
-    );
-  }
 }
 
 /**
@@ -99,9 +59,9 @@ export function genSubtitleFamily(
   if (defaultFormatString !== undefined) validateFormatString(defaultFormatString);
 
   for (const item of items) {
-    validateLabel(item.label);
-    validateSourceMeasure(item.sourceMeasure);
-    if (item.formatString !== undefined) validateFormatString(item.formatString);
+    validateLabel(item.label, 'label');
+    validateBracketSafe(item.sourceMeasure, 'sourceMeasure');
+    if (item.formatString !== undefined) validateFormatString(item.formatString, 'formatString');
   }
 
   const targetTable = project.model.tables.find((t) => t.name === tableName);
@@ -132,9 +92,7 @@ export function genSubtitleFamily(
   // Pre-check name collisions against the target table so createMeasure cannot
   // throw mid-loop. This is the last possible failure point before mutation.
   const existingInTarget = new Set(targetTable.measures.map((m) => m.name));
-  const collisions = items
-    .map((i) => i.measureName)
-    .filter((n) => existingInTarget.has(n));
+  const collisions = items.map((i) => i.measureName).filter((n) => existingInTarget.has(n));
   if (collisions.length > 0) {
     throw new Error(
       `Measure name(s) already exist in table '${tableName}': ${collisions.join(', ')}`,

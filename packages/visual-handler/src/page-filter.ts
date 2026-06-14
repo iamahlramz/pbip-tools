@@ -27,10 +27,7 @@ export interface FilteredPagesResult {
  *
  * Returns data — callers decide whether to throw on unknown pages.
  */
-export function filterPagesByFilter(
-  pages: PageInfo[],
-  filter?: PageFilter,
-): FilteredPagesResult {
+export function filterPagesByFilter(pages: PageInfo[], filter?: PageFilter): FilteredPagesResult {
   const wantedPagePaths = new Set(filter?.pagePaths ?? []);
   const wantedDisplayNames = new Set(filter?.pageDisplayNames ?? []);
   const hasFilter = wantedPagePaths.size > 0 || wantedDisplayNames.size > 0;
@@ -50,9 +47,7 @@ export function filterPagesByFilter(
   );
 
   const unknownPagePaths = [...wantedPagePaths].filter((p) => !seenPagePaths.has(p));
-  const unknownPageDisplayNames = [...wantedDisplayNames].filter(
-    (d) => !seenDisplayNames.has(d),
-  );
+  const unknownPageDisplayNames = [...wantedDisplayNames].filter((d) => !seenDisplayNames.has(d));
 
   const included: PageInfo[] = [];
   const excluded: PageInfo[] = [];

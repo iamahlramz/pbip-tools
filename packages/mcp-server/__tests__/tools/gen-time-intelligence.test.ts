@@ -111,4 +111,49 @@ describe('genTimeIntelligence', () => {
       genTimeIntelligence(project, '_Measures', 'NonExistent', "'DimDate'[Date]", ['MTD']),
     ).toThrow("Base measure 'NonExistent' not found in the model");
   });
+
+  describe('DAX injection hardening (B3)', () => {
+    it('rejects baseMeasure containing `]` that would break out of the [...] reference', () => {
+      expect(() =>
+        genTimeIntelligence(
+          project,
+          '_Measures',
+          'Total Sales] ; EVALUATE Foo',
+          "'DimDate'[Date]",
+          ['MTD'],
+        ),
+      ).toThrow(/DAX-reserved character/);
+    });
+
+    it('rejects dateColumn whose shape is not Table[Col] / Col[Col] / [Col]', () => {
+      expect(() =>
+        genTimeIntelligence(
+          project,
+          '_Measures',
+          'Total Sales',
+          'DimDate[Date]) RETURN CALCULATE([Total Sales],ALL(Security))',
+          ['MTD'],
+        ),
+      ).toThrow(/dateColumn/);
+    });
+
+    it('rejects dateColumn containing a double quote that would smuggle DAX', () => {
+      expect(() =>
+        genTimeIntelligence(project, '_Measures', 'Total Sales', '"; EVALUATE "', ['MTD']),
+      ).toThrow(/dateColumn/);
+    });
+
+    it("accepts legitimate Table[Col] and 'Table'[Col] dateColumn forms", () => {
+      expect(() =>
+        genTimeIntelligence(project, '_Measures', 'Total Sales', 'DimDate[Date]', ['MTD']),
+      ).not.toThrow();
+      // Clean up so the next assertion doesn't trip on the duplicate name.
+      const t = project.model.tables.find((x) => x.name === '_Measures')!;
+      t.measures = t.measures.filter((m) => m.name !== 'Total Sales MTD');
+
+      expect(() =>
+        genTimeIntelligence(project, '_Measures', 'Total Sales', "'DimDate'[Date]", ['MTD']),
+      ).not.toThrow();
+    });
+  });
 });

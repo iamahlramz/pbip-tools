@@ -64,7 +64,7 @@ my-workspace/
 
 Once configured, pbip-tools auto-discovers your PBIP projects when the AI assistant connects. No additional setup is required.
 
-Launch your AI assistant and start asking questions. The 25 MCP tools handle everything behind the scenes.
+Launch your AI assistant and start asking questions. The 56 MCP tools handle everything behind the scenes.
 
 ### Example interactions
 

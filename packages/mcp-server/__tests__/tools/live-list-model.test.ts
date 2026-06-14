@@ -26,20 +26,20 @@ afterEach(() => {
 });
 
 function tokenResponse(): Response {
-  return new Response(
-    JSON.stringify({ access_token: 'tok', expires_in: 3600 }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } },
-  );
+  return new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function infoResponse(rowsByCall: Array<Array<Record<string, unknown>>>) {
   let i = 0;
   return () => {
     const rows = rowsByCall[i++] ?? [];
-    return new Response(
-      JSON.stringify({ results: [{ tables: [{ rows }] }] }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ results: [{ tables: [{ rows }] }] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   };
 }
 
@@ -64,10 +64,10 @@ function buildSequencedFetch(infoMap: Record<string, Array<Record<string, unknow
       const dax = body.queries[0].query;
       const matchKey = Object.keys(infoMap).find((k) => dax.includes(k));
       const rows = matchKey ? infoMap[matchKey] : [];
-      return new Response(
-        JSON.stringify({ results: [{ tables: [{ rows }] }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ results: [{ tables: [{ rows }] }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     throw new Error(`Unexpected URL in mock fetch: ${url}`);
   });
@@ -166,9 +166,7 @@ describe('liveListModel', () => {
   it('includes measure expressions when includeExpressions=true', async () => {
     const fetchImpl = buildSequencedFetch({
       'INFO.TABLES': [{ ID: 1, Name: 'Sales' }],
-      'INFO.MEASURES': [
-        { ID: 100, TableID: 1, Name: 'Total', Expression: 'SUM(Sales[X])' },
-      ],
+      'INFO.MEASURES': [{ ID: 100, TableID: 1, Name: 'Total', Expression: 'SUM(Sales[X])' }],
       'INFO.COLUMNS': [],
       'INFO.RELATIONSHIPS': [],
       'INFO.ROLES': [],
@@ -247,10 +245,10 @@ describe('liveListModel', () => {
       const url = typeof input === 'string' ? input : (input as Request).url;
       if (url.includes('login.microsoftonline.com')) return tokenResponse();
       // Simulate the 400 + DAX error body Power BI returns on shared capacity.
-      return new Response(
-        'INFO.TABLES requires a Premium / Premium Per User capacity',
-        { status: 400, statusText: 'Bad Request' },
-      );
+      return new Response('INFO.TABLES requires a Premium / Premium Per User capacity', {
+        status: 400,
+        statusText: 'Bad Request',
+      });
     });
 
     let caught: unknown;

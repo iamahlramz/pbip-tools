@@ -9,10 +9,7 @@ export type { MeasureResponse };
  * callers see a stable object regardless of whether the source measure had
  * a formatString / displayFolder / description / lineageTag set.
  */
-export function serializeMeasureResponse(
-  measure: MeasureNode,
-  tableName: string,
-): MeasureResponse {
+export function serializeMeasureResponse(measure: MeasureNode, tableName: string): MeasureResponse {
   return {
     name: measure.name,
     table: tableName,

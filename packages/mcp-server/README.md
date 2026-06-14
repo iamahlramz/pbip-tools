@@ -1,6 +1,6 @@
 # @pbip-tools/mcp-server
 
-MCP server exposing 25 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
+MCP server exposing 56 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
 
 Part of the [pbip-tools](https://github.com/iamahlramz/pbip-tools) monorepo.
 

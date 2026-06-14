@@ -2,6 +2,7 @@ import type { PbipProject } from '@pbip-tools/core';
 import { mkdir, writeFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PBIR_VISUAL_CONTAINER_SCHEMA_URL } from '../shared/pbir-schemas.js';
+import { safeJoinUnderRoot } from '../shared/path-safety.js';
 
 export interface VisualBindingInput {
   role: string;
@@ -34,14 +35,21 @@ export async function createVisual(
     throw new Error('No report path found in project');
   }
 
-  const pageDir = join(project.reportPath, 'definition', 'pages', options.pageId);
+  // SECURITY (B4): both pageId and visualId are interpolated into a filesystem
+  // path. Without validation, traversal payloads (`pageId = "../../etc"`) would
+  // mkdir + writeFile attacker-chosen content outside the report root.
+  // safeJoinUnderRoot enforces the PBIR identifier allowlist + final
+  // containment check on each segment.
+  const pagesRoot = join(project.reportPath, 'definition', 'pages');
+  const pageDir = safeJoinUnderRoot(pagesRoot, options.pageId, 'pageId');
   try {
     await stat(pageDir);
   } catch {
     throw new Error(`Page '${options.pageId}' does not exist`);
   }
 
-  const visualDir = join(pageDir, 'visuals', options.visualId);
+  const visualsRoot = join(pageDir, 'visuals');
+  const visualDir = safeJoinUnderRoot(visualsRoot, options.visualId, 'visualId');
   await mkdir(visualDir, { recursive: true });
 
   const visualJson = buildVisualJson(options);

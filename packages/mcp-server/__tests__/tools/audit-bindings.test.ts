@@ -127,10 +127,7 @@ describe('auditBindings', () => {
         pagePaths: ['ReportSectionMain'],
         pageDisplayNames: ['Details'],
       });
-      expect(result.summary.pagesScanned.sort()).toEqual([
-        'ReportSection2',
-        'ReportSectionMain',
-      ]);
+      expect(result.summary.pagesScanned.sort()).toEqual(['ReportSection2', 'ReportSectionMain']);
     });
 
     it('throws when an unknown pagePath is supplied', async () => {
@@ -147,10 +144,7 @@ describe('auditBindings', () => {
 
     it('preserves existing unscoped behaviour when filter is absent', async () => {
       const result = await auditBindings(standardProject);
-      expect(result.summary.pagesScanned.sort()).toEqual([
-        'ReportSection2',
-        'ReportSectionMain',
-      ]);
+      expect(result.summary.pagesScanned.sort()).toEqual(['ReportSection2', 'ReportSectionMain']);
       expect(result.issues).toHaveLength(2);
     });
   });

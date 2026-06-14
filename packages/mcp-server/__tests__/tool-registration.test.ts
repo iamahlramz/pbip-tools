@@ -22,12 +22,7 @@ interface CapturedTool {
 function captureRegistrations(): {
   tools: CapturedTool[];
   fakeServer: {
-    tool(
-      name: string,
-      description: string,
-      schemaShape: unknown,
-      handler: unknown,
-    ): void;
+    tool(name: string, description: string, schemaShape: unknown, handler: unknown): void;
   };
 } {
   const tools: CapturedTool[] = [];
@@ -45,7 +40,9 @@ function captureRegistrations(): {
 // only when a tool runs. Tests that drive individual tools cover the runtime
 // path; here we only care about the registration shape.
 const notCalled = () => {
-  throw new Error('registerTools helper called during registration — should only run at tool-invoke time');
+  throw new Error(
+    'registerTools helper called during registration — should only run at tool-invoke time',
+  );
 };
 const fakeGetProject = notCalled as unknown as (path?: string) => Promise<PbipProject>;
 const fakeInvalidateCache = notCalled as unknown as (path: string) => void;

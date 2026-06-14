@@ -33,13 +33,13 @@ To close this gap without adopting `mcp-engine`'s coarse `manage_X` verb pattern
 
 ### 3. Tool naming — `pbip_live_*` prefix for live-mode tools
 
-| Old proposal | New name |
-| --- | --- |
-| `pbip_run_dax_query` | `pbip_live_run_dax` |
-| `pbip_list_live_model` | `pbip_live_list_model` |
-| `pbip_list_live_dependencies` | `pbip_live_list_dependencies` |
-| `pbip_get_live_memory_stats` | `pbip_live_get_memory_stats` |
-| `pbip_diff_model` | `pbip_compare_model` (accepts offline-vs-live via `ModelTarget`) |
+| Old proposal                  | New name                                                         |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `pbip_run_dax_query`          | `pbip_live_run_dax`                                              |
+| `pbip_list_live_model`        | `pbip_live_list_model`                                           |
+| `pbip_list_live_dependencies` | `pbip_live_list_dependencies`                                    |
+| `pbip_get_live_memory_stats`  | `pbip_live_get_memory_stats`                                     |
+| `pbip_diff_model`             | `pbip_compare_model` (accepts offline-vs-live via `ModelTarget`) |
 
 Avoids ambiguity with existing offline `pbip_list_tables` / `pbip_list_measures`. `diff` is not in the existing verb vocabulary; `compare` is.
 
@@ -58,14 +58,14 @@ export type ModelTarget =
 
 ### 5. Cross-cutting concerns (decided now, before any B-tool ships)
 
-| Concern | Decision |
-| --- | --- |
-| **Error shape** | `jsonResponse({ error: { code, message, fabricStatus?, correlationId? } })`. `code` is a stable string (e.g. `AUTH_FAILED`, `CAPACITY_NOT_SUPPORTED`, `ROW_CAP_EXCEEDED`). |
-| **Timeouts** | 30s default for REST calls; 120s for `executeQueries`. Configurable via env `PBIP_FABRIC_TIMEOUT_MS` / `PBIP_DAX_TIMEOUT_MS`. |
-| **Retry policy** | Exponential backoff on 429/503 honouring `Retry-After` header. Max 3 attempts. **No retry** on 4xx auth errors (401/403). |
-| **Logging** | Correlation IDs from `RequestId` header captured and surfaced. All error paths routed through a redaction wrapper that strips `Authorization`, `Cookie`, `x-ms-*` headers before surfacing error bodies to the MCP response. Unit test: assert error payloads never contain `Bearer ` substring. |
-| **Token cache TTL** | `expires_in - 300s` safety margin. Cache is per-process (MCP stdio session); cleared on 401. |
-| **Row cap** | `pbip_live_run_dax` enforces hard cap of 10,000 rows server-side (below the API's 100k limit) for safety. Tool docstring flags it as a data-exfiltration-sensitive operation. |
+| Concern             | Decision                                                                                                                                                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Error shape**     | `jsonResponse({ error: { code, message, fabricStatus?, correlationId? } })`. `code` is a stable string (e.g. `AUTH_FAILED`, `CAPACITY_NOT_SUPPORTED`, `ROW_CAP_EXCEEDED`).                                                                                                                       |
+| **Timeouts**        | 30s default for REST calls; 120s for `executeQueries`. Configurable via env `PBIP_FABRIC_TIMEOUT_MS` / `PBIP_DAX_TIMEOUT_MS`.                                                                                                                                                                    |
+| **Retry policy**    | Exponential backoff on 429/503 honouring `Retry-After` header. Max 3 attempts. **No retry** on 4xx auth errors (401/403).                                                                                                                                                                        |
+| **Logging**         | Correlation IDs from `RequestId` header captured and surfaced. All error paths routed through a redaction wrapper that strips `Authorization`, `Cookie`, `x-ms-*` headers before surfacing error bodies to the MCP response. Unit test: assert error payloads never contain `Bearer ` substring. |
+| **Token cache TTL** | `expires_in - 300s` safety margin. Cache is per-process (MCP stdio session); cleared on 401.                                                                                                                                                                                                     |
+| **Row cap**         | `pbip_live_run_dax` enforces hard cap of 10,000 rows server-side (below the API's 100k limit) for safety. Tool docstring flags it as a data-exfiltration-sensitive operation.                                                                                                                    |
 
 ### 6. Security — filter bypass prevention
 

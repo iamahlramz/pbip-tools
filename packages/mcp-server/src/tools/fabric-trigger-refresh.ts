@@ -1,8 +1,4 @@
-import {
-  POWER_BI_SCOPE,
-  fabricFetchVoid,
-  getFabricConfig,
-} from '@pbip-tools/fabric-client';
+import { POWER_BI_SCOPE, fabricFetchVoid, getFabricConfig } from '@pbip-tools/fabric-client';
 
 export async function fabricTriggerRefresh(workspaceId: string, datasetId: string) {
   await fabricFetchVoid(getFabricConfig(), POWER_BI_SCOPE, {

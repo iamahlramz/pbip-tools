@@ -1,5 +1,6 @@
 import type { PbipProject } from '@pbip-tools/core';
 import { createMeasure } from './create-measure.js';
+import { validateBracketSafe, validateColumnReference } from '../shared/dax-validation.js';
 
 export type TimeIntelligenceVariant =
   | 'MTD'
@@ -80,6 +81,13 @@ export function genTimeIntelligence(
   variants: TimeIntelligenceVariant[],
   displayFolder?: string,
 ): TimeIntelligenceResult {
+  // SECURITY: both baseMeasure (interpolated into [...]) and dateColumn
+  // (interpolated raw, e.g. `'DimDate'[Date]`) are user-controlled and would
+  // permit CWE-94 DAX injection if accepted unchecked. The existence check
+  // on baseMeasure is defense-in-depth; the shape check is the real gate.
+  validateBracketSafe(baseMeasure, 'baseMeasure');
+  validateColumnReference(dateColumn, 'dateColumn');
+
   // Validate base measure exists
   let baseMeasureFound = false;
   for (const table of project.model.tables) {

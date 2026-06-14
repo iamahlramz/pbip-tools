@@ -1,11 +1,11 @@
 ---
 title: Tool Overview
-description: All 25 MCP tools at a glance
+description: All 56 MCP tools at a glance
 sidebar:
   order: 1
 ---
 
-pbip-tools exposes **25 MCP tools** organized into six categories. Every tool operates on the TMDL and visual.json files inside your Power BI Project (PBIP) folder -- no running instance of Power BI Desktop is required.
+pbip-tools exposes **56 MCP tools** organized into six categories. Every tool operates on the TMDL and visual.json files inside your Power BI Project (PBIP) folder -- no running instance of Power BI Desktop is required.
 
 ## Quick-reference table
 

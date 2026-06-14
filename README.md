@@ -9,7 +9,7 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 - **TMDL Parser** — Full parser for the tab-indented TMDL format including all 3 DAX expression forms (inline, multi-line, backtick-delimited), calculation groups, relationships, expressions with `meta` parameters, cultures, and DAX User-Defined Functions
 - **Project Discovery** — Auto-discovers `.pbip` projects in your workspace
 - **Security Filter** — Strips M-code and connection strings before sending content to AI, so any data source can be used safely
-- **58 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, RLS, DAX formatting, TMDL validation (40+ BPA rules), SVG measure templates, DAXLib package management, Fabric API integration, and paginated report (RDL) tools
+- **56 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, RLS, DAX formatting, TMDL validation (40+ BPA rules), SVG measure templates, DAXLib package management, Fabric API integration, and paginated report (RDL) tools
 - **Visual.json Handler** — Recursive binding extractor that handles all 6 binding locations (projections, sort, objects, container objects, reference lines, filters) for any visual type including Deneb and custom visuals
 - **RLS Support** — Full parser and write tools for row-level security roles with DAX filter expressions
 - **DAX Formatter** — Format DAX expressions via DaxFormatter.com API + offline syntax validation with 400+ function catalog
@@ -241,7 +241,7 @@ parser handler formatter
         |
 @pbip-tools/project-discovery  (filesystem discovery + security filter + writer)
         |
-@pbip-tools/mcp-server         (MCP protocol server + 58 tools)
+@pbip-tools/mcp-server         (MCP protocol server + 56 tools)
 ```
 
 - **Monorepo:** npm workspaces + Turborepo
@@ -288,7 +288,7 @@ The parser handles the full TMDL specification:
 
 ## Production Hardening
 
-- **Input Validation** — All 58 tool schemas enforce string length limits (names ≤256 chars, expressions ≤100K chars)
+- **Input Validation** — All 56 tool schemas enforce string length limits (names ≤256 chars, expressions ≤100K chars)
 - **Error Handling** — All tool handlers wrapped in try-catch to prevent stack trace leakage through MCP
 - **Path Traversal Protection** — Resolved paths validated to stay within the working directory
 - **Security Filter** — Enhanced M-code patterns: `Sql.Native()`, `OleDb.DataSource()`, `Odbc.DataSource()`, connection strings, and URLs
@@ -304,7 +304,7 @@ The parser handles the full TMDL specification:
 | [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator  |
 | [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, security filtering, and writing |
 | [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL/RDLX paginated report parser                            |
-| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 58 tools for AI assistants                  |
+| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 56 tools for AI assistants                  |
 
 ## License
 

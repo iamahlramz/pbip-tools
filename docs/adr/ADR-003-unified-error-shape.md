@@ -62,20 +62,20 @@ export function toErrorResponse(err: unknown): { error: { code: string; message:
 
 Initial codes, to grow incrementally (kept in a single constants file in `shared/errors.ts`):
 
-| Code | Meaning | First used by |
-| --- | --- | --- |
-| `INTERNAL_ERROR` | Catch-all for untagged `Error` — the migration fallback | safeTool |
-| `PROJECT_NOT_FOUND` | No `.pbip` resolvable from the supplied path or CWD | project-discovery path resolution |
-| `PATH_OUTSIDE_CWD` | `projectPath` resolves outside the working directory | server.ts path guard |
-| `TABLE_NOT_FOUND` | Referenced table missing from the model | create-measure, update-measure, gen-* |
-| `MEASURE_NOT_FOUND` | Referenced measure missing from the model | update-measure, delete-measure, gen-subtitle-family |
-| `MEASURE_ALREADY_EXISTS` | Measure name collides with an existing one | create-measure, gen-subtitle-family pre-flight |
-| `UNKNOWN_PAGES` | `pagePaths` or `pageDisplayNames` lists pages not in the report | audit-bindings, update-visual-bindings |
-| `VISUAL_JSON_TOO_LARGE` | Single visual.json exceeds the 5 MB safety cap | update-visual-bindings |
-| `INVALID_DAX_INPUT` | User-supplied DAX string fails validation | gen-subtitle-family |
-| `AUTH_FAILED` | Fabric token acquisition returned 4xx | fabric-client (Phase B) |
-| `CAPACITY_NOT_SUPPORTED` | `INFO.*` DAX returned a capacity-gated error | pbip_live_* (Phase B) |
-| `ROW_CAP_EXCEEDED` | Live query returned more rows than the server cap | pbip_live_run_dax (Phase B) |
+| Code                     | Meaning                                                         | First used by                                       |
+| ------------------------ | --------------------------------------------------------------- | --------------------------------------------------- |
+| `INTERNAL_ERROR`         | Catch-all for untagged `Error` — the migration fallback         | safeTool                                            |
+| `PROJECT_NOT_FOUND`      | No `.pbip` resolvable from the supplied path or CWD             | project-discovery path resolution                   |
+| `PATH_OUTSIDE_CWD`       | `projectPath` resolves outside the working directory            | server.ts path guard                                |
+| `TABLE_NOT_FOUND`        | Referenced table missing from the model                         | create-measure, update-measure, gen-\*              |
+| `MEASURE_NOT_FOUND`      | Referenced measure missing from the model                       | update-measure, delete-measure, gen-subtitle-family |
+| `MEASURE_ALREADY_EXISTS` | Measure name collides with an existing one                      | create-measure, gen-subtitle-family pre-flight      |
+| `UNKNOWN_PAGES`          | `pagePaths` or `pageDisplayNames` lists pages not in the report | audit-bindings, update-visual-bindings              |
+| `VISUAL_JSON_TOO_LARGE`  | Single visual.json exceeds the 5 MB safety cap                  | update-visual-bindings                              |
+| `INVALID_DAX_INPUT`      | User-supplied DAX string fails validation                       | gen-subtitle-family                                 |
+| `AUTH_FAILED`            | Fabric token acquisition returned 4xx                           | fabric-client (Phase B)                             |
+| `CAPACITY_NOT_SUPPORTED` | `INFO.*` DAX returned a capacity-gated error                    | pbip*live*\* (Phase B)                              |
+| `ROW_CAP_EXCEEDED`       | Live query returned more rows than the server cap               | pbip_live_run_dax (Phase B)                         |
 
 ### 5. Forbidden content in error messages
 

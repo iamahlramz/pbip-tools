@@ -26,10 +26,23 @@ export interface FabricApiErrorOptions {
   cause?: unknown;
 }
 
+// Symbol for Node's util.inspect customization — we use the symbol (not the
+// dynamic require) so it works in both ESM and CJS without importing util.
+const NODE_INSPECT_CUSTOM = Symbol.for('nodejs.util.inspect.custom');
+
 /**
  * Error class for every failure path exiting fabric-client. Designed to be
  * safe to surface to MCP callers — the message and details fields are
  * pre-redacted by the helpers below; never rethrow a raw `fetch` error.
+ *
+ * SECURITY (B5): the `cause` chain is captured for stack-trace-only debugging
+ * but is NEVER exposed via `toJSON()`, `String(err)`, or `util.inspect(err)`.
+ * `console.error('Fatal:', err)` in mcp-server's stdio host calls
+ * `util.inspect` by default — without the custom inspector, Node would walk
+ * the cause chain and emit any embedded `client_secret=…` URLSearchParams
+ * body that an underlying `fetch` rejection might have captured. The
+ * inspector override is the gate; the auth.ts callsite for AUTH_NETWORK_FAILED
+ * also pre-scrubs the cause to redact the secret before storage.
  */
 export class FabricApiError extends Error {
   readonly code: FabricErrorCode;
@@ -71,6 +84,16 @@ export class FabricApiError extends Error {
     if (this.correlationId !== undefined) out.correlationId = this.correlationId;
     if (this.details !== undefined) out.details = this.details;
     return out;
+  }
+
+  /**
+   * Node's util.inspect (used by console.error / console.log by default)
+   * walks the `cause` chain unless overridden. Return only the redacted
+   * public surface — never the cause.
+   */
+  [NODE_INSPECT_CUSTOM](): string {
+    const safe = this.toJSON();
+    return `${this.name} ${JSON.stringify(safe)}`;
   }
 }
 

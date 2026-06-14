@@ -214,4 +214,79 @@ describe('getAccessTokenForScope — error paths', () => {
       }),
     ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });
+
+  describe('B5 — secret leak hardening (cause chain + util.inspect)', () => {
+    it('redacts the secret from cause.message even when the underlying fetch error captured it', async () => {
+      const fetchImpl = vi.fn(async () => {
+        throw new Error(
+          `network died while POSTing client_secret=${config.clientSecret}&grant_type=...`,
+        );
+      });
+
+      let caught: unknown;
+      try {
+        await getAccessTokenForScope(config, FABRIC_SCOPE, {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          now: fakeNow,
+        });
+      } catch (err) {
+        caught = err;
+      }
+
+      expect(caught).toBeInstanceOf(FabricApiError);
+      const err = caught as FabricApiError & { cause?: unknown };
+
+      // The cause is preserved for stack-trace debugging but pre-scrubbed.
+      expect(err.cause).toBeInstanceOf(Error);
+      const cause = err.cause as Error;
+      expect(cause.message).not.toContain(config.clientSecret);
+      expect(cause.message).toContain('<redacted-client-secret>');
+      if (typeof cause.stack === 'string') {
+        expect(cause.stack).not.toContain(config.clientSecret);
+      }
+    });
+
+    it('util.inspect(err) — what console.error prints — never contains the secret', async () => {
+      const { inspect } = await import('node:util');
+      const fetchImpl = vi.fn(async () => {
+        throw new Error(`boom secret=${config.clientSecret} embedded by polyfill`);
+      });
+
+      let caught: unknown;
+      try {
+        await getAccessTokenForScope(config, FABRIC_SCOPE, {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          now: fakeNow,
+        });
+      } catch (err) {
+        caught = err;
+      }
+
+      const inspected = inspect(caught, { depth: null });
+      expect(inspected).not.toContain(config.clientSecret);
+      // Sanity: the inspector emits the redacted public surface.
+      expect(inspected).toContain('AUTH_NETWORK_FAILED');
+      expect(inspected).toContain('Network failure');
+    });
+
+    it('String(err) and JSON.stringify(err.toJSON()) never contain the secret', async () => {
+      const fetchImpl = vi.fn(async () => {
+        throw new Error(`leak ${config.clientSecret}`);
+      });
+
+      let caught: unknown;
+      try {
+        await getAccessTokenForScope(config, FABRIC_SCOPE, {
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+          now: fakeNow,
+        });
+      } catch (err) {
+        caught = err;
+      }
+
+      const err = caught as FabricApiError;
+      expect(String(err)).not.toContain(config.clientSecret);
+      expect(JSON.stringify(err.toJSON())).not.toContain(config.clientSecret);
+    });
+  });
 });

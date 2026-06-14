@@ -1,8 +1,4 @@
-import {
-  executeQueries,
-  FabricApiError,
-  getFabricConfig,
-} from '@pbip-tools/fabric-client';
+import { executeQueries, FabricApiError, getFabricConfig } from '@pbip-tools/fabric-client';
 
 /**
  * INFO.* DAX-driven schema dump of a deployed Power BI / Fabric semantic model.
@@ -202,9 +198,7 @@ export async function liveListModel(
   }
 
   const allowedTables =
-    options.tableFilter && options.tableFilter.length > 0
-      ? new Set(options.tableFilter)
-      : null;
+    options.tableFilter && options.tableFilter.length > 0 ? new Set(options.tableFilter) : null;
 
   const tables: LiveTable[] = tableRows
     .map((r) => ({
@@ -274,8 +268,7 @@ export async function liveListModel(
       (rel) =>
         rel.fromTable.length > 0 &&
         rel.toTable.length > 0 &&
-        (!allowedTables ||
-          (allowedTables.has(rel.fromTable) && allowedTables.has(rel.toTable))),
+        (!allowedTables || (allowedTables.has(rel.fromTable) && allowedTables.has(rel.toTable))),
     );
 
   const roles: LiveRole[] = roleRows

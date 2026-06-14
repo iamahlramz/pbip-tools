@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PageInfo } from '@pbip-tools/core';
-import {
-  filterPagesByFilter,
-  formatPageList,
-  PAGE_LIST_DISPLAY_CAP,
-} from '../src/page-filter.js';
+import { filterPagesByFilter, formatPageList, PAGE_LIST_DISPLAY_CAP } from '../src/page-filter.js';
 
 function makePage(pageId: string, displayName?: string): PageInfo {
   return { pageId, displayName, visuals: [] };

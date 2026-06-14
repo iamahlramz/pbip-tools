@@ -299,11 +299,7 @@ export const DeleteRoleSchema = z.object({
 
 // --- Live-mode tool schemas (Phase B) ---
 
-const workspaceId = z
-  .string()
-  .min(1)
-  .max(128)
-  .describe('Fabric workspace ID (GUID).');
+const workspaceId = z.string().min(1).max(128).describe('Fabric workspace ID (GUID).');
 const datasetId = z
   .string()
   .min(1)
@@ -318,7 +314,7 @@ export const LiveListModelSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include each measure\'s DAX expression in the response. Default false — opt in only when you need expressions; they may contain hardcoded constants worth treating as sensitive.',
+      "When true, include each measure's DAX expression in the response. Default false — opt in only when you need expressions; they may contain hardcoded constants worth treating as sensitive.",
     ),
   tableFilter: z
     .array(z.string().min(1).max(256))
@@ -395,9 +391,7 @@ export const GenSubtitleFamilySchema = z.object({
           .min(1)
           .max(256)
           .describe('User-facing prefix before the colon (e.g. "Prev Day")'),
-        sourceMeasure: measureName.describe(
-          'Name of an existing base measure to wrap in FORMAT()',
-        ),
+        sourceMeasure: measureName.describe('Name of an existing base measure to wrap in FORMAT()'),
         formatString: z
           .string()
           .max(128)

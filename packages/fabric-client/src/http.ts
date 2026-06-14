@@ -146,7 +146,11 @@ async function fabricFetch(
     }
 
     // 429/503: honour Retry-After if provided, otherwise exponential backoff.
-    if (allowRetry && (response.status === 429 || response.status === 503) && attempt < MAX_RETRY_ATTEMPTS) {
+    if (
+      allowRetry &&
+      (response.status === 429 || response.status === 503) &&
+      attempt < MAX_RETRY_ATTEMPTS
+    ) {
       const retryAfterMs = parseRetryAfter(response.headers.get('Retry-After'));
       const backoffMs = retryAfterMs ?? Math.min(8_000, 500 * 2 ** (attempt - 1));
       await sleepImpl(backoffMs);

@@ -207,7 +207,6 @@ function findTable(project: PbipProject, tableName: string) {
   return table;
 }
 
-
 function resolveRdlPath(rdlPath: string): string {
   const cwd = process.cwd();
   const resolved = resolve(cwd, rdlPath);

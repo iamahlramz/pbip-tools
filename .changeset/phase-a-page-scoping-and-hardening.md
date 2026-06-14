@@ -1,7 +1,7 @@
 ---
-"@pbip-tools/mcp-server": minor
-"@pbip-tools/visual-handler": minor
-"@pbip-tools/core": minor
+'@pbip-tools/mcp-server': minor
+'@pbip-tools/visual-handler': minor
+'@pbip-tools/core': minor
 ---
 
 **Phase A — page-scoped binding ops, bulk subtitle measures, and security hardening**
@@ -26,6 +26,18 @@
 - **`pbip_update_visual_bindings`** now applies a 5 MB hard cap on each `visual.json` read (JSON-bomb DoS guard) and uses `path.relative` for page-directory inference so mixed-case Windows drive letters, UNC paths, and trailing separators no longer silently fail.
 - **Error messages in `pbip_update_visual_bindings` and `pbip_audit_bindings`** cap page lists at 20 entries with a `(+N more)` hint, limiting metadata leakage in hosted-mode deployments.
 
+### Pre-publish hardening (pre-v0.4.0 council review)
+
+Six pre-publish fixes landed on top of Phase A + B beachhead after a comprehensive end-to-end council review verified gaps that the original implementation tests had missed:
+
+- **DAX injection hardening across all three generators (CWE-94).** `gen-subtitle-family` was hardened in `91fbaa4`; the same pattern is now extracted into a shared `src/shared/dax-validation.ts` module and applied to `gen-time-intelligence` (validates `baseMeasure` shape + `dateColumn` against `Table[Col]` / `'Table'[Col]` / `[Col]` allowlist) and `gen-kpi-suite` (validates `kpiName` against Power BI measure-name allowlist + `baseMeasure` bracket-safety + light-touch sanity check on caller-supplied `targetExpression`).
+- **Path-traversal hardening for `pbip_create_page` and `pbip_create_visual` (CWE-22).** `pageId` and `visualId` are now validated through a new `src/shared/path-safety.ts` `safeJoinUnderRoot` helper that enforces Microsoft's documented PBIR identifier allowlist (`/^[A-Za-z0-9_-]+$/`) plus a final `path.relative` containment check. Defends against `pageId = '../../etc/passwd'`, mixed separators, UNC paths, and embedded `/` / `\` characters.
+- **Secret-leak hardening on `FabricApiError`.** The `cause` chain on the `AUTH_NETWORK_FAILED` path is now pre-scrubbed for the SP `client_secret` before storage, AND `FabricApiError` overrides `[Symbol.for('nodejs.util.inspect.custom')]` so `console.error(err)` (which mcp-server's stdio host uses) never walks the cause chain into stack-trace fragments that may have captured the secret via a misbehaving `fetch` polyfill.
+
+### Issue #5 disclosure
+
+The `$schema` URLs added to `page.json` and `visual.json` in commit `ef87f50` are **structural metadata only** — they declare the file's intended contract but the body shape was not migrated to match. A separate end-to-end council review (verified against the live Microsoft schemas at github.com/microsoft/json-schemas on 2026-06-14) found that `page.json` emits `displayOption: 0` (numeric) where the published `page/2.1.0` schema requires a string enum, and `visual.json` emits the legacy `query.Commands[].SemanticQueryDataShapeCommand` shape where `visualContainer/2.9.0` requires `query.queryState.<role>.projections[]`. The body-shape migration is tracked as **Issue #6** in `libs/config/pbip-tools_issues.md` and deferred to a follow-up release.
+
 ### Phase B beachhead (also in this release)
 
 - **`pbip_live_list_model` (new tool)** — first live-mode tool. Concurrent `INFO.TABLES / MEASURES / COLUMNS / RELATIONSHIPS / ROLES` against a deployed Power BI / Fabric semantic model, with ID→name joins, `tableFilter` allowlist, and `includeExpressions` opt-in (off by default — measure DAX is opt-in because expressions can contain hardcoded constants). Maps DAX engine errors to `CAPACITY_NOT_SUPPORTED` for Pro / shared capacity. Requires Premium / PPU / Fabric F-SKU.
@@ -42,4 +54,4 @@
 - **ADR-003** — unified error response shape (`{error: {code, message, details?, ...}}`) for all tools; migration path is incremental, Phase A errors remain valid throughout. The `safeTool` wrapper migration is deferred — `fabric-client` already emits the new shape via `FabricApiError.toJSON()`.
 - **`docs/PHASE_B_STATUS.md`** — records what shipped, what is deferred, the SP gate-check procedure, and the B1 design spec.
 
-294 mcp-server + 42 visual-handler + 29 fabric-client tests pass. Zero regressions in existing tool behaviour — every added parameter is optional.
+Test counts after the pre-publish hardening pass: ~319 mcp-server + 42 visual-handler + 32 fabric-client tests, all passing. Zero regressions in existing tool behaviour — every added parameter is optional.

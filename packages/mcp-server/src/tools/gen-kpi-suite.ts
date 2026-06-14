@@ -1,5 +1,10 @@
 import type { PbipProject } from '@pbip-tools/core';
 import { createMeasure } from './create-measure.js';
+import {
+  validateBracketSafe,
+  validateMeasureIdentifier,
+  validateRawDaxExpression,
+} from '../shared/dax-validation.js';
 
 export interface KpiSuiteResult {
   table: string;
@@ -16,6 +21,17 @@ export function genKpiSuite(
   formatString?: string,
   statusThresholds?: { behind: number; atRisk: number },
 ): KpiSuiteResult {
+  // SECURITY: kpiName becomes the prefix of 5 generated measure names AND is
+  // interpolated into [...] bracket refs inside DAX. baseMeasure is interpolated
+  // into [...] as well. targetExpression is caller-supplied raw DAX (the caller
+  // is providing a measure body by design); we light-check it but cannot
+  // reject DAX-shaped content.
+  // statusThresholds.behind / .atRisk are numbers per the zod schema — safe to
+  // template-coerce.
+  validateMeasureIdentifier(kpiName, 'kpiName');
+  validateBracketSafe(baseMeasure, 'baseMeasure');
+  validateRawDaxExpression(targetExpression, 'targetExpression');
+
   // Validate base measure exists
   let baseMeasureFound = false;
   for (const table of project.model.tables) {
@@ -30,6 +46,9 @@ export function genKpiSuite(
 
   const behind = statusThresholds?.behind ?? 0.8;
   const atRisk = statusThresholds?.atRisk ?? 0.95;
+  if (!Number.isFinite(behind) || !Number.isFinite(atRisk)) {
+    throw new Error('statusThresholds.behind and .atRisk must be finite numbers');
+  }
 
   const targetName = `${kpiName} Target`;
   const varianceName = `${kpiName} Variance`;

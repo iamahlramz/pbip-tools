@@ -98,6 +98,48 @@ describe('createVisual', () => {
     ).rejects.toThrow('No report path found');
   });
 
+  describe('Path traversal hardening (B4)', () => {
+    it('rejects visualId containing forward slash', async () => {
+      await expect(
+        createVisual(project, {
+          pageId: 'ReportSectionMain',
+          visualId: 'foo/bar',
+          visualType: 'card',
+        }),
+      ).rejects.toThrow(/PBIR naming convention/);
+    });
+
+    it('rejects visualId containing backslash', async () => {
+      await expect(
+        createVisual(project, {
+          pageId: 'ReportSectionMain',
+          visualId: '..\\..\\evil',
+          visualType: 'card',
+        }),
+      ).rejects.toThrow(/PBIR naming convention/);
+    });
+
+    it('rejects pageId containing parent-directory traversal', async () => {
+      await expect(
+        createVisual(project, {
+          pageId: '../../etc',
+          visualId: 'testVisual',
+          visualType: 'card',
+        }),
+      ).rejects.toThrow(/PBIR naming convention/);
+    });
+
+    it('rejects empty visualId', async () => {
+      await expect(
+        createVisual(project, {
+          pageId: 'ReportSectionMain',
+          visualId: '',
+          visualType: 'card',
+        }),
+      ).rejects.toThrow(/non-empty/);
+    });
+  });
+
   describe('PBIR $schema declaration (Issue #5)', () => {
     it('emits the Microsoft-published visual.json $schema URL as the first property', async () => {
       const result = await createVisual(project, {

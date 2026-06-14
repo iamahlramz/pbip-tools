@@ -85,7 +85,7 @@ Beyond content redaction, pbip-tools implements several layers of defense:
 
 ### Input Validation
 
-All 25 MCP tool schemas enforce strict input constraints using Zod validation:
+All 56 MCP tool schemas enforce strict input constraints using Zod validation:
 
 - **Name fields** are limited to 256 characters maximum
 - **DAX expressions** are limited to 100,000 characters maximum

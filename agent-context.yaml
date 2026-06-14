@@ -7,7 +7,7 @@ project:
   type: 'library'
   status: 'active'
   platform: 'ANY'
-  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 58 tools for semantic model authoring, validation, and deployment'
+  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 56 tools for semantic model authoring, validation, and deployment'
 
 stack:
   languages: ['TypeScript']
@@ -38,7 +38,7 @@ stack:
 architecture:
   pattern: 'layered'
   key_patterns:
-    - 'Monorepo with Turborepo (7 packages)'
+    - 'Monorepo with Turborepo (8 packages)'
     - 'Parser-Serializer round-trip pattern (TMDL ↔ AST ↔ TMDL)'
     - 'safeTool() wrapper for MCP tool registration'
     - 'getProject()/getProjectForWrite() with LRU caching'
@@ -70,12 +70,16 @@ packages:
     exports: 'discoverProjects, loadProject, writeTableFile, writeModelFile, writeFunctionsFile, writeRoleFile'
   mcp-server:
     path: 'packages/mcp-server'
-    purpose: 'MCP server with 58 registered tools — the main entry point'
+    purpose: 'MCP server with 56 registered tools — the main entry point'
     exports: 'MCP tool handlers, schemas, data catalogs'
   rdl-parser:
     path: 'packages/rdl-parser'
     purpose: 'RDL/RDLX (paginated report) XML parser'
     exports: 'parseRdl, getRdlInfo, extractRdlQueries'
+  fabric-client:
+    path: 'packages/fabric-client'
+    purpose: 'Fabric / Power BI REST client — scope-parameterized OAuth2, token cache, redacting error wrapper, retry/backoff. Owns all network I/O.'
+    exports: 'getAccessTokenForScope, fabricFetchJson, fabricFetchVoid, listWorkspaces, executeQueries, FabricApiError'
 
 tool_categories:
   project_discovery: 'pbip_get_project_info'

@@ -1,8 +1,4 @@
-import {
-  POWER_BI_SCOPE,
-  fabricFetchJson,
-  getFabricConfig,
-} from '@pbip-tools/fabric-client';
+import { POWER_BI_SCOPE, fabricFetchJson, getFabricConfig } from '@pbip-tools/fabric-client';
 
 interface RawRefresh {
   requestId: string;

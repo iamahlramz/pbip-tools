@@ -407,7 +407,8 @@ function checkNoDaxConstructs(expression: string, issues: DaxValidationIssue[]):
   if (!hasFunction && !hasColumnRef && !hasNumeric && !hasKeyword) {
     issues.push({
       severity: 'error',
-      message: 'Expression contains no recognizable DAX constructs (no functions, column references, or keywords)',
+      message:
+        'Expression contains no recognizable DAX constructs (no functions, column references, or keywords)',
       line: 1,
       column: 1,
     });

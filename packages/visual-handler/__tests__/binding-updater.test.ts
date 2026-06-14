@@ -250,8 +250,7 @@ describe('updateBindingsInJson', () => {
     expect(sort.field.Measure.Property).toBe('Revenue');
 
     // Nested inside objects.dataPoint.properties.fill.solid.color.expr.
-    const expr =
-      updated.visual.objects.dataPoint[0].properties.fill.solid.color.expr;
+    const expr = updated.visual.objects.dataPoint[0].properties.fill.solid.color.expr;
     expect(expr.Measure.Expression.SourceRef.Entity).toBe('Metrics');
     expect(expr.Measure.Property).toBe('Revenue');
 

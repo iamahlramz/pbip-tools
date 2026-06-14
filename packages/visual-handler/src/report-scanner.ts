@@ -23,10 +23,7 @@ export interface FindVisualFilesResult {
   unknownPageDisplayNames: string[];
 }
 
-export async function findVisualFiles(
-  reportPath: string,
-  filter?: PageFilter,
-): Promise<string[]> {
+export async function findVisualFiles(reportPath: string, filter?: PageFilter): Promise<string[]> {
   const result = await findVisualFilesDetailed(reportPath, filter);
   return result.files;
 }
@@ -57,8 +54,7 @@ export async function findVisualFilesDetailed(
   const requestedDisplayNames = new Set(filter?.pageDisplayNames ?? []);
   const seenPagePaths = new Set<string>();
   const seenDisplayNames = new Set<string>();
-  const hasFilter =
-    requestedPagePaths.size > 0 || requestedDisplayNames.size > 0;
+  const hasFilter = requestedPagePaths.size > 0 || requestedDisplayNames.size > 0;
 
   for (const pageId of pageEntries.sort()) {
     const pageDir = join(pagesDir, pageId);
@@ -70,9 +66,9 @@ export async function findVisualFilesDetailed(
     let displayName: string | undefined;
     if (requestedDisplayNames.size > 0) {
       try {
-        const pageJson = JSON.parse(
-          await readFile(join(pageDir, 'page.json'), 'utf-8'),
-        ) as { displayName?: string };
+        const pageJson = JSON.parse(await readFile(join(pageDir, 'page.json'), 'utf-8')) as {
+          displayName?: string;
+        };
         displayName = pageJson.displayName;
         if (displayName) seenDisplayNames.add(displayName);
       } catch {
@@ -113,9 +109,7 @@ export async function findVisualFilesDetailed(
     }
   }
 
-  const unknownPagePaths = [...requestedPagePaths].filter(
-    (p) => !seenPagePaths.has(p),
-  );
+  const unknownPagePaths = [...requestedPagePaths].filter((p) => !seenPagePaths.has(p));
   const unknownPageDisplayNames = [...requestedDisplayNames].filter(
     (d) => !seenDisplayNames.has(d),
   );

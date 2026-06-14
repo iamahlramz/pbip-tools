@@ -78,6 +78,54 @@ describe('createPage', () => {
     );
   });
 
+  describe('Path traversal hardening (B4)', () => {
+    it('rejects pageId containing path-separator characters (forward slash)', async () => {
+      await expect(createPage(project, { pageId: 'foo/bar' })).rejects.toThrow(
+        /PBIR naming convention/,
+      );
+    });
+
+    it('rejects pageId containing path-separator characters (backslash)', async () => {
+      await expect(createPage(project, { pageId: 'foo\\bar' })).rejects.toThrow(
+        /PBIR naming convention/,
+      );
+    });
+
+    it('rejects pageId attempting parent-directory traversal', async () => {
+      await expect(
+        createPage(project, { pageId: '..\\..\\..\\windows\\system32\\evil' }),
+      ).rejects.toThrow(/PBIR naming convention/);
+      await expect(createPage(project, { pageId: '../../etc/passwd' })).rejects.toThrow(
+        /PBIR naming convention/,
+      );
+    });
+
+    it('rejects pageId that is just ".."', async () => {
+      await expect(createPage(project, { pageId: '..' })).rejects.toThrow(/PBIR naming convention/);
+    });
+
+    it('rejects empty pageId', async () => {
+      await expect(createPage(project, { pageId: '' })).rejects.toThrow(/non-empty/);
+    });
+
+    it('rejects pageId containing spaces (not in PBIR naming convention)', async () => {
+      await expect(createPage(project, { pageId: 'My Test Page' })).rejects.toThrow(
+        /PBIR naming convention/,
+      );
+    });
+
+    it('accepts the PBIR-canonical 20-char hex GUID style', async () => {
+      const result = await createPage(project, { pageId: 'a1b2c3d4e5f6789012ab' });
+      expect(result.pageId).toBe('a1b2c3d4e5f6789012ab');
+      // Cleanup
+      const dir = resolve(
+        FIXTURES,
+        'standard/AdventureWorks.Report/definition/pages/a1b2c3d4e5f6789012ab',
+      );
+      await rm(dir, { recursive: true }).catch(() => {});
+    });
+  });
+
   describe('PBIR $schema declaration (Issue #5)', () => {
     it('emits the Microsoft-published page.json $schema URL as the first property', async () => {
       const result = await createPage(project, { pageId: 'TestPage' });

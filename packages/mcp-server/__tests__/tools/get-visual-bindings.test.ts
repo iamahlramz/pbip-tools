@@ -43,7 +43,10 @@ describe('getVisualBindings', () => {
   });
 
   it('should filter by visualId and return just that visual', async () => {
-    const results = (await getVisualBindings(standardProject, 'visual04')) as FullVisualBindingsRow[];
+    const results = (await getVisualBindings(
+      standardProject,
+      'visual04',
+    )) as FullVisualBindingsRow[];
     expect(results).toHaveLength(1);
 
     const visual = results[0];

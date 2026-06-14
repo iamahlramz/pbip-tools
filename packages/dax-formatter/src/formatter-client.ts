@@ -179,7 +179,8 @@ function parseSingleResponse(data: DaxFormatterSingleResponse): DaxFormatResult 
         {
           line: null,
           column: null,
-          message: 'DaxFormatter API returned an empty result — the expression may be invalid or the API may be unavailable',
+          message:
+            'DaxFormatter API returned an empty result — the expression may be invalid or the API may be unavailable',
         },
       ],
     };

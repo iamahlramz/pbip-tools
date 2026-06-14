@@ -8,10 +8,10 @@ Phase B's **beachhead is in** — the network layer exists, auth + retry + redac
 
 ## What shipped
 
-| Item | Commit | Tool / module | Tests |
-| --- | --- | --- | --- |
-| **B0** | `fdc62db` | New `@pbip-tools/fabric-client` package: scope-parameterized OAuth2 client-credentials auth, per-(tenant × scope) token cache, redacting error wrapper, retry/backoff with `Retry-After` honoured, 401 evict-and-retry. Existing four `fabric-*` tools migrated to consume it; public signatures preserved. | 29 |
-| **B2** | `acf162d` | New `pbip_live_list_model` tool: concurrent `INFO.TABLES / MEASURES / COLUMNS / RELATIONSHIPS / ROLES` with ID → name joins in memory, `CAPACITY_NOT_SUPPORTED` mapping for Pro / shared capacity, `includeExpressions` opt-in, optional `tableFilter` allowlist. | 6 |
+| Item   | Commit    | Tool / module                                                                                                                                                                                                                                                                                               | Tests |
+| ------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **B0** | `fdc62db` | New `@pbip-tools/fabric-client` package: scope-parameterized OAuth2 client-credentials auth, per-(tenant × scope) token cache, redacting error wrapper, retry/backoff with `Retry-After` honoured, 401 evict-and-retry. Existing four `fabric-*` tools migrated to consume it; public signatures preserved. | 29    |
+| **B2** | `acf162d` | New `pbip_live_list_model` tool: concurrent `INFO.TABLES / MEASURES / COLUMNS / RELATIONSHIPS / ROLES` with ID → name joins in memory, `CAPACITY_NOT_SUPPORTED` mapping for Pro / shared capacity, `includeExpressions` opt-in, optional `tableFilter` allowlist.                                           | 6     |
 
 ### What `fabric-client` exports
 

@@ -2,11 +2,11 @@
 
 Records of significant architectural decisions for pbip-tools.
 
-| # | Title | Status | Date |
-| --- | --- | --- | --- |
+| #                                         | Title                                             | Status   | Date       |
+| ----------------------------------------- | ------------------------------------------------- | -------- | ---------- |
 | [001](./ADR-001-live-mode-integration.md) | Live-mode integration and `fabric-client` package | Accepted | 2026-04-22 |
-| [002](./ADR-002-tmdl-write-safety.md) | TMDL write safety — parser round-trip mandatory | Accepted | 2026-04-22 |
-| [003](./ADR-003-unified-error-shape.md) | Unified error response shape across all tools | Accepted | 2026-04-23 |
+| [002](./ADR-002-tmdl-write-safety.md)     | TMDL write safety — parser round-trip mandatory   | Accepted | 2026-04-22 |
+| [003](./ADR-003-unified-error-shape.md)   | Unified error response shape across all tools     | Accepted | 2026-04-23 |
 
 ## Format
 

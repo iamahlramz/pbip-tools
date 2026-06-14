@@ -32,9 +32,7 @@ describe('genSubtitleFamily', () => {
     expect(result.table).toBe('_Measures');
     expect(result.created).toHaveLength(1);
     expect(result.created[0].name).toBe('SubT Sales Summary');
-    expect(result.created[0].expression).toBe(
-      '"Total: " & FORMAT([Total Sales], "#,0")',
-    );
+    expect(result.created[0].expression).toBe('"Total: " & FORMAT([Total Sales], "#,0")');
   });
 
   it('uses the default formatString when not provided', () => {
@@ -244,7 +242,7 @@ describe('genSubtitleFamily', () => {
       expect(() =>
         genSubtitleFamily(project, '_Measures', [
           {
-            measureName: "SubT Apostrophe",
+            measureName: 'SubT Apostrophe',
             label: "Today's",
             sourceMeasure: 'Total Sales',
           },

@@ -24,7 +24,7 @@ parser handler
         |
 @pbip-tools/project-discovery  (filesystem + security + writer)
         |
-@pbip-tools/mcp-server         (MCP protocol + 25 tools)
+@pbip-tools/mcp-server         (MCP protocol + 56 tools)
 ```
 
 The bottom of the graph (`mcp-server`) is what end users interact with. Everything above it is a library that can also be used independently.
@@ -86,12 +86,12 @@ This is the orchestration layer between the raw parsers and the MCP server. It h
 
 ### @pbip-tools/mcp-server
 
-**The MCP protocol server exposing all 25 tools.**
+**The MCP protocol server exposing all 56 tools.**
 
 This is the package that AI assistants (Claude, GitHub Copilot, etc.) interact with via the [Model Context Protocol](https://modelcontextprotocol.io). It:
 
 - Implements the MCP server using `@modelcontextprotocol/sdk`
-- Defines all 25 tool schemas using Zod for input validation
+- Defines all 56 tool schemas using Zod for input validation
 - Routes tool calls to the appropriate functions in `project-discovery`, `tmdl-parser`, `visual-handler`, and `dax-formatter`
 - Handles error boundaries so that failures return clean MCP error responses without leaking stack traces
 

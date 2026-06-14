@@ -1,9 +1,4 @@
-import {
-  FABRIC_SCOPE,
-  POWER_BI_SCOPE,
-  type FabricApiScope,
-  type FabricConfig,
-} from './config.js';
+import { FABRIC_SCOPE, POWER_BI_SCOPE, type FabricApiScope, type FabricConfig } from './config.js';
 import { FabricApiError, fabricErrorFromResponse } from './errors.js';
 
 interface CachedToken {
@@ -82,12 +77,16 @@ export async function getAccessTokenForScope(
       body: body.toString(),
     });
   } catch (cause) {
-    // Strip any client_secret accidentally captured in the cause's stack/message
-    // before surfacing.
+    // SECURITY (B5): scrub the client_secret from any cause that captured the
+    // request body in its message. The custom util.inspect on FabricApiError
+    // already prevents cause traversal via console.error / util.inspect, but
+    // we belt-and-braces it here so even direct `err.cause.message` access by
+    // a future caller cannot leak the secret.
+    const scrubbedCause = scrubSecretFromCause(cause, config.clientSecret);
     throw new FabricApiError({
       code: 'AUTH_NETWORK_FAILED',
       message: 'Network failure while acquiring Fabric access token',
-      cause,
+      cause: scrubbedCause,
     });
   }
 
@@ -127,6 +126,38 @@ export async function getAccessTokenForScope(
  */
 export function evictToken(config: FabricConfig, scope: FabricApiScope): void {
   tokenCache.delete(cacheKey(config.tenantId, scope));
+}
+
+/**
+ * Best-effort redaction of an SP `client_secret` from anywhere it might have
+ * been captured in an underlying error (message, stack, request-body fragments
+ * embedded by some `fetch` polyfills).
+ *
+ * Returns a fresh Error instance (when the original was an Error) so the
+ * caller's cause chain remains useful for stack traces minus the secret.
+ * Non-Error values are passed through unchanged after string-coercion +
+ * redaction.
+ */
+function scrubSecretFromCause(cause: unknown, secret: string): unknown {
+  if (!secret) return cause;
+  const replacement = '<redacted-client-secret>';
+  if (cause instanceof Error) {
+    const scrubbed = new Error(redactValue(cause.message, secret, replacement));
+    scrubbed.name = cause.name;
+    if (typeof cause.stack === 'string') {
+      scrubbed.stack = redactValue(cause.stack, secret, replacement);
+    }
+    return scrubbed;
+  }
+  if (typeof cause === 'string') {
+    return redactValue(cause, secret, replacement);
+  }
+  return cause;
+}
+
+function redactValue(input: string, secret: string, replacement: string): string {
+  if (!input.includes(secret)) return input;
+  return input.split(secret).join(replacement);
 }
 
 export { FABRIC_SCOPE, POWER_BI_SCOPE };

@@ -1,5 +1,5 @@
 ---
-"@pbip-tools/fabric-client": minor
+'@pbip-tools/fabric-client': minor
 ---
 
 **New package — Fabric / Power BI REST client**

@@ -119,7 +119,9 @@ describe('fabricFetchJson — retry / backoff', () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(tokenResponse())
-      .mockResolvedValueOnce(new Response('boom', { status: 503, statusText: 'Service Unavailable' }))
+      .mockResolvedValueOnce(
+        new Response('boom', { status: 503, statusText: 'Service Unavailable' }),
+      )
       .mockResolvedValueOnce(jsonResponse({ ok: true }));
 
     const result = await fabricFetchJson<{ ok: boolean }>(config, FABRIC_SCOPE, {
