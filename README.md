@@ -26,7 +26,7 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | ----------------------- | ------------------------------------------------ |
 | `pbip_get_project_info` | Model summary: table/measure/relationship counts |
 
-### Semantic Model — Read (7)
+### Semantic Model — Read (9)
 
 | Tool                        | Description                                                                  |
 | --------------------------- | ---------------------------------------------------------------------------- |
@@ -37,31 +37,37 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_search_measures`      | Search measure names and DAX expressions                                     |
 | `pbip_list_display_folders` | Display folder tree with measure counts                                      |
 | `pbip_list_roles`           | List all RLS roles with table permission counts                              |
+| `pbip_list_functions`       | User-defined DAX functions (UDFs) in the model                               |
+| `pbip_get_function`         | Full UDF detail: body, parameters, annotations                               |
 
-### Semantic Model — Write (10)
+### Semantic Model — Write (12)
 
-| Tool                     | Description                                                          |
-| ------------------------ | -------------------------------------------------------------------- |
-| `pbip_create_measure`    | Create a new DAX measure with format string, display folder, etc.    |
-| `pbip_update_measure`    | Modify expression, format string, folder, description, or visibility |
-| `pbip_delete_measure`    | Remove a measure from its table                                      |
-| `pbip_move_measure`      | Move between tables with automatic visual.json binding updates       |
-| `pbip_create_calc_group` | Create a new calculation group table with items                      |
-| `pbip_add_calc_item`     | Add a calculation item to an existing group                          |
-| `pbip_create_role`       | Create a new RLS role with table-level DAX filters                   |
-| `pbip_update_role`       | Modify role permission or filter expressions                         |
-| `pbip_delete_role`       | Remove an RLS role                                                   |
-| `pbip_get_role`          | Full role detail with DAX filter expressions                         |
+| Tool                       | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| `pbip_create_measure`      | Create a new DAX measure with format string, display folder, etc.    |
+| `pbip_update_measure`      | Modify expression, format string, folder, description, or visibility |
+| `pbip_delete_measure`      | Remove a measure from its table                                      |
+| `pbip_move_measure`        | Move between tables with automatic visual.json binding updates       |
+| `pbip_create_calc_group`   | Create a new calculation group table with items                      |
+| `pbip_add_calc_item`       | Add a calculation item to an existing group                          |
+| `pbip_create_role`         | Create a new RLS role with table-level DAX filters                   |
+| `pbip_update_role`         | Modify role permission or filter expressions                         |
+| `pbip_delete_role`         | Remove an RLS role                                                   |
+| `pbip_get_role`            | Full role detail with DAX filter expressions                         |
+| `pbip_create_relationship` | Create a relationship between two tables                             |
+| `pbip_delete_relationship` | Delete a relationship by from / to tables + columns                  |
 
-### Visual & Report Tools (5)
+### Visual & Report Tools (7)
 
 | Tool                          | Description                                                                |
 | ----------------------------- | -------------------------------------------------------------------------- |
 | `pbip_list_visuals`           | List all visuals across pages with types and binding counts                |
 | `pbip_get_visual_bindings`    | Get measure/column bindings for a visual or page                           |
-| `pbip_audit_bindings`         | Find broken bindings referencing missing tables/measures/columns + summary |
 | `pbip_update_visual_bindings` | Batch update bindings after measure moves or table renames                 |
 | `pbip_list_visual_types`      | Browse visual type registry with data roles and categories                 |
+| `pbip_create_page`            | Create a page directory + `page.json` (default canvas 1920×1080)           |
+| `pbip_create_visual`          | Create a visual under a page with optional bindings                        |
+| `pbip_audit_bindings`         | Find broken bindings referencing missing tables/measures/columns + summary |
 
 ### DAX Tools (3)
 
@@ -71,23 +77,23 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_validate_dax`    | Validate DAX syntax locally — offline, no API needed              |
 | `pbip_format_measures` | Batch format all measures in a table and write back to TMDL       |
 
-### Audit & Validation (4)
+### Audit & Validation (3)
 
 | Tool                         | Description                                                            |
 | ---------------------------- | ---------------------------------------------------------------------- |
 | `pbip_validate_tmdl`         | Validate model with 40+ BPA rules across 7 categories                  |
 | `pbip_audit_dependencies`    | DAX dependency graph in JSON, DOT (Graphviz), or adjacency list format |
 | `pbip_audit_unused_measures` | Find measures not referenced by any other measure                      |
-| `pbip_audit_bindings`        | Cross-reference visual bindings with semantic model                    |
 
-### Organization & Generation (4)
+### Organization & Generation (5)
 
-| Tool                         | Description                                                    |
-| ---------------------------- | -------------------------------------------------------------- |
-| `pbip_organize_folders`      | Auto-organize measures into display folders by naming patterns |
-| `pbip_gen_data_dictionary`   | Generate markdown data dictionary from semantic model          |
-| `pbip_gen_time_intelligence` | Generate time intelligence measures (YTD, YoY, etc.)           |
-| `pbip_gen_kpi_suite`         | Generate KPI measure suites from base measures                 |
+| Tool                         | Description                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `pbip_organize_folders`      | Auto-organize measures into display folders by naming patterns                   |
+| `pbip_gen_data_dictionary`   | Generate markdown / JSON data dictionary from the semantic model                 |
+| `pbip_gen_time_intelligence` | Generate time intelligence measures (YTD, YoY, etc.)                             |
+| `pbip_gen_kpi_suite`         | Generate KPI measure suites from base measures                                   |
+| `pbip_gen_subtitle_family`   | Bulk `"{label}: " & FORMAT([source], "{fmt}")` subtitle measures for gauge / KPI |
 
 ### SVG Templates (1)
 
@@ -117,7 +123,15 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 
 Requires env vars: `FABRIC_TENANT_ID`, `FABRIC_CLIENT_ID`, `FABRIC_CLIENT_SECRET`
 
-### RDL/Paginated Reports (6)
+### Live-Mode (1)
+
+| Tool                   | Description                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `pbip_live_list_model` | Schema dump of a deployed Fabric / Power BI dataset via `INFO.*` DAX functions |
+
+Requires the same `FABRIC_*` env vars as the Fabric API tools, plus a dataset on Premium / PPU / Fabric F-SKU capacity (`INFO.*` returns `CAPACITY_NOT_SUPPORTED` on Pro / shared).
+
+### RDL / Paginated Reports (6)
 
 | Tool                       | Description                                    |
 | -------------------------- | ---------------------------------------------- |
@@ -229,25 +243,27 @@ export FABRIC_CLIENT_SECRET="your-client-secret"
 ## Architecture
 
 ```
-@pbip-tools/core              (zero deps — types only)
+@pbip-tools/core                              (zero deps — types only)
         |
    +----+----+----+----+
-   |    |    |         |
-@pbip/ @pbip/ @pbip/  @pbip/
-tmdl   visual  dax-    rdl-parser  (RDL/RDLX paginated reports)
-parser handler formatter
-   |    |    |         |
+   |    |    |    |
+@pbip/ @pbip/ @pbip/ @pbip/
+tmdl-  visual- dax-  rdl-
+parser handler form. parser
+   |    |    |    |
    +----+----+----+----+
         |
-@pbip-tools/project-discovery  (filesystem discovery + security filter + writer)
+@pbip-tools/project-discovery                 (filesystem + security + writer)
         |
-@pbip-tools/mcp-server         (MCP protocol server + 56 tools)
+@pbip-tools/fabric-client                     (Fabric / Power BI REST + auth + retry + redaction)
+        |
+@pbip-tools/mcp-server                        (MCP protocol server + 56 tools)
 ```
 
-- **Monorepo:** npm workspaces + Turborepo
+- **Monorepo:** npm workspaces + Turborepo (8 packages)
 - **Language:** TypeScript 5.7+, strict mode, ESM
 - **Runtime:** Node.js 18+
-- **Tests:** Vitest — 422 tests across 64 test files
+- **Tests:** Vitest — 653 tests across 77 test files (mcp-server 333, tmdl-parser 93, rdl-parser 55, dax-formatter 53, project-discovery 45, visual-handler 42, fabric-client 32)
 
 ## Development
 
@@ -296,15 +312,16 @@ The parser handles the full TMDL specification:
 
 ## Packages
 
-| Package                                                       | Description                                                 |
-| ------------------------------------------------------------- | ----------------------------------------------------------- |
-| [`@pbip-tools/core`](packages/core)                           | Core types and constants                                    |
-| [`@pbip-tools/tmdl-parser`](packages/tmdl-parser)             | TMDL file parser and serializer                             |
-| [`@pbip-tools/visual-handler`](packages/visual-handler)       | Visual.json binding extraction and updating                 |
-| [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator  |
-| [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, security filtering, and writing |
-| [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL/RDLX paginated report parser                            |
-| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 56 tools for AI assistants                  |
+| Package                                                       | Description                                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`@pbip-tools/core`](packages/core)                           | Core types and constants (zero runtime deps)                                     |
+| [`@pbip-tools/tmdl-parser`](packages/tmdl-parser)             | TMDL file parser and serializer                                                  |
+| [`@pbip-tools/visual-handler`](packages/visual-handler)       | Visual.json binding extraction, updating, and page-filter helpers                |
+| [`@pbip-tools/dax-formatter`](packages/dax-formatter)         | DAX formatter (DaxFormatter.com API) and offline validator                       |
+| [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, security filtering, and writing                      |
+| [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL / RDLX paginated report parser                                               |
+| [`@pbip-tools/fabric-client`](packages/fabric-client)         | Fabric / Power BI REST client — scope-parameterized auth, token cache, redaction |
+| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 56 tools for AI assistants                                       |
 
 ## License
 

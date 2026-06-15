@@ -26,4 +26,4 @@ First release of `@pbip-tools/fabric-client`. The package owns all network I/O a
 
 Used internally by `@pbip-tools/mcp-server` for the four existing `fabric-*` tools (signatures preserved during migration) and the new `pbip_live_list_model` tool. Designed for standalone reuse from CI scripts, Databricks notebooks, and any future non-MCP context.
 
-Initial release at 0.1.0. 29 unit tests (auth cache, error redaction, retry/401 recovery, header subsetting) — see `__tests__/`.
+Initial release at 0.1.0. 32 unit tests (auth cache, expiry refresh, force-refresh, evictToken, AUTH_FAILED on 401, secret-redaction in cause chain + util.inspect output, error code mapping, header subsetting, retry/backoff with Retry-After, 401 evict-and-retry, bearer-token redaction in error body excerpts) — see `__tests__/`.
