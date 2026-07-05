@@ -135,6 +135,40 @@ describe('updateVisualProperties', () => {
     expect(entries[1].properties.color).toEqual({ solid: { color: '#333333' } });
   });
 
+  it('merges into an aggregation-wrapped metadata selector via a bare-field selector (no duplicate entry)', async () => {
+    // PBIR wraps implicitly-aggregated columns: the on-disk entry targets
+    // "Sum(Orders.Freight)"; a caller patching with the bare "Orders.Freight"
+    // must merge into that entry, not append a second conflicting one.
+    await seedVisual('ReportSectionMain', 'visual01', {
+      name: 'visual01',
+      visual: {
+        visualType: 'clusteredColumnChart',
+        objects: {
+          dataPoint: [
+            { properties: { fill: { solid: { color: '#111111' } } }, selector: { metadata: 'Sum(Orders.Freight)' } },
+          ],
+        },
+      },
+    });
+
+    const result = await updateVisualProperties(project(), {
+      pageId: 'ReportSectionMain',
+      visualName: 'visual01',
+      target: 'objects',
+      card: 'dataPoint',
+      selector: { metadata: 'Orders.Freight' },
+      properties: { fill: { solid: { color: '#222222' } } },
+    });
+
+    expect(result.action).toBe('merged');
+    const doc = await readVisual('ReportSectionMain', 'visual01');
+    const entries = doc.visual.objects.dataPoint;
+    expect(entries).toHaveLength(1); // merged, not appended
+    expect(entries[0].properties.fill).toEqual({ solid: { color: '#222222' } });
+    // The on-disk (wrapped) selector is preserved — we merge into it, not rename it.
+    expect(entries[0].selector).toEqual({ metadata: 'Sum(Orders.Freight)' });
+  });
+
   it('creates the card array when the card is absent', async () => {
     // Fixture visual01 ships with `objects: {}` (no cards).
     const before = await readVisual('ReportSectionMain', 'visual01');

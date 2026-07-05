@@ -94,11 +94,13 @@ export async function updateVisualProperties(
   }
   const cardEntries = targetBag[options.card] as Array<Record<string, unknown>>;
 
-  // Find the entry whose selector deep-equals the supplied selector. A missing
-  // selector on either side is treated as undefined, and deepEqual treats
-  // null/undefined as equivalent — so both-absent matches.
+  // Find the entry whose selector matches the supplied selector. A missing
+  // selector on either side is treated as undefined (both-absent matches). The
+  // `metadata` field is compared with the PBIR aggregation wrapper normalized
+  // away, so a caller's bare `Orders.Freight` matches an on-disk
+  // `Sum(Orders.Freight)` and merges instead of appending a duplicate entry.
   const match = cardEntries.find(
-    (entry) => isPlainObject(entry) && deepEqual(entry.selector, options.selector),
+    (entry) => isPlainObject(entry) && selectorsMatch(entry.selector, options.selector),
   );
 
   let action: 'merged' | 'appended';
@@ -131,6 +133,34 @@ export async function updateVisualProperties(
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Strip a PBIR aggregation wrapper from a queryRef-style string, e.g.
+ * `Sum(Orders.Freight)` -> `Orders.Freight`; leaves bare refs unchanged. */
+function unwrapAggregation(ref: string): string {
+  const m = ref.match(/^[A-Za-z]+\((.+)\)$/);
+  return m ? m[1] : ref;
+}
+
+/** Selector equality with `metadata` aggregation-normalized. Both-absent
+ * (null/undefined) matches. Falls back to deep-equal for non-metadata selectors
+ * (id, data, scopeId, …). */
+function selectorsMatch(a: unknown, b: unknown): boolean {
+  if (
+    isPlainObject(a) &&
+    isPlainObject(b) &&
+    typeof a.metadata === 'string' &&
+    typeof b.metadata === 'string'
+  ) {
+    if (unwrapAggregation(a.metadata) !== unwrapAggregation(b.metadata)) return false;
+    // Compare the remaining selector keys structurally (excluding metadata).
+    const rest = (o: Record<string, unknown>) => {
+      const { metadata: _drop, ...others } = o;
+      return others;
+    };
+    return deepEqual(rest(a), rest(b));
+  }
+  return deepEqual(a, b);
 }
 
 /**
