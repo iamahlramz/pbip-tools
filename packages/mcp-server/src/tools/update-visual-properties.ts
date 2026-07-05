@@ -135,11 +135,19 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Strip a PBIR aggregation wrapper from a queryRef-style string, e.g.
+/** Strip ONE PBIR aggregation wrapper from a queryRef-style string, e.g.
  * `Sum(Orders.Freight)` -> `Orders.Freight`; leaves bare refs unchanged. */
 function unwrapAggregation(ref: string): string {
   const m = ref.match(/^[A-Za-z]+\((.+)\)$/);
   return m ? m[1] : ref;
+}
+
+/** Two metadata queryRefs refer to the same projection iff they are equal, OR one
+ * is the bare form of the other's aggregation wrapper (bare `x` <-> `Sum(x)`).
+ * Deliberately NOT `unwrap(a)===unwrap(b)` — that would collapse `Sum(x)` and
+ * `Avg(x)` (different aggregations of the same column) into one. */
+function metadataEquivalent(a: string, b: string): boolean {
+  return a === b || unwrapAggregation(a) === b || a === unwrapAggregation(b);
 }
 
 /** Selector equality with `metadata` aggregation-normalized. Both-absent
@@ -152,7 +160,7 @@ function selectorsMatch(a: unknown, b: unknown): boolean {
     typeof a.metadata === 'string' &&
     typeof b.metadata === 'string'
   ) {
-    if (unwrapAggregation(a.metadata) !== unwrapAggregation(b.metadata)) return false;
+    if (!metadataEquivalent(a.metadata, b.metadata)) return false;
     // Compare the remaining selector keys structurally (excluding metadata).
     const rest = (o: Record<string, unknown>) => {
       const { metadata: _drop, ...others } = o;

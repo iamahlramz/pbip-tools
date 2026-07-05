@@ -169,6 +169,36 @@ describe('updateVisualProperties', () => {
     expect(entries[0].selector).toEqual({ metadata: 'Sum(Orders.Freight)' });
   });
 
+  it('does NOT merge across different aggregations of the same column (Sum ≠ Avg)', async () => {
+    // bare<->wrapped equivalence must not collapse distinct aggregations.
+    await seedVisual('ReportSectionMain', 'visual01', {
+      name: 'visual01',
+      visual: {
+        visualType: 'clusteredColumnChart',
+        objects: {
+          dataPoint: [
+            { properties: { fill: { solid: { color: '#aaaaaa' } } }, selector: { metadata: 'Sum(Sales.Amount)' } },
+          ],
+        },
+      },
+    });
+
+    const result = await updateVisualProperties(project(), {
+      pageId: 'ReportSectionMain',
+      visualName: 'visual01',
+      target: 'objects',
+      card: 'dataPoint',
+      selector: { metadata: 'Avg(Sales.Amount)' },
+      properties: { fill: { solid: { color: '#00ff00' } } },
+    });
+
+    expect(result.action).toBe('appended'); // distinct aggregation → new entry, not merged
+    const doc = await readVisual('ReportSectionMain', 'visual01');
+    expect(doc.visual.objects.dataPoint).toHaveLength(2);
+    // The Sum entry is untouched.
+    expect(doc.visual.objects.dataPoint[0].properties.fill).toEqual({ solid: { color: '#aaaaaa' } });
+  });
+
   it('creates the card array when the card is absent', async () => {
     // Fixture visual01 ships with `objects: {}` (no cards).
     const before = await readVisual('ReportSectionMain', 'visual01');
