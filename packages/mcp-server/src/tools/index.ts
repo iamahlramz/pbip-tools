@@ -33,6 +33,7 @@ import {
   // Report/visual management schemas
   CreatePageSchema,
   CreateVisualSchema,
+  UpdateVisualPropertiesSchema,
   // Visual handler schemas
   ListVisualsSchema,
   GetVisualBindingsSchema,
@@ -110,6 +111,7 @@ import { addCalcItem } from './add-calc-item.js';
 // Report/visual management tool implementations
 import { createPage } from './create-page.js';
 import { createVisual } from './create-visual.js';
+import { updateVisualProperties } from './update-visual-properties.js';
 
 // Visual handler tool implementations
 import { listVisuals } from './list-visuals.js';
@@ -559,6 +561,25 @@ export function registerTools(
         visualType: args.visualType,
         title: args.title,
         bindings: args.bindings,
+      });
+      invalidateCache(project.pbipPath);
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_visual_properties',
+    'Generically patch formatting properties on an existing visual. Deep-merges the supplied properties into the card entry matching the given selector (appends a new entry when none match). Which card/selector/property paths to use is determined by the pbivisual-json family skills — this tool is deliberately generic.',
+    UpdateVisualPropertiesSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = await updateVisualProperties(project, {
+        pageId: args.pageId,
+        visualName: args.visualName,
+        target: args.target,
+        card: args.card,
+        selector: args.selector,
+        properties: args.properties,
       });
       invalidateCache(project.pbipPath);
       return jsonResponse({ success: true, ...result });

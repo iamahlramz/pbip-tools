@@ -179,6 +179,42 @@ export const CreateVisualSchema = z.object({
     .describe('Initial data bindings for the visual'),
 });
 
+export const UpdateVisualPropertiesSchema = z.object({
+  projectPath,
+  pageId: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('Page ID (folder name under definition/pages) containing the visual'),
+  visualName: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe("Visual name (folder name under the page's visuals/ directory)"),
+  target: z
+    .enum(['objects', 'visualContainerObjects'])
+    .describe(
+      'Which formatting bag to patch: "objects" (data-plane visual formatting) or "visualContainerObjects" (container-level formatting such as title/background)',
+    ),
+  card: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('Formatting card name within the target bag (e.g. "title", "labels", "background")'),
+  selector: z
+    .record(z.unknown())
+    .nullable()
+    .optional()
+    .describe(
+      'Optional selector object identifying which entry in the card to patch. Entries are matched by deep-equality on selector; omit or null to target the entry with no selector.',
+    ),
+  properties: z
+    .record(z.unknown())
+    .describe(
+      'Formatting properties to deep-merge into the matched entry (nested objects merge recursively; arrays/scalars replace).',
+    ),
+});
+
 // --- Visual handler tool schemas ---
 
 export const ListVisualsSchema = z.object({
