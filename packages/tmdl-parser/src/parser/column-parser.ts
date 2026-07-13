@@ -2,6 +2,7 @@ import type { ColumnNode, AnnotationNode, ChangedPropertyNode } from '@pbip-tool
 import type { Token } from '../lexer/index.js';
 import { TokenType } from '../lexer/index.js';
 import type { ParseWarning } from '../errors.js';
+import { normalizeExpression } from './normalize-expression.js';
 
 export function parseColumn(
   tokens: Token[],
@@ -22,6 +23,40 @@ export function parseColumn(
   const changedProperties: ChangedPropertyNode[] = [];
 
   let i = startIndex + 1;
+
+  // Calculated-column DAX: `column X = <expr>` inline, or `column X =` with a
+  // multi-line/backtick body — same shapes as measures (mirrors parseMeasure).
+  if (colToken.value !== undefined) {
+    const inlineExpression = colToken.value.trim();
+    const expressionLines: string[] = [];
+    let isBacktickBlock = false;
+
+    if (i < tokens.length && tokens[i].type === TokenType.BACKTICK_FENCE) {
+      isBacktickBlock = true;
+      i++;
+      while (i < tokens.length) {
+        const t = tokens[i];
+        if (t.type === TokenType.BACKTICK_FENCE) {
+          i++;
+          break;
+        }
+        if (t.type === TokenType.EXPRESSION_CONTENT) {
+          expressionLines.push(t.value ?? t.raw);
+        }
+        i++;
+      }
+    } else if (inlineExpression === '') {
+      while (i < tokens.length && tokens[i].type === TokenType.EXPRESSION_CONTENT) {
+        expressionLines.push(tokens[i].value ?? tokens[i].raw);
+        i++;
+      }
+    }
+
+    node.expression =
+      isBacktickBlock || inlineExpression === ''
+        ? normalizeExpression(expressionLines)
+        : inlineExpression;
+  }
   while (i < tokens.length) {
     const t = tokens[i];
     if (t.type === TokenType.BLANK_LINE) {

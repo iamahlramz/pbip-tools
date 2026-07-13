@@ -4,6 +4,7 @@ export { loadConfig, resolveSecurityConfig } from './config-loader.js';
 export { loadProject } from './project-loader.js';
 export { applySecurityFilter } from './security-filter.js';
 export {
+  safeWrite,
   writeTableFile,
   deleteTableFile,
   writeModelFile,

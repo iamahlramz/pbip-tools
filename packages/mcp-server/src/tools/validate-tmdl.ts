@@ -168,6 +168,9 @@ function validateTableRefs(project: PbipProject, issues: TmdlValidationIssue[]):
   const tableNames = new Set(project.model.tables.map((t) => t.name));
 
   for (const ref of tableRefs) {
+    // Only `ref table` entries point at tables — cultureInfo (and future kinds)
+    // reference other object types and must not be checked against table names.
+    if (ref.refKind !== undefined && ref.refKind !== 'table') continue;
     if (!tableNames.has(ref.name)) {
       issues.push({
         severity: 'error',

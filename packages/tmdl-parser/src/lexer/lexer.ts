@@ -215,9 +215,12 @@ export function tokenize(text: string): Token[] {
     } else if (
       token.type === TokenType.MEASURE ||
       token.type === TokenType.EXPRESSION ||
-      token.type === TokenType.FUNCTION
+      token.type === TokenType.FUNCTION ||
+      token.type === TokenType.COLUMN
     ) {
       // Check if expression value starts with ``` or ends with =
+      // (COLUMN only reaches here for calculated columns — data columns have no `=`
+      // so token.value is undefined and the guard below skips them)
       if (token.value !== undefined) {
         const val = token.value.trim();
         if (val === '```' || val.startsWith('```\n') || val.startsWith('```\r')) {
@@ -318,18 +321,19 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
     const rest = stripped.substring(firstWord.length).trim();
 
     if (token.type === TokenType.REF) {
-      // `ref table 'Name'` or `ref table Name`
-      const refRest = rest;
-      const refMatch = refRest.match(/^table\s+(.+)$/);
+      // `ref <kind> 'Name'` — kind is table, cultureInfo, or any future ref kind
+      const refMatch = rest.match(/^(\w+)\s+(.+)$/);
       if (refMatch) {
-        token.name = unquoteName(refMatch[1].trim());
+        token.value = refMatch[1];
+        token.name = unquoteName(refMatch[2].trim());
       }
     } else if (
       token.type === TokenType.MEASURE ||
       token.type === TokenType.EXPRESSION ||
       token.type === TokenType.FUNCTION ||
       token.type === TokenType.CALCULATION_ITEM ||
-      token.type === TokenType.TABLE_PERMISSION
+      token.type === TokenType.TABLE_PERMISSION ||
+      token.type === TokenType.COLUMN
     ) {
       // `measure 'Name' = VALUE` or `function 'Name' = (body)` or `tablePermission Store = DAX`
       const eqIndex = rest.indexOf('=');

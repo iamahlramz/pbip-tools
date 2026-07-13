@@ -1,6 +1,7 @@
 import type {
   RoleNode,
   TablePermissionNode,
+  ColumnPermissionNode,
   RoleMemberNode,
   AnnotationNode,
   ModelPermission,
@@ -126,6 +127,7 @@ function parseTablePermission(
   };
 
   const annotations: AnnotationNode[] = [];
+  const columnPermissions: ColumnPermissionNode[] = [];
 
   // Parse properties after the expression
   while (i < tokens.length) {
@@ -143,12 +145,40 @@ function parseTablePermission(
         value: t.value ?? '',
         range: { start: { line: t.line, column: 0 }, end: { line: t.line, column: 0 } },
       });
+    } else if (t.type === TokenType.PROPERTY && t.keyword === 'metadataPermission') {
+      // OLS table-level permission
+      node.metadataPermission = t.value;
+    } else if (t.type === TokenType.COLUMN_PERMISSION) {
+      // OLS column-level permission: `columnPermission <col>` with a nested
+      // `metadataPermission: <value>` property at deeper indent
+      const cp: ColumnPermissionNode = {
+        kind: 'columnPermission',
+        columnName: t.name ?? '',
+        range: { start: { line: t.line, column: 0 }, end: { line: t.line, column: 0 } },
+      };
+      let j = i + 1;
+      while (j < tokens.length) {
+        const c = tokens[j];
+        if (c.type === TokenType.BLANK_LINE) {
+          j++;
+          continue;
+        }
+        if (c.indent <= t.indent) break;
+        if (c.type === TokenType.PROPERTY && c.keyword === 'metadataPermission') {
+          cp.metadataPermission = c.value;
+        }
+        j++;
+      }
+      columnPermissions.push(cp);
+      i = j;
+      continue;
     }
 
     i++;
   }
 
   if (annotations.length > 0) node.annotations = annotations;
+  if (columnPermissions.length > 0) node.columnPermissions = columnPermissions;
 
   node.range = {
     start: { line: tpToken.line, column: 0 },

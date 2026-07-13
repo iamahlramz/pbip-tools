@@ -34,6 +34,7 @@ export type {
   PropertyNode,
   RoleNode,
   TablePermissionNode,
+  ColumnPermissionNode,
   RoleMemberNode,
   ModelPermission,
   UnknownNode,

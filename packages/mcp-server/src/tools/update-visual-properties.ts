@@ -1,6 +1,7 @@
 import type { PbipProject } from '@pbip-tools/core';
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { safeWrite } from '@pbip-tools/project-discovery';
 import { safeJoinUnderRoot } from '../shared/path-safety.js';
 
 /**
@@ -119,7 +120,7 @@ export async function updateVisualProperties(
     action = 'appended';
   }
 
-  await writeFile(visualJsonPath, JSON.stringify(doc, null, 2) + '\n', 'utf-8');
+  await safeWrite(visualJsonPath, JSON.stringify(doc, null, 2) + '\n');
 
   return {
     pageId: options.pageId,

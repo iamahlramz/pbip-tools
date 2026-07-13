@@ -1,6 +1,7 @@
 import type { PbipProject } from '@pbip-tools/core';
-import { mkdir, writeFile, stat } from 'node:fs/promises';
+import { mkdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { safeWrite } from '@pbip-tools/project-discovery';
 import { PBIR_VISUAL_CONTAINER_SCHEMA_URL } from '../shared/pbir-schemas.js';
 import { safeJoinUnderRoot } from '../shared/path-safety.js';
 
@@ -54,7 +55,7 @@ export async function createVisual(
 
   const visualJson = buildVisualJson(options);
   const visualJsonPath = join(visualDir, 'visual.json');
-  await writeFile(visualJsonPath, JSON.stringify(visualJson, null, 2) + '\n', 'utf-8');
+  await safeWrite(visualJsonPath, JSON.stringify(visualJson, null, 2) + '\n');
 
   return {
     pageId: options.pageId,

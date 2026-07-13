@@ -37,6 +37,8 @@ export interface ModelNode extends TmdlNode {
 export interface TableRefNode extends TmdlNode {
   kind: 'tableRef';
   name: string;
+  /** TMDL ref kind — 'table' (default), 'cultureInfo', or any future `ref <kind>` construct */
+  refKind?: string;
 }
 
 export interface QueryGroupNode extends TmdlNode {
@@ -279,8 +281,18 @@ export interface TablePermissionNode extends TmdlNode {
   kind: 'tablePermission';
   tableName: string;
   filterExpression: string;
+  /** OLS table-level metadata permission — 'none' | 'read' | 'default' */
+  metadataPermission?: string;
+  /** OLS column-level permissions nested under this tablePermission */
+  columnPermissions?: ColumnPermissionNode[];
   annotations?: AnnotationNode[];
   properties?: PropertyNode[];
+}
+
+export interface ColumnPermissionNode extends TmdlNode {
+  kind: 'columnPermission';
+  columnName: string;
+  metadataPermission?: string;
 }
 
 export interface RoleMemberNode extends TmdlNode {

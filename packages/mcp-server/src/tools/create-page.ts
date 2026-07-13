@@ -1,6 +1,7 @@
 import type { PbipProject } from '@pbip-tools/core';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { safeWrite } from '@pbip-tools/project-discovery';
 import { PBIR_PAGE_SCHEMA_URL } from '../shared/pbir-schemas.js';
 import { safeJoinUnderRoot } from '../shared/path-safety.js';
 
@@ -53,7 +54,7 @@ export async function createPage(
   };
 
   const pageJsonPath = join(pageDir, 'page.json');
-  await writeFile(pageJsonPath, JSON.stringify(pageJson, null, 2) + '\n', 'utf-8');
+  await safeWrite(pageJsonPath, JSON.stringify(pageJson, null, 2) + '\n');
 
   return {
     pageId: options.pageId,

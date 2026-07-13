@@ -85,7 +85,16 @@ export function serializeModel(node: ModelNode): string {
   if (node.tableRefs) {
     lines.push('');
     for (const ref of node.tableRefs) {
-      lines.push(`${indent(1)}ref table ${quoteName(ref.name)}`);
+      const kind = ref.refKind ?? 'table';
+      // Non-table refs (cultureInfo etc.) name BCP-47-style identifiers that
+      // Power BI Desktop emits unquoted — only quote when parsing demands it.
+      const name =
+        kind === 'table'
+          ? quoteName(ref.name)
+          : /[\s']/.test(ref.name)
+            ? `'${ref.name}'`
+            : ref.name;
+      lines.push(`${indent(1)}ref ${kind} ${name}`);
     }
   }
 
@@ -149,14 +158,33 @@ function serializeColumn(col: ColumnNode, level: number): string[] {
     lines.push(`${indent(level)}/// ${col.docComment}`);
   }
 
-  lines.push(`${indent(level)}column ${quoteName(col.name)}`);
+  // Calculated columns carry their DAX in `expression` — emit it exactly like
+  // measures do (inline for single-line, indented block for multi-line).
+  if (col.expression) {
+    const exprLines = col.expression.split('\n');
+    if (exprLines.length === 1) {
+      lines.push(`${indent(level)}column ${quoteName(col.name)} = ${col.expression}`);
+    } else {
+      lines.push(`${indent(level)}column ${quoteName(col.name)} =`);
+      for (const el of exprLines) {
+        lines.push(`${indent(level + 1)}${el}`);
+      }
+    }
+  } else {
+    lines.push(`${indent(level)}column ${quoteName(col.name)}`);
+  }
   lines.push(`${indent(level + 1)}dataType: ${col.dataType}`);
 
   if (col.isKey) lines.push(`${indent(level + 1)}isKey`);
   if (col.isHidden) lines.push(`${indent(level + 1)}isHidden`);
   if (col.isNameInferred) lines.push(`${indent(level + 1)}isNameInferred`);
   if (col.isDataTypeInferred) lines.push(`${indent(level + 1)}isDataTypeInferred`);
+  if (col.isAvailableInMdx) lines.push(`${indent(level + 1)}isAvailableInMdx`);
+  if (col.isDefaultLabel) lines.push(`${indent(level + 1)}isDefaultLabel`);
+  if (col.isDefaultImage) lines.push(`${indent(level + 1)}isDefaultImage`);
+  if (col.columnType) lines.push(`${indent(level + 1)}columnType: ${col.columnType}`);
   if (col.formatString) lines.push(`${indent(level + 1)}formatString: ${col.formatString}`);
+  if (col.displayFolder) lines.push(`${indent(level + 1)}displayFolder: ${col.displayFolder}`);
   if (col.lineageTag) lines.push(`${indent(level + 1)}lineageTag: ${col.lineageTag}`);
   if (col.summarizeBy) lines.push(`${indent(level + 1)}summarizeBy: ${col.summarizeBy}`);
   if (col.sortByColumn) lines.push(`${indent(level + 1)}sortByColumn: ${col.sortByColumn}`);
@@ -214,12 +242,29 @@ function serializeMeasure(measure: MeasureNode, level: number): string[] {
 
 function serializePartition(part: PartitionNode, level: number): string[] {
   const lines: string[] = [];
-  const partType = part.source.type === 'calculated' ? 'calculated' : 'm';
+  const partType =
+    part.source.type === 'calculated'
+      ? 'calculated'
+      : part.source.type === 'entity'
+        ? 'entity'
+        : 'm';
   lines.push(`${indent(level)}partition ${quoteName(part.name)} = ${partType}`);
 
   if (part.mode) lines.push(`${indent(level + 1)}mode: ${part.mode}`);
 
-  if (part.source.type === 'mCode' || part.source.type === 'calculated') {
+  if (part.source.type === 'entity') {
+    // Entity (Direct Lake) source: bare `source` line with property children
+    lines.push(`${indent(level + 1)}source`);
+    if (part.source.entityName !== undefined) {
+      lines.push(`${indent(level + 2)}entityName: ${part.source.entityName}`);
+    }
+    if (part.source.schemaName !== undefined) {
+      lines.push(`${indent(level + 2)}schemaName: ${part.source.schemaName}`);
+    }
+    if (part.source.expressionSource !== undefined) {
+      lines.push(`${indent(level + 2)}expressionSource: ${part.source.expressionSource}`);
+    }
+  } else if (part.source.type === 'mCode' || part.source.type === 'calculated') {
     lines.push(`${indent(level + 1)}source =`);
     const sourceLines = part.source.expression.split('\n');
     for (const sl of sourceLines) {
@@ -448,13 +493,30 @@ export function serializeRole(node: RoleNode): string {
   for (const tp of node.tablePermissions) {
     lines.push('');
     const expr = tp.filterExpression;
-    if (expr.includes('\n')) {
+    if (expr === '') {
+      // OLS-only tablePermission — no filter DAX, so no dangling `=`
+      lines.push(`${indent(1)}tablePermission ${quoteName(tp.tableName)}`);
+    } else if (expr.includes('\n')) {
       lines.push(`${indent(1)}tablePermission ${quoteName(tp.tableName)} =`);
       for (const exprLine of expr.split('\n')) {
         lines.push(`${indent(2)}${exprLine}`);
       }
     } else {
       lines.push(`${indent(1)}tablePermission ${quoteName(tp.tableName)} = ${expr}`);
+    }
+
+    if (tp.metadataPermission) {
+      lines.push(`${indent(2)}metadataPermission: ${tp.metadataPermission}`);
+    }
+
+    if (tp.columnPermissions && tp.columnPermissions.length > 0) {
+      for (const cp of tp.columnPermissions) {
+        lines.push('');
+        lines.push(`${indent(2)}columnPermission ${quoteName(cp.columnName)}`);
+        if (cp.metadataPermission) {
+          lines.push(`${indent(3)}metadataPermission: ${cp.metadataPermission}`);
+        }
+      }
     }
 
     if (tp.annotations && tp.annotations.length > 0) {

@@ -94,6 +94,8 @@ export function parseModel(tokens: Token[], warnings: ParseWarning[], file?: str
     if (t.type === TokenType.REF) {
       tableRefs.push({
         kind: 'tableRef',
+        // Lexer stores the ref kind ('table', 'cultureInfo', …) in token.value
+        refKind: t.value ?? 'table',
         name: t.name ?? '',
         range: { start: { line: t.line, column: 0 }, end: { line: t.line, column: 0 } },
       });

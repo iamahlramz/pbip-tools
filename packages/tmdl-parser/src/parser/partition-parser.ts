@@ -7,7 +7,7 @@ import { normalizeExpression } from './normalize-expression.js';
 export function parsePartition(
   tokens: Token[],
   startIndex: number,
-  _warnings: ParseWarning[],
+  warnings: ParseWarning[],
 ): { node: PartitionNode; endIndex: number } {
   const partToken = tokens[startIndex];
   const baseIndent = partToken.indent;
@@ -17,7 +17,15 @@ export function parsePartition(
 
   if (partitionType === 'calculated') {
     source = { type: 'calculated', expression: '' };
+  } else if (partitionType === 'entity') {
+    source = { type: 'entity' };
   } else {
+    if (partitionType !== 'm') {
+      warnings.push({
+        message: `Unknown partition type '${partitionType}' on partition '${partToken.name ?? ''}' — treating as m`,
+        line: partToken.line,
+      });
+    }
     source = { type: 'mCode', expression: '' };
   }
 
@@ -50,8 +58,32 @@ export function parsePartition(
       continue;
     }
 
-    if (t.type === TokenType.PROPERTY && t.keyword === 'source' && (t.value === '' || !t.value)) {
+    if (t.type === TokenType.PROPERTY && t.keyword === 'source') {
+      if (t.value === '' || !t.value) {
+        // `source =` — multi-line M/calculated body follows as EXPRESSION_CONTENT
+        collectingSource = true;
+      } else if (source.type === 'mCode' || source.type === 'calculated') {
+        // `source = <inline expr>` — single-line source
+        source.expression = t.value;
+      }
+      i++;
+      continue;
+    }
+
+    // Entity partitions declare a bare `source` line (no `=`) which lexes as UNKNOWN,
+    // followed by entityName/schemaName/expressionSource property lines.
+    if (t.type === TokenType.UNKNOWN && t.value?.trim() === 'source') {
       collectingSource = true;
+      i++;
+      continue;
+    }
+
+    if (
+      source.type === 'entity' &&
+      t.type === TokenType.PROPERTY &&
+      (t.keyword === 'entityName' || t.keyword === 'schemaName' || t.keyword === 'expressionSource')
+    ) {
+      source[t.keyword as 'entityName' | 'schemaName' | 'expressionSource'] = t.value;
       i++;
       continue;
     }

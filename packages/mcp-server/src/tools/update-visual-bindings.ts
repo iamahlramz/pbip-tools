@@ -1,5 +1,6 @@
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { relative, sep } from 'node:path';
+import { safeWrite } from '@pbip-tools/project-discovery';
 import type { PbipProject, BindingUpdateOp } from '@pbip-tools/core';
 import {
   findVisualFilesDetailed,
@@ -75,7 +76,7 @@ export async function updateVisualBindings(
     const result = updateBindingsInJson(json, updates);
 
     if (result.updatedCount > 0) {
-      await writeFile(filePath, JSON.stringify(result.json, null, 2) + '\n', 'utf-8');
+      await safeWrite(filePath, JSON.stringify(result.json, null, 2) + '\n');
       filesModified++;
       totalUpdates += result.updatedCount;
 
