@@ -12,7 +12,7 @@ It is the only open-source tool that operates on **both layers** of a PBIP proje
 - **TMDL semantic model** -- tables, measures, columns, relationships, and expressions
 - **visual.json report layer** -- page layouts, visual bindings, filters, and formatting
 
-By exposing 56 MCP tools over stdio, pbip-tools turns any MCP-compatible AI assistant into a Power BI development partner.
+By exposing 55 MCP tools over stdio, pbip-tools turns any MCP-compatible AI assistant into a Power BI development partner.
 
 ## Supported AI assistants
 

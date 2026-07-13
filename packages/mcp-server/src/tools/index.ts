@@ -45,10 +45,8 @@ import {
   CreateRoleSchema,
   UpdateRoleSchema,
   DeleteRoleSchema,
-  // DAX formatter schemas
-  FormatDaxSchema,
+  // DAX validation schemas
   ValidateDaxSchema,
-  FormatMeasuresSchema,
   // RDL tool schemas
   RdlGetInfoSchema,
   RdlListDatasetsSchema,
@@ -126,10 +124,8 @@ import { createRole } from './create-role.js';
 import { updateRole } from './update-role.js';
 import { deleteRole } from './delete-role.js';
 
-// DAX formatter tool implementations
-import { formatDaxTool } from './format-dax.js';
+// DAX validation tool implementations
 import { validateDaxTool } from './validate-dax.js';
-import { formatMeasures } from './format-measures.js';
 
 // RDL tool implementations
 import { rdlGetInfo } from './rdl-get-info.js';
@@ -747,24 +743,8 @@ export function registerTools(
   );
 
   // =============================================
-  // DAX FORMATTER TOOLS (3)
+  // DAX VALIDATION TOOLS (1)
   // =============================================
-
-  server.tool(
-    'pbip_format_dax',
-    'Format a DAX expression via DaxFormatter.com API (requires internet)',
-    FormatDaxSchema.shape,
-    safeTool(async (args) => {
-      const result = await formatDaxTool(
-        args.expression,
-        args.listSeparator,
-        args.decimalSeparator,
-        args.lineStyle,
-        args.spacingStyle,
-      );
-      return jsonResponse(result);
-    }),
-  );
 
   server.tool(
     'pbip_validate_dax',
@@ -773,37 +753,6 @@ export function registerTools(
     safeTool(async (args) => {
       const result = validateDaxTool(args.expression);
       return jsonResponse(result);
-    }),
-  );
-
-  server.tool(
-    'pbip_format_measures',
-    'Batch format all measures in a table via DaxFormatter.com API and write back to TMDL (requires internet)',
-    FormatMeasuresSchema.shape,
-    safeTool(async (args) => {
-      const project = await getProjectForWrite(args.projectPath);
-      const result = await formatMeasures(
-        project,
-        args.tableName,
-        {
-          listSeparator: args.listSeparator,
-          decimalSeparator: args.decimalSeparator,
-          lineStyle: args.lineStyle,
-          spacingStyle: args.spacingStyle,
-        },
-        args.dryRun,
-      );
-
-      if (!args.dryRun && result.measuresFormatted > 0) {
-        const table = findTable(project, args.tableName);
-        await writeTableFile(project, table);
-        invalidateCache(project.pbipPath);
-      }
-
-      return jsonResponse({
-        success: true,
-        ...result,
-      });
     }),
   );
 

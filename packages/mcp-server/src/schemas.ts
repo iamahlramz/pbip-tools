@@ -495,18 +495,7 @@ export const OrganizeFoldersSchema = z.object({
     .describe('If true (default), returns proposed changes without applying them'),
 });
 
-// --- DAX formatter tool schemas ---
-
-export const FormatDaxSchema = z.object({
-  expression: expression.describe('DAX expression to format'),
-  listSeparator: z.enum([',', ';']).optional().describe('List separator (default: comma)'),
-  decimalSeparator: z.enum(['.', ',']).optional().describe('Decimal separator (default: dot)'),
-  lineStyle: z.enum(['long', 'short']).optional().describe('Line style (default: long)'),
-  spacingStyle: z
-    .enum(['spaceAfterFunction', 'noSpaceAfterFunction'])
-    .optional()
-    .describe('Spacing after function name (default: spaceAfterFunction, SQLBI best practice)'),
-});
+// --- DAX validation tool schema ---
 
 export const ValidateDaxSchema = z.object({
   expression: expression.describe('DAX expression to validate offline'),
@@ -674,23 +663,6 @@ export const AuditDependenciesEnhancedSchema = z.object({
     .optional()
     .default('json')
     .describe('Output format: json (default), dot (Graphviz DOT), adjacency (adjacency list)'),
-});
-
-export const FormatMeasuresSchema = z.object({
-  projectPath,
-  tableName: tableName.describe('Name of the table whose measures to format'),
-  listSeparator: z.enum([',', ';']).optional().describe('List separator (default: comma)'),
-  decimalSeparator: z.enum(['.', ',']).optional().describe('Decimal separator (default: dot)'),
-  lineStyle: z.enum(['long', 'short']).optional().describe('Line style (default: long)'),
-  spacingStyle: z
-    .enum(['spaceAfterFunction', 'noSpaceAfterFunction'])
-    .optional()
-    .describe('Spacing after function name'),
-  dryRun: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('If true, returns formatted results without writing to disk'),
 });
 
 // --- Relationship write schemas ---

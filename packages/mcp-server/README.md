@@ -1,6 +1,6 @@
 # @pbip-tools/mcp-server
 
-MCP server exposing 56 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
+MCP server exposing 55 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
 
 Part of the [pbip-tools](https://github.com/iamahlramz/pbip-tools) monorepo.
 
@@ -45,7 +45,7 @@ Add to your MCP settings:
 }
 ```
 
-## Tools (56)
+## Tools (55)
 
 ### Discovery & Read (10)
 
@@ -80,15 +80,16 @@ Add to your MCP settings:
 | `pbip_create_relationship` | Create a relationship between two tables          |
 | `pbip_delete_relationship` | Delete a relationship by from/to tables + columns |
 
-### Visuals & Pages (5)
+### Visuals & Pages (6)
 
-| Tool                          | Description                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| `pbip_list_visuals`           | List all visuals across pages; filter by `pageId` or `visualType[]`          |
-| `pbip_get_visual_bindings`    | Get bindings for a visual or page; `fields: "minimal"` for a flat summary    |
-| `pbip_update_visual_bindings` | Batch update bindings; optional `pagePaths[]` / `pageDisplayNames[]` scoping |
-| `pbip_create_page`            | Create a page directory + `page.json` (default canvas 1920×1080)             |
-| `pbip_create_visual`          | Create a visual under a page with optional bindings                          |
+| Tool                            | Description                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `pbip_list_visuals`             | List all visuals across pages; filter by `pageId` or `visualType[]`          |
+| `pbip_get_visual_bindings`      | Get bindings for a visual or page; `fields: "minimal"` for a flat summary    |
+| `pbip_update_visual_bindings`   | Batch update bindings; optional `pagePaths[]` / `pageDisplayNames[]` scoping |
+| `pbip_update_visual_properties` | Generic PBIR patch: deep-merge formatting properties by objects selector     |
+| `pbip_create_page`              | Create a page directory + `page.json` (default canvas 1920×1080)             |
+| `pbip_create_visual`            | Create a visual under a page with optional bindings                          |
 
 ### Row-Level Security (5)
 
@@ -114,13 +115,6 @@ Add to your MCP settings:
 | -------------------- | -------------------------------------------------------- |
 | `pbip_validate_dax`  | Validate DAX syntax offline                              |
 | `pbip_validate_tmdl` | 40+ BPA rules across structural, perf, DAX, naming, etc. |
-
-### DAX Formatter (2)
-
-| Tool                   | Description                          |
-| ---------------------- | ------------------------------------ |
-| `pbip_format_dax`      | Format DAX via DaxFormatter.com API  |
-| `pbip_format_measures` | Batch format all measures in a table |
 
 ### Compound Generators (5)
 

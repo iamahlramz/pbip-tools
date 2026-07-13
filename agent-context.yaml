@@ -7,7 +7,7 @@ project:
   type: 'library'
   status: 'active'
   platform: 'ANY'
-  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 56 tools for semantic model authoring, validation, and deployment'
+  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 55 tools for semantic model authoring, validation, and deployment'
 
 stack:
   languages: ['TypeScript']
@@ -70,7 +70,7 @@ packages:
     exports: 'discoverProjects, loadProject, writeTableFile, writeModelFile, writeFunctionsFile, writeRoleFile'
   mcp-server:
     path: 'packages/mcp-server'
-    purpose: 'MCP server with 56 registered tools — the main entry point'
+    purpose: 'MCP server with 55 registered tools — the main entry point'
     exports: 'MCP tool handlers, schemas, data catalogs'
   rdl-parser:
     path: 'packages/rdl-parser'
@@ -86,7 +86,7 @@ tool_categories:
   semantic_model_read: 'pbip_list_tables, pbip_list_measures, pbip_get_measure, pbip_list_relationships, pbip_list_roles, pbip_get_role, pbip_list_display_folders'
   semantic_model_write: 'pbip_create_measure, pbip_update_measure, pbip_delete_measure, pbip_move_measure, pbip_create_calc_group, pbip_add_calc_item, pbip_create_role, pbip_update_role, pbip_delete_role'
   visual_tools: 'pbip_list_visuals, pbip_get_visual_bindings, pbip_update_visual_bindings, pbip_list_visual_types'
-  dax_tools: 'pbip_format_dax, pbip_format_measures, pbip_validate_dax, pbip_search_measures'
+  dax_tools: 'pbip_validate_dax, pbip_search_measures'
   audit_tools: 'pbip_audit_dependencies, pbip_audit_bindings, pbip_audit_unused_measures'
   validation: 'pbip_validate_tmdl (40+ BPA rules across 7 categories)'
   organization: 'pbip_organize_folders, pbip_gen_data_dictionary'

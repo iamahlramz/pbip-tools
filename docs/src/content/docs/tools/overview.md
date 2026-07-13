@@ -1,11 +1,11 @@
 ---
 title: Tool Overview
-description: All 56 MCP tools at a glance
+description: All 55 MCP tools at a glance
 sidebar:
   order: 1
 ---
 
-pbip-tools exposes **56 MCP tools** organized into 14 categories. Most operate on the TMDL and visual.json files inside your Power BI Project (PBIP) folder — no running instance of Power BI Desktop is required. The Fabric API and live-mode tools additionally call Power BI / Fabric REST when supplied with service-principal credentials.
+pbip-tools exposes **55 MCP tools** organized into 13 categories. Most operate on the TMDL and visual.json files inside your Power BI Project (PBIP) folder — no running instance of Power BI Desktop is required. The Fabric API and live-mode tools additionally call Power BI / Fabric REST when supplied with service-principal credentials.
 
 ## Quick-reference table
 
@@ -42,13 +42,14 @@ pbip-tools exposes **56 MCP tools** organized into 14 categories. Most operate o
 | `pbip_create_relationship` | Create a relationship between two tables            |
 | `pbip_delete_relationship` | Delete a relationship by from / to tables + columns |
 
-### Visuals & Pages (5 tools)
+### Visuals & Pages (6 tools)
 
 | Tool                                                                                | Purpose                                                              |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | [`pbip_list_visuals`](/tools/visual-handler/#pbip_list_visuals)                     | All visuals across pages; filter by `pageId` or `visualType[]`       |
 | [`pbip_get_visual_bindings`](/tools/visual-handler/#pbip_get_visual_bindings)       | Bindings for visuals; `fields: "minimal"` for a flat summary         |
 | [`pbip_update_visual_bindings`](/tools/visual-handler/#pbip_update_visual_bindings) | Batch update bindings; optional `pagePaths[]` / `pageDisplayNames[]` |
+| `pbip_update_visual_properties`                                                     | Generic PBIR patch: deep-merge formatting properties by selector     |
 | `pbip_create_page`                                                                  | Create a page directory + `page.json` (default canvas 1920×1080)     |
 | `pbip_create_visual`                                                                | Create a visual under a page with optional bindings                  |
 
@@ -74,15 +75,8 @@ pbip-tools exposes **56 MCP tools** organized into 14 categories. Most operate o
 
 | Tool                                                           | Purpose                                                                            |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`pbip_validate_dax`](/tools/dax-formatter/#pbip_validate_dax) | Validate DAX syntax offline — bracket balance, unclosed strings, unknown functions |
+| [`pbip_validate_dax`](/tools/dax-validation/#pbip_validate_dax) | Validate DAX syntax offline — bracket balance, unclosed strings, unknown functions |
 | `pbip_validate_tmdl`                                           | 40+ BPA rules across structural, performance, DAX, formatting, naming, maintenance |
-
-### DAX Formatter (2 tools)
-
-| Tool                                                                 | Purpose                                                     |
-| -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [`pbip_format_dax`](/tools/dax-formatter/#pbip_format_dax)           | Format a single DAX expression via the DaxFormatter.com API |
-| [`pbip_format_measures`](/tools/dax-formatter/#pbip_format_measures) | Batch-format all measures in a table                        |
 
 ### Compound Generators (5 tools)
 
