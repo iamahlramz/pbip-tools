@@ -8,18 +8,20 @@ proposed fix. Two are in **pbip-tools**, one in **pbivisual-json**, one is a ski
 
 ---
 
-## 1. `pbip_validate_tmdl` has NO circular-dependency rule  [pbip-tools · BPA]
+## 1. `pbip_validate_tmdl` has NO circular-dependency rule [pbip-tools · BPA]
 
-**Severity: high** — it reported **0 errors** on a model Power BI Desktop *refused to load*.
+**Severity: high** — it reported **0 errors** on a model Power BI Desktop _refused to load_.
 
 **Repro.** A calculated column sorted (`sortByColumn`) by another calculated column that is
 derived FROM it. `sortByColumn` is itself a dependency edge, so:
+
 ```
 column 'Due Status'        = SWITCH(TRUE(), ... )   sortByColumn: 'Due Status Order'
 column 'Due Status Order'  = SWITCH('Due Status', "Overdue",1, ...)   // derives FROM Due Status
 ```
-Desktop: *"A circular dependency was detected: Daily_Tasks[Due Status],
-Daily_Tasks[Due Status Order], Daily_Tasks[Due Status]"*. `pbip_validate_tmdl` = 0 errors.
+
+Desktop: _"A circular dependency was detected: Daily_Tasks[Due Status],
+Daily_Tasks[Due Status Order], Daily_Tasks[Due Status]"_. `pbip_validate_tmdl` = 0 errors.
 
 A second cycle class: a **measure referenced inside a calculated column** (implicit CALCULATE
 → context transition → the column depends on every column of the table, incl. ones derived
@@ -36,14 +38,16 @@ data columns have no formula graph, so no cycle is possible. (Also the better mo
 
 ---
 
-## 2. Offline DAX parser false-positive on empty-string literal before a grouping `)`  [pbip-tools · pbip_validate_dax]
+## 2. Offline DAX parser false-positive on empty-string literal before a grouping `)` [pbip-tools · pbip_validate_dax]
 
 **Severity: medium** — rejects valid DAX; risks users "fixing" correct code.
 
 **Repro.** `pbip_validate_dax` on this **valid** expression:
+
 ```dax
 IF ( ( "a" <> "" || "b" <> "" ) && "c" <> "", 1, 0 )
 ```
+
 → `{ "valid": false, "issues": [{ "severity":"error",
 "message":"Missing operand before closing parenthesis" }] }`
 
@@ -58,19 +62,21 @@ Add the above as a regression fixture.
 
 ---
 
-## 3. `lint-instance` + `validate-structural` miss PBIR property PLACEMENT  [pbivisual-json]
+## 3. `lint-instance` + `validate-structural` miss PBIR property PLACEMENT [pbivisual-json]
 
 **Severity: medium** — a schema-invalid visual.json passes both checks; Desktop flags it.
 
 **Repro.** Emit `filterConfig` INSIDE the `visual` object instead of at the visual.json top
 level (it's a sibling of `visual`/`name`/`position` per the visualContainer schema):
+
 ```json
 { "name": "...", "position": {...},
   "visual": { "visualType": "pivotTable", ..., "filterConfig": { "filters": [...] } } }  // WRONG
 ```
+
 `lint-instance` → OK. `validate-structural` → PASS (checks type/box/bindings vs spec, not
-placement). Desktop on load → *"An additional property 'filterConfig' was included in the
-/visual property."*
+placement). Desktop on load → _"An additional property 'filterConfig' was included in the
+/visual property."_
 
 **Proposed fix.** Validate emitted `visual.json` against the **visualContainer JSON schema**
 (the `$schema` each file already references), or at minimum assert a known set of top-level vs
@@ -79,7 +85,7 @@ current structural + lint checks. Add `filterConfig-in-/visual` as a negative fi
 
 ---
 
-## 4. `pbi-semantic-model` SKILL.md wrongly claimed Bridge reload re-applies model TMDL  [libs/config skill — FIXED]
+## 4. `pbi-semantic-model` SKILL.md wrongly claimed Bridge reload re-applies model TMDL [libs/config skill — FIXED]
 
 **Severity: low (doc), but caused real friction.** The skill said the Desktop Bridge
 `file.reload/v1` "re-applies the model definition (TMSL/TMDL) by default." It does **not** —
@@ -91,6 +97,7 @@ visual bound to it errors and the reload silently keeps the old model. Corrected
 ---
 
 ### Cross-cutting note
+
 All four are **headless-validator gaps**: `pbip_validate_tmdl`, `pbip_validate_dax`,
 `lint-instance`, and `validate-structural` were green while Desktop rejected the model / visual.
 Worth a "headless checks are necessary, not sufficient — Desktop load + `mcp-engine run_query`
