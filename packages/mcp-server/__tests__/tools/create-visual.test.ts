@@ -1,29 +1,37 @@
 import { loadProject } from '@pbip-tools/project-discovery';
 import type { PbipProject } from '@pbip-tools/core';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rm, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { createVisual } from '../../src/tools/create-visual.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, '../../../..', 'fixtures');
 
+// Writes go to a per-test temp copy of the report so parallel test files that
+// read the shared fixture (audit-bindings, list-visuals, …) never observe our
+// visuals. Same isolation pattern as update-visual-bindings.test.ts.
+let standardProject: PbipProject;
 let project: PbipProject;
+let tempDir: string;
 
 beforeAll(async () => {
-  project = await loadProject(resolve(FIXTURES, 'standard/AdventureWorks.pbip'));
+  standardProject = await loadProject(resolve(FIXTURES, 'standard/AdventureWorks.pbip'));
+});
+
+beforeEach(async () => {
+  tempDir = await mkdtemp(join(tmpdir(), 'pbip-create-visual-test-'));
+  const tempReportPath = join(tempDir, 'AdventureWorks.Report');
+  await cp(resolve(FIXTURES, 'standard/AdventureWorks.Report'), tempReportPath, {
+    recursive: true,
+  });
+  project = { ...standardProject, reportPath: tempReportPath };
 });
 
 afterEach(async () => {
-  // Clean up any created test visuals
-  const testVisualDir = resolve(
-    FIXTURES,
-    'standard/AdventureWorks.Report/definition/pages/ReportSectionMain/visuals/testVisual',
-  );
-  try {
-    await rm(testVisualDir, { recursive: true });
-  } catch {
-    // already cleaned
+  if (tempDir) {
+    await rm(tempDir, { recursive: true, force: true });
   }
 });
 

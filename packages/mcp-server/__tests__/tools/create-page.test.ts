@@ -1,32 +1,45 @@
 import { loadProject } from '@pbip-tools/project-discovery';
 import type { PbipProject } from '@pbip-tools/core';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rm, readFile, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { cp, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { createPage } from '../../src/tools/create-page.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, '../../../..', 'fixtures');
 
-let project: PbipProject;
+// Writes go to a per-test temp copy of the report so parallel test files that
+// read the shared fixture (audit-bindings, list-visuals, …) never observe our
+// pages. Same isolation pattern as update-visual-bindings.test.ts.
+let standardProject: PbipProject;
+let tempDir: string;
+let tempReportPath: string;
 
 beforeAll(async () => {
-  project = await loadProject(resolve(FIXTURES, 'standard/AdventureWorks.pbip'));
+  standardProject = await loadProject(resolve(FIXTURES, 'standard/AdventureWorks.pbip'));
+});
+
+beforeEach(async () => {
+  tempDir = await mkdtemp(join(tmpdir(), 'pbip-create-page-test-'));
+  const sourceReport = resolve(FIXTURES, 'standard/AdventureWorks.Report');
+  tempReportPath = join(tempDir, 'AdventureWorks.Report');
+  await cp(sourceReport, tempReportPath, { recursive: true });
 });
 
 afterEach(async () => {
-  // Clean up any created test pages
-  const testPageDir = resolve(FIXTURES, 'standard/AdventureWorks.Report/definition/pages/TestPage');
-  try {
-    await rm(testPageDir, { recursive: true });
-  } catch {
-    // already cleaned
+  if (tempDir) {
+    await rm(tempDir, { recursive: true, force: true });
   }
 });
 
+function project(): PbipProject {
+  return { ...standardProject, reportPath: tempReportPath };
+}
+
 describe('createPage', () => {
   it('should create a page directory with page.json', async () => {
-    const result = await createPage(project, {
+    const result = await createPage(project(), {
       pageId: 'TestPage',
       displayName: 'My Test Page',
     });
@@ -44,23 +57,20 @@ describe('createPage', () => {
   });
 
   it('should create visuals subdirectory', async () => {
-    await createPage(project, { pageId: 'TestPage' });
+    await createPage(project(), { pageId: 'TestPage' });
 
-    const visualsDir = resolve(
-      FIXTURES,
-      'standard/AdventureWorks.Report/definition/pages/TestPage/visuals',
-    );
+    const visualsDir = join(tempReportPath, 'definition', 'pages', 'TestPage', 'visuals');
     const s = await stat(visualsDir);
     expect(s.isDirectory()).toBe(true);
   });
 
   it('should use pageId as displayName when not provided', async () => {
-    const result = await createPage(project, { pageId: 'TestPage' });
+    const result = await createPage(project(), { pageId: 'TestPage' });
     expect(result.displayName).toBe('TestPage');
   });
 
   it('should support custom dimensions', async () => {
-    const result = await createPage(project, {
+    const result = await createPage(project(), {
       pageId: 'TestPage',
       width: 1920,
       height: 1080,
@@ -72,7 +82,7 @@ describe('createPage', () => {
   });
 
   it('should throw when no report path exists', async () => {
-    const noReportProject = { ...project, reportPath: undefined };
+    const noReportProject = { ...standardProject, reportPath: undefined };
     await expect(createPage(noReportProject, { pageId: 'Test' })).rejects.toThrow(
       'No report path found',
     );
@@ -80,55 +90,51 @@ describe('createPage', () => {
 
   describe('Path traversal hardening (B4)', () => {
     it('rejects pageId containing path-separator characters (forward slash)', async () => {
-      await expect(createPage(project, { pageId: 'foo/bar' })).rejects.toThrow(
+      await expect(createPage(project(), { pageId: 'foo/bar' })).rejects.toThrow(
         /PBIR naming convention/,
       );
     });
 
     it('rejects pageId containing path-separator characters (backslash)', async () => {
-      await expect(createPage(project, { pageId: 'foo\\bar' })).rejects.toThrow(
+      await expect(createPage(project(), { pageId: 'foo\\bar' })).rejects.toThrow(
         /PBIR naming convention/,
       );
     });
 
     it('rejects pageId attempting parent-directory traversal', async () => {
       await expect(
-        createPage(project, { pageId: '..\\..\\..\\windows\\system32\\evil' }),
+        createPage(project(), { pageId: '..\\..\\..\\windows\\system32\\evil' }),
       ).rejects.toThrow(/PBIR naming convention/);
-      await expect(createPage(project, { pageId: '../../etc/passwd' })).rejects.toThrow(
+      await expect(createPage(project(), { pageId: '../../etc/passwd' })).rejects.toThrow(
         /PBIR naming convention/,
       );
     });
 
     it('rejects pageId that is just ".."', async () => {
-      await expect(createPage(project, { pageId: '..' })).rejects.toThrow(/PBIR naming convention/);
+      await expect(createPage(project(), { pageId: '..' })).rejects.toThrow(
+        /PBIR naming convention/,
+      );
     });
 
     it('rejects empty pageId', async () => {
-      await expect(createPage(project, { pageId: '' })).rejects.toThrow(/non-empty/);
+      await expect(createPage(project(), { pageId: '' })).rejects.toThrow(/non-empty/);
     });
 
     it('rejects pageId containing spaces (not in PBIR naming convention)', async () => {
-      await expect(createPage(project, { pageId: 'My Test Page' })).rejects.toThrow(
+      await expect(createPage(project(), { pageId: 'My Test Page' })).rejects.toThrow(
         /PBIR naming convention/,
       );
     });
 
     it('accepts the PBIR-canonical 20-char hex GUID style', async () => {
-      const result = await createPage(project, { pageId: 'a1b2c3d4e5f6789012ab' });
+      const result = await createPage(project(), { pageId: 'a1b2c3d4e5f6789012ab' });
       expect(result.pageId).toBe('a1b2c3d4e5f6789012ab');
-      // Cleanup
-      const dir = resolve(
-        FIXTURES,
-        'standard/AdventureWorks.Report/definition/pages/a1b2c3d4e5f6789012ab',
-      );
-      await rm(dir, { recursive: true }).catch(() => {});
     });
   });
 
   describe('PBIR $schema declaration (Issue #5)', () => {
     it('emits the Microsoft-published page.json $schema URL as the first property', async () => {
-      const result = await createPage(project, { pageId: 'TestPage' });
+      const result = await createPage(project(), { pageId: 'TestPage' });
       const raw = await readFile(result.path, 'utf-8');
       const parsed = JSON.parse(raw);
 
