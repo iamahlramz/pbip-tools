@@ -1,12 +1,14 @@
-import { mkdtemp, readFile, writeFile, rm, readdir } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, readdir, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { safeWrite } from '../src/project-writer.js';
+import { safeWrite, backupPathFor } from '../src/project-writer.js';
 
 /**
- * P0 #5 regression suite: every project write must be copy-on-write (a .bak of
- * the previous content) and atomic (temp file + rename), so a serializer bug or
- * a crash mid-write can never destroy the only copy of an uncommitted file.
+ * P0 #5 regression suite: every project write must be copy-on-write (a
+ * recoverable backup of the previous content) and atomic (temp file + rename),
+ * so a serializer bug or a crash mid-write can never destroy the only copy of
+ * an uncommitted file. Backups must live OUTSIDE the project — a PBIP project
+ * is a git repo, and in-tree .bak siblings would pollute `git status`.
  */
 describe('safeWrite', () => {
   let dir: string;
@@ -19,47 +21,70 @@ describe('safeWrite', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it('writes a new file when none exists (no .bak created)', async () => {
+  it('writes a new file when none exists', async () => {
     const target = join(dir, 'Sales.tmdl');
     await safeWrite(target, 'table Sales\n');
 
     expect(await readFile(target, 'utf-8')).toBe('table Sales\n');
-    const entries = await readdir(dir);
-    expect(entries).not.toContain('Sales.tmdl.bak');
   });
 
-  it('backs up the previous content to .bak before overwriting', async () => {
+  it('backs up the previous content before overwriting', async () => {
     const target = join(dir, 'Sales.tmdl');
     await writeFile(target, 'ORIGINAL CONTENT\n', 'utf-8');
 
     await safeWrite(target, 'NEW CONTENT\n');
 
     expect(await readFile(target, 'utf-8')).toBe('NEW CONTENT\n');
-    expect(await readFile(`${target}.bak`, 'utf-8')).toBe('ORIGINAL CONTENT\n');
+    expect(await readFile(backupPathFor(target), 'utf-8')).toBe('ORIGINAL CONTENT\n');
   });
 
-  it('keeps only the most recent backup on repeated writes', async () => {
+  it('never writes backups or temp files into the project directory', async () => {
     const target = join(dir, 'Sales.tmdl');
     await safeWrite(target, 'v1\n');
     await safeWrite(target, 'v2\n');
     await safeWrite(target, 'v3\n');
 
-    expect(await readFile(target, 'utf-8')).toBe('v3\n');
-    expect(await readFile(`${target}.bak`, 'utf-8')).toBe('v2\n');
+    // The project dir must contain exactly the file we asked for — a PBIP
+    // project is a git repo and stray .bak/.tmp siblings would be committed.
+    expect(await readdir(dir)).toEqual(['Sales.tmdl']);
   });
 
-  it('leaves no temp files behind', async () => {
+  it('keeps the most recent previous version recoverable', async () => {
     const target = join(dir, 'Sales.tmdl');
     await safeWrite(target, 'v1\n');
     await safeWrite(target, 'v2\n');
 
-    const entries = await readdir(dir);
-    expect(entries.filter((e) => e.includes('.tmp-'))).toEqual([]);
+    expect(await readFile(target, 'utf-8')).toBe('v2\n');
+    expect(await readFile(backupPathFor(target), 'utf-8')).toBe('v1\n');
   });
 
-  it('backup and temp names do not match the .tmdl loader glob', () => {
-    // project-loader filters on endsWith('.tmdl') — backups must stay invisible
-    expect('Sales.tmdl.bak'.endsWith('.tmdl')).toBe(false);
-    expect(`Sales.tmdl.tmp-${process.pid}`.endsWith('.tmdl')).toBe(false);
+  it('keys backups by source directory so same-named files never collide', () => {
+    const a = backupPathFor(join(dir, 'projectA', 'Sales.tmdl'));
+    const b = backupPathFor(join(dir, 'projectB', 'Sales.tmdl'));
+    expect(a).not.toBe(b);
+  });
+
+  it('survives concurrent writes to the same path without a temp-file clash', async () => {
+    const target = join(dir, 'Sales.tmdl');
+    await safeWrite(target, 'seed\n');
+
+    // A shared temp name (e.g. keyed on pid, constant per process) would make
+    // one of these rename an already-renamed file and throw ENOENT.
+    await Promise.all([
+      safeWrite(target, 'a\n'),
+      safeWrite(target, 'b\n'),
+      safeWrite(target, 'c\n'),
+    ]);
+
+    // Exactly one writer wins; the file is whole (never truncated or missing)
+    // and no temp files are left behind.
+    expect(['a\n', 'b\n', 'c\n']).toContain(await readFile(target, 'utf-8'));
+    expect(await readdir(dir)).toEqual(['Sales.tmdl']);
+  });
+
+  it('leaves the target readable after every write (atomic rename)', async () => {
+    const target = join(dir, 'Sales.tmdl');
+    await safeWrite(target, 'table Sales\n');
+    await expect(access(target)).resolves.toBeUndefined();
   });
 });

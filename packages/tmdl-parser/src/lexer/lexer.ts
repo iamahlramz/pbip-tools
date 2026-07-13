@@ -336,22 +336,10 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
       token.type === TokenType.COLUMN
     ) {
       // `measure 'Name' = VALUE` or `function 'Name' = (body)` or `tablePermission Store = DAX`
-      const eqIndex = rest.indexOf('=');
-      if (eqIndex >= 0) {
-        token.name = unquoteName(rest.substring(0, eqIndex).trim());
-        token.value = rest.substring(eqIndex + 1).trim();
-      } else {
-        token.name = unquoteName(rest);
-      }
+      splitNameValue(token, rest);
     } else if (token.type === TokenType.PARTITION) {
       // `partition Name = m` or `partition Name = calculated`
-      const eqIndex = rest.indexOf('=');
-      if (eqIndex >= 0) {
-        token.name = unquoteName(rest.substring(0, eqIndex).trim());
-        token.value = rest.substring(eqIndex + 1).trim();
-      } else {
-        token.name = unquoteName(rest);
-      }
+      splitNameValue(token, rest);
     } else if (token.type === TokenType.ANNOTATION) {
       // `annotation Name = Value`
       const eqIndex = rest.indexOf('=');
@@ -438,6 +426,40 @@ function parseLine(stripped: string, indent: number, lineNum: number, raw: strin
     line: lineNum,
     raw,
   };
+}
+
+/**
+ * Split `<name> = <value>` on the assignment `=`, skipping any `=` that sits
+ * inside a quoted identifier. TMDL wraps names containing special characters in
+ * single quotes, so `column '>= 90 Days'` and `measure 'A=B' = 1` are both
+ * legal — a naive indexOf('=') would tear the name apart and invent an
+ * expression out of the remainder.
+ */
+function splitNameValue(token: Token, rest: string): void {
+  let eqIndex = -1;
+  let inQuotes = false;
+
+  for (let i = 0; i < rest.length; i++) {
+    const ch = rest[i];
+    if (ch === "'") {
+      // TMDL escapes a literal quote inside a quoted name by doubling it ('').
+      if (inQuotes && rest[i + 1] === "'") {
+        i++;
+        continue;
+      }
+      inQuotes = !inQuotes;
+    } else if (ch === '=' && !inQuotes) {
+      eqIndex = i;
+      break;
+    }
+  }
+
+  if (eqIndex >= 0) {
+    token.name = unquoteName(rest.substring(0, eqIndex).trim());
+    token.value = rest.substring(eqIndex + 1).trim();
+  } else {
+    token.name = unquoteName(rest);
+  }
 }
 
 function isKeywordLine(stripped: string): boolean {

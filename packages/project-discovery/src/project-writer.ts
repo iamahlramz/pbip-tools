@@ -1,5 +1,7 @@
-import { writeFile, mkdir, copyFile, rename } from 'node:fs/promises';
-import { join } from 'node:path';
+import { writeFile, mkdir, copyFile, rename, unlink } from 'node:fs/promises';
+import { join, dirname, basename } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createHash, randomUUID } from 'node:crypto';
 import type {
   PbipProject,
   TableNode,
@@ -26,28 +28,59 @@ function validateName(name: string, kind: string): void {
 }
 
 /**
- * Copy-on-write file write: backs up any existing file to `<path>.bak`, then
- * writes atomically via a temp file + rename so a crash mid-write can never
- * leave a truncated file. The .bak is the last-known-good recovery point for
- * uncommitted projects (serializer bugs, bad tool input).
+ * Where the last-known-good copy of `filePath` is kept. Backups live OUTSIDE
+ * the project: a PBIP project is a git repo, and `.bak` siblings inside it
+ * would show up in `git status` and get committed into the user's report /
+ * semantic-model tree. The directory is keyed by a hash of the source dir so
+ * two projects with same-named files never collide.
  */
-export async function safeWrite(filePath: string, content: string): Promise<void> {
-  try {
-    await copyFile(filePath, `${filePath}.bak`);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-  }
-  const tmpPath = `${filePath}.tmp-${process.pid}`;
-  await writeFile(tmpPath, content, 'utf-8');
-  await rename(tmpPath, filePath);
+export function backupPathFor(filePath: string): string {
+  const dirKey = createHash('sha256').update(dirname(filePath)).digest('hex').slice(0, 16);
+  return join(tmpdir(), 'pbip-tools-backups', dirKey, `${basename(filePath)}.bak`);
 }
 
 /**
- * Soft delete: renames the file to `<path>.bak` instead of unlinking, so a
- * mistaken delete is recoverable until the next write to the same path.
+ * Copy-on-write + atomic file write.
+ *
+ * The immediately-previous content is copied to a backup outside the project
+ * (see backupPathFor) — one slot per file, overwritten on each write, so it
+ * recovers the last write, not an arbitrarily old version; git remains the
+ * durable history. The new content then lands via temp-file + rename, so a
+ * crash mid-write can never leave a truncated file in the project.
+ */
+export async function safeWrite(filePath: string, content: string): Promise<void> {
+  const backupPath = backupPathFor(filePath);
+  try {
+    await mkdir(dirname(backupPath), { recursive: true });
+    await copyFile(filePath, backupPath);
+  } catch (err) {
+    // ENOENT = no previous version to back up (new file). Anything else is real.
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
+
+  // randomUUID (not pid — constant within a process) so two concurrent writes
+  // to the same path can never share a temp file and clobber each other.
+  const tmpPath = `${filePath}.tmp-${randomUUID()}`;
+  try {
+    await writeFile(tmpPath, content, 'utf-8');
+    await rename(tmpPath, filePath);
+  } catch (err) {
+    // A failed rename (Windows EPERM/EBUSY when the file is open in Power BI
+    // Desktop, EXDEV, …) must not strand a temp file in the user's project.
+    await unlink(tmpPath).catch(() => {});
+    throw err;
+  }
+}
+
+/**
+ * Soft delete: the file is copied to its out-of-project backup, then removed,
+ * so a mistaken delete stays recoverable.
  */
 async function safeDelete(filePath: string): Promise<void> {
-  await rename(filePath, `${filePath}.bak`);
+  const backupPath = backupPathFor(filePath);
+  await mkdir(dirname(backupPath), { recursive: true });
+  await copyFile(filePath, backupPath);
+  await unlink(filePath);
 }
 
 /**
@@ -63,7 +96,8 @@ export async function writeTableFile(project: PbipProject, table: TableNode): Pr
 }
 
 /**
- * Delete a table's TMDL file from disk (soft delete — renamed to .bak).
+ * Delete a table's TMDL file from disk. The content is copied to its
+ * out-of-project backup first, so a mistaken delete stays recoverable.
  */
 export async function deleteTableFile(project: PbipProject, tableName: string): Promise<void> {
   validateName(tableName, 'Table');
@@ -122,7 +156,8 @@ export async function writeRelationshipsFile(
 }
 
 /**
- * Delete a role's TMDL file from disk (soft delete — renamed to .bak).
+ * Delete a role's TMDL file from disk. The content is copied to its
+ * out-of-project backup first, so a mistaken delete stays recoverable.
  */
 export async function deleteRoleFile(project: PbipProject, roleName: string): Promise<void> {
   validateName(roleName, 'Role');

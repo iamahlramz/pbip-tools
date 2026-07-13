@@ -119,6 +119,10 @@ export const PROPERTY_KEYWORDS = new Set([
   'defaultPowerBIDataSourceVersion',
   'name',
   'columnType',
+  // Tabular emits the non-default value as `isAvailableInMdx: false`; the bare
+  // flag form is handled by BOOLEAN_FLAGS. Both must lex, or the `: false` line
+  // falls through to UNKNOWN and the setting is dropped on rewrite.
+  'isAvailableInMdx',
   'formatStringExpression',
   'linguisticMetadata',
   'modelPermission',

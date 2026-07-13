@@ -54,4 +54,35 @@ describe('updateRole', () => {
       "Role 'NonExistentRole' not found",
     );
   });
+
+  // The tool's input shape carries only the RLS filter. Rebuilding permission
+  // nodes from it alone silently dropped object-level security — a column
+  // hidden from the role would become readable on the next unrelated edit.
+  it('preserves OLS (metadataPermission / columnPermissions) when updating RLS filters', () => {
+    const role = project.model.roles.find((r) => r.name === 'Store Manager')!;
+    role.tablePermissions = [
+      {
+        kind: 'tablePermission',
+        tableName: 'DimCustomer',
+        filterExpression: '\'DimCustomer\'[Region] = "West"',
+        metadataPermission: 'read',
+        columnPermissions: [
+          { kind: 'columnPermission', columnName: 'Salary', metadataPermission: 'none' },
+        ],
+      },
+    ];
+
+    const result = updateRole(project, 'Store Manager', undefined, [
+      { tableName: 'DimCustomer', filterExpression: '\'DimCustomer\'[Region] = "East"' },
+    ]);
+
+    const updated = result.role.tablePermissions[0];
+    expect(updated.filterExpression).toBe('\'DimCustomer\'[Region] = "East"');
+    expect(updated.metadataPermission).toBe('read');
+    expect(updated.columnPermissions).toHaveLength(1);
+    expect(updated.columnPermissions![0]).toMatchObject({
+      columnName: 'Salary',
+      metadataPermission: 'none',
+    });
+  });
 });

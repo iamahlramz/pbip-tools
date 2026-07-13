@@ -75,6 +75,79 @@ describe('calculated-column round-trip', () => {
   });
 });
 
+describe('quoted names containing "="', () => {
+  // TMDL quotes names with special characters, so `=` inside a quoted
+  // identifier is data, not the assignment operator. A naive indexOf('=')
+  // tears the name apart and invents a DAX expression from the remainder.
+  const input = [
+    'table Aging',
+    '',
+    "\tcolumn '>= 90 Days'",
+    '\t\tdataType: string',
+    '\t\tsourceColumn: Bucket',
+    '',
+    "\tcolumn 'Score >= 80' = [Score] >= 80",
+    '\t\tdataType: boolean',
+    '',
+    "\tmeasure '>= Target' = 1",
+    '\t\tformatString: 0',
+    '',
+  ].join('\n');
+
+  it('does not split a quoted column name on an embedded "="', () => {
+    const node = parseTable(input);
+
+    const plain = node.columns.find((c) => c.name === '>= 90 Days');
+    expect(plain).toBeDefined();
+    expect(plain!.expression).toBeUndefined();
+    expect(plain!.sourceColumn).toBe('Bucket');
+
+    // A quoted name AND a real calc expression on the same line
+    const calc = node.columns.find((c) => c.name === 'Score >= 80');
+    expect(calc).toBeDefined();
+    expect(calc!.expression).toBe('[Score] >= 80');
+
+    expect(node.measures[0].name).toBe('>= Target');
+    expect(node.measures[0].expression).toBe('1');
+  });
+
+  it('round-trips such names without corrupting the file', () => {
+    const out = serializeTable(parseTable(input));
+    expect(out).toContain("column '>= 90 Days'");
+    expect(out).toContain("column 'Score >= 80' = [Score] >= 80");
+    expect(out).toContain("measure '>= Target' = 1");
+    expect(out).not.toContain("''>");
+    expect(serializeTable(parseTable(out))).toBe(out);
+  });
+});
+
+describe('isAvailableInMdx tri-state', () => {
+  it('preserves an explicit `isAvailableInMdx: false`', () => {
+    const input = [
+      'table T',
+      '',
+      '\tcolumn Big',
+      '\t\tdataType: string',
+      '\t\tisAvailableInMdx: false',
+      '\t\tsourceColumn: Big',
+      '',
+    ].join('\n');
+
+    const node = parseTable(input);
+    expect(node.columns[0].isAvailableInMdx).toBe(false);
+
+    const out = serializeTable(node);
+    expect(out).toContain('isAvailableInMdx: false');
+    expect(serializeTable(parseTable(out))).toBe(out);
+  });
+
+  it('does not invent the flag on columns that never declared it', () => {
+    const input = ['table T', '', '\tcolumn C', '\t\tdataType: string', ''].join('\n');
+    const out = serializeTable(parseTable(input));
+    expect(out).not.toContain('isAvailableInMdx');
+  });
+});
+
 describe('partition source round-trip', () => {
   it('preserves entity (Direct Lake) partition sources', () => {
     const input = [

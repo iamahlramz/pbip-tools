@@ -321,7 +321,14 @@ export const UpdateRoleSchema = z.object({
     .array(
       z.object({
         tableName: tableName.describe('Table to apply the filter to'),
-        filterExpression: expression.describe('DAX filter expression'),
+        // Empty string = no RLS filter on this table. An OLS-only
+        // tablePermission (metadataPermission / columnPermission with no filter
+        // DAX) is legal TMDL, and get_role returns '' for it — rejecting empty
+        // here would make such a role uneditable in a read-modify-write loop.
+        filterExpression: z
+          .string()
+          .max(100000)
+          .describe('DAX filter expression (empty string = no RLS filter)'),
       }),
     )
     .optional()

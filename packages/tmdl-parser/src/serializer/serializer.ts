@@ -179,7 +179,13 @@ function serializeColumn(col: ColumnNode, level: number): string[] {
   if (col.isHidden) lines.push(`${indent(level + 1)}isHidden`);
   if (col.isNameInferred) lines.push(`${indent(level + 1)}isNameInferred`);
   if (col.isDataTypeInferred) lines.push(`${indent(level + 1)}isDataTypeInferred`);
-  if (col.isAvailableInMdx) lines.push(`${indent(level + 1)}isAvailableInMdx`);
+  // Tri-state: only emit when the file said something. `false` is the value a
+  // modeller sets deliberately (BPA perf rule) and must survive a rewrite.
+  if (col.isAvailableInMdx === false) {
+    lines.push(`${indent(level + 1)}isAvailableInMdx: false`);
+  } else if (col.isAvailableInMdx === true) {
+    lines.push(`${indent(level + 1)}isAvailableInMdx`);
+  }
   if (col.isDefaultLabel) lines.push(`${indent(level + 1)}isDefaultLabel`);
   if (col.isDefaultImage) lines.push(`${indent(level + 1)}isDefaultImage`);
   if (col.columnType) lines.push(`${indent(level + 1)}columnType: ${col.columnType}`);

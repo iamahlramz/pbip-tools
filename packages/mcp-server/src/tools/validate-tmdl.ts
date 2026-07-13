@@ -297,7 +297,10 @@ function validatePerformance(project: PbipProject, issues: TmdlValidationIssue[]
   for (const table of project.model.tables) {
     // P1: Flag float (double) columns — prefer Int64 or Decimal
     for (const col of table.columns) {
-      if (col.dataType === 'double' && col.columnType !== 'calculated') {
+      // A column with a DAX expression IS a calculated column (TMDL writes
+      // `column X = <dax>`, never a `columnType:` line), and this rule is meant
+      // to spare those — gating on columnType alone flagged every one of them.
+      if (col.dataType === 'double' && !col.expression && col.columnType !== 'calculated') {
         issues.push({
           severity: 'warning',
           rule: 'perf_avoid_float_columns',
@@ -308,9 +311,12 @@ function validatePerformance(project: PbipProject, issues: TmdlValidationIssue[]
       }
     }
 
-    // P2: Calculated columns with aggregation functions
+    // P2: Calculated columns with aggregation functions.
+    // A calc column IS a column with a DAX expression — TMDL declares it as
+    // `column X = <dax>`, not via a `columnType:` line, so gating on
+    // columnType would skip every real calculated column.
     for (const col of table.columns) {
-      if (col.columnType === 'calculated' && col.expression) {
+      if (col.expression) {
         const aggPattern =
           /\b(SUM|AVERAGE|COUNT|COUNTROWS|MIN|MAX|SUMX|AVERAGEX|COUNTX|MAXX|MINX)\s*\(/i;
         if (aggPattern.test(col.expression)) {
@@ -411,7 +417,7 @@ function getAllExpressions(project: PbipProject): Array<{ label: string; express
       exprs.push({ label: `Measure '${table.name}'.[${m.name}]`, expression: m.expression });
     }
     for (const col of table.columns) {
-      if (col.columnType === 'calculated' && col.expression) {
+      if (col.expression) {
         exprs.push({
           label: `CalcColumn '${table.name}'.${col.name}`,
           expression: col.expression,
