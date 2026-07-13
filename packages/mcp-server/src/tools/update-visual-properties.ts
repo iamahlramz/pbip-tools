@@ -163,7 +163,8 @@ function selectorsMatch(a: unknown, b: unknown): boolean {
     if (!metadataEquivalent(a.metadata, b.metadata)) return false;
     // Compare the remaining selector keys structurally (excluding metadata).
     const rest = (o: Record<string, unknown>) => {
-      const { metadata: _drop, ...others } = o;
+      const others = { ...o };
+      delete others.metadata;
       return others;
     };
     return deepEqual(rest(a), rest(b));

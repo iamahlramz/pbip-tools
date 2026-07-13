@@ -15,9 +15,12 @@ let tempReportPath: string;
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), 'pbip-props-test-'));
   tempReportPath = join(tempDir, 'AdventureWorks.Report');
-  await mkdir(join(tempReportPath, 'definition', 'pages', 'ReportSectionMain', 'visuals', 'visual01'), {
-    recursive: true,
-  });
+  await mkdir(
+    join(tempReportPath, 'definition', 'pages', 'ReportSectionMain', 'visuals', 'visual01'),
+    {
+      recursive: true,
+    },
+  );
   // Baseline visual.json so tests that patch without seeding their own have a
   // starting file (tests that call seedVisual overwrite this).
   await seedVisual('ReportSectionMain', 'visual01', {
@@ -108,7 +111,9 @@ describe('updateVisualProperties', () => {
       visual: {
         visualType: 'card',
         objects: {
-          labels: [{ properties: { color: { solid: { color: '#111111' } } }, selector: { id: 'abc' } }],
+          labels: [
+            { properties: { color: { solid: { color: '#111111' } } }, selector: { id: 'abc' } },
+          ],
         },
       },
     });
@@ -145,7 +150,10 @@ describe('updateVisualProperties', () => {
         visualType: 'clusteredColumnChart',
         objects: {
           dataPoint: [
-            { properties: { fill: { solid: { color: '#111111' } } }, selector: { metadata: 'Sum(Orders.Freight)' } },
+            {
+              properties: { fill: { solid: { color: '#111111' } } },
+              selector: { metadata: 'Sum(Orders.Freight)' },
+            },
           ],
         },
       },
@@ -177,7 +185,10 @@ describe('updateVisualProperties', () => {
         visualType: 'clusteredColumnChart',
         objects: {
           dataPoint: [
-            { properties: { fill: { solid: { color: '#aaaaaa' } } }, selector: { metadata: 'Sum(Sales.Amount)' } },
+            {
+              properties: { fill: { solid: { color: '#aaaaaa' } } },
+              selector: { metadata: 'Sum(Sales.Amount)' },
+            },
           ],
         },
       },
@@ -196,7 +207,9 @@ describe('updateVisualProperties', () => {
     const doc = await readVisual('ReportSectionMain', 'visual01');
     expect(doc.visual.objects.dataPoint).toHaveLength(2);
     // The Sum entry is untouched.
-    expect(doc.visual.objects.dataPoint[0].properties.fill).toEqual({ solid: { color: '#aaaaaa' } });
+    expect(doc.visual.objects.dataPoint[0].properties.fill).toEqual({
+      solid: { color: '#aaaaaa' },
+    });
   });
 
   it('creates the card array when the card is absent', async () => {
@@ -264,7 +277,9 @@ describe('updateVisualProperties', () => {
       ).rejects.toThrow(/PBIR naming convention/);
 
       // Report untouched.
-      expect(await readFile(visualPath('ReportSectionMain', 'visual01'), 'utf-8')).toBe(originalRaw);
+      expect(await readFile(visualPath('ReportSectionMain', 'visual01'), 'utf-8')).toBe(
+        originalRaw,
+      );
     });
 
     it('rejects visualName containing a forward slash', async () => {
