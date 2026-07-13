@@ -65,10 +65,10 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_get_visual_bindings`      | Get measure/column bindings for a visual or page                           |
 | `pbip_update_visual_bindings`   | Batch update bindings after measure moves or table renames                 |
 | `pbip_update_visual_properties` | Generic PBIR patch: deep-merge formatting properties by objects selector   |
-| `pbip_list_visual_types`      | Browse visual type registry with data roles and categories                 |
-| `pbip_create_page`            | Create a page directory + `page.json` (default canvas 1920×1080)           |
-| `pbip_create_visual`          | Create a visual under a page with optional bindings                        |
-| `pbip_audit_bindings`         | Find broken bindings referencing missing tables/measures/columns + summary |
+| `pbip_list_visual_types`        | Browse visual type registry with data roles and categories                 |
+| `pbip_create_page`              | Create a page directory + `page.json` (default canvas 1920×1080)           |
+| `pbip_create_visual`            | Create a visual under a page with optional bindings                        |
+| `pbip_audit_bindings`           | Find broken bindings referencing missing tables/measures/columns + summary |
 
 ### DAX Tools (1)
 

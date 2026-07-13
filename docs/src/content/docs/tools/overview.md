@@ -73,10 +73,10 @@ pbip-tools exposes **55 MCP tools** organized into 13 categories. Most operate o
 
 ### Validation (2 tools)
 
-| Tool                                                           | Purpose                                                                            |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Tool                                                            | Purpose                                                                            |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | [`pbip_validate_dax`](/tools/dax-validation/#pbip_validate_dax) | Validate DAX syntax offline — bracket balance, unclosed strings, unknown functions |
-| `pbip_validate_tmdl`                                           | 40+ BPA rules across structural, performance, DAX, formatting, naming, maintenance |
+| `pbip_validate_tmdl`                                            | 40+ BPA rules across structural, performance, DAX, formatting, naming, maintenance |
 
 ### Compound Generators (5 tools)
 
