@@ -11,6 +11,7 @@ import {
   writeRoleFile,
   deleteRoleFile,
   deleteTableFile,
+  writeExpressionsFile,
 } from '@pbip-tools/project-discovery';
 import {
   // Read-only schemas
@@ -95,6 +96,12 @@ import {
   CreateColumnSchema,
   UpdateColumnSchema,
   DeleteColumnSchema,
+  CreateFunctionSchema,
+  UpdateFunctionSchema,
+  DeleteFunctionSchema,
+  CreateExpressionSchema,
+  UpdateExpressionSchema,
+  DeleteExpressionSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -179,6 +186,13 @@ import { renameMeasure } from './rename-measure.js';
 import { updateCalcItem, deleteCalcItem, deleteCalcGroup } from './calc-item-write.js';
 import { createHierarchy, updateHierarchy, deleteHierarchy } from './hierarchy-write.js';
 import { createColumn, updateColumn, deleteColumn } from './column-write.js';
+import { createFunction, updateFunction, deleteFunction } from './function-write.js';
+import {
+  createExpression,
+  updateExpression,
+  deleteExpression,
+  buildParameterExpression,
+} from './expression-write.js';
 
 // Fabric API tool implementations
 import { fabricListWorkspaces } from './fabric-list-workspaces.js';
@@ -803,6 +817,132 @@ export function registerTools(
       const result = deleteColumn(project, args.tableName, args.columnName);
 
       await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  // =============================================
+  // DAX UDF TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_create_function',
+    'Create a DAX user-defined function in functions.tmdl',
+    CreateFunctionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = createFunction(project, args.functionName, args.expression);
+
+      await writeFunctionsFile(project, project.model.functions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, function: result.function.name });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_function',
+    'Update a DAX user-defined function (rename and/or change its body)',
+    UpdateFunctionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateFunction(project, args.functionName, {
+        newName: args.newName,
+        expression: args.expression,
+      });
+
+      await writeFunctionsFile(project, project.model.functions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, function: result.function.name });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_function',
+    'Delete a DAX user-defined function (destructive). Refuses while any measure, calculated column, calculation item, or other function still calls it.',
+    DeleteFunctionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteFunction(project, args.functionName);
+
+      await writeFunctionsFile(project, project.model.functions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  // =============================================
+  // NAMED EXPRESSION / POWER QUERY PARAMETER TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_create_expression',
+    'Create a named M expression, or a Power Query parameter (pass parameterValue and the meta [IsParameterQuery=true, …] suffix is built for you)',
+    CreateExpressionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+
+      if (args.expression === undefined && args.parameterValue === undefined) {
+        throw new Error('Supply either `expression` (raw M) or `parameterValue` (parameter)');
+      }
+
+      const m =
+        args.parameterValue !== undefined
+          ? buildParameterExpression(args.parameterValue, {
+              type: args.parameterType,
+              required: args.parameterRequired,
+            })
+          : args.expression!;
+
+      const result = createExpression(project, args.expressionName, m, {
+        queryGroup: args.queryGroup,
+        resultType: args.resultType,
+      });
+
+      await writeExpressionsFile(project, project.model.expressions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        expression: result.expression.name,
+        isParameter: args.parameterValue !== undefined,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_expression',
+    'Update a named M expression or Power Query parameter (rename, change M, query group, result type)',
+    UpdateExpressionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateExpression(project, args.expressionName, {
+        newName: args.newName,
+        expression: args.expression,
+        queryGroup: args.queryGroup,
+        resultType: args.resultType,
+      });
+
+      await writeExpressionsFile(project, project.model.expressions);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, expression: result.expression.name });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_expression',
+    'Delete a named M expression or Power Query parameter (destructive). Refuses while a partition source or another expression still references it.',
+    DeleteExpressionSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteExpression(project, args.expressionName);
+
+      await writeExpressionsFile(project, project.model.expressions);
       invalidateCache(project.pbipPath);
 
       return jsonResponse({ success: true, ...result });

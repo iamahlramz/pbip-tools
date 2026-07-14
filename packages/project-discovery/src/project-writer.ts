@@ -8,6 +8,7 @@ import type {
   RoleNode,
   ModelNode,
   FunctionNode,
+  ExpressionNode,
   RelationshipNode,
 } from '@pbip-tools/core';
 import { TMDL_FILES } from '@pbip-tools/core';
@@ -16,6 +17,7 @@ import {
   serializeRole,
   serializeModel,
   serializeFunctions,
+  serializeExpressions,
   serializeRelationships,
 } from '@pbip-tools/tmdl-parser';
 
@@ -140,6 +142,20 @@ export async function writeFunctionsFile(
 ): Promise<void> {
   const filePath = join(project.semanticModelPath, 'definition', TMDL_FILES.FUNCTIONS);
   const content = serializeFunctions(functions);
+  await safeWrite(filePath, content);
+}
+
+/**
+ * Write the expressions TMDL to disk. Overwrites existing expressions.tmdl.
+ * Covers both named M expressions and Power Query parameters (a parameter is
+ * an expression whose value carries a `meta [IsParameterQuery=true, …]` suffix).
+ */
+export async function writeExpressionsFile(
+  project: PbipProject,
+  expressions: ExpressionNode[],
+): Promise<void> {
+  const filePath = join(project.semanticModelPath, 'definition', TMDL_FILES.EXPRESSIONS);
+  const content = serializeExpressions(expressions);
   await safeWrite(filePath, content);
 }
 

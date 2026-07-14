@@ -874,3 +874,69 @@ export const DeleteColumnSchema = z.object({
   tableName: tableName.describe('Table containing the column'),
   columnName: columnName.describe('Column to delete'),
 });
+
+// --- DAX UDF (functions.tmdl) write schemas ---
+
+const functionName = z.string().min(1).max(256);
+
+export const CreateFunctionSchema = z.object({
+  projectPath,
+  functionName: functionName.describe('Name of the new DAX user-defined function'),
+  expression: expression.describe('Full UDF body, e.g. `(a: NUMERIC, b: NUMERIC) => DIVIDE(a, b)`'),
+});
+
+export const UpdateFunctionSchema = z.object({
+  projectPath,
+  functionName: functionName.describe('Function to update'),
+  newName: functionName.optional().describe('Rename the function'),
+  expression: expression.optional().describe('New UDF body'),
+});
+
+export const DeleteFunctionSchema = z.object({
+  projectPath,
+  functionName: functionName.describe('Function to delete'),
+});
+
+// --- Named expression / Power Query parameter (expressions.tmdl) schemas ---
+
+const expressionName = z.string().min(1).max(256);
+
+export const CreateExpressionSchema = z.object({
+  projectPath,
+  expressionName: expressionName.describe('Name of the new expression or parameter'),
+  expression: expression
+    .optional()
+    .describe('Raw M expression. Omit when creating a parameter via parameterValue.'),
+  parameterValue: z
+    .string()
+    .max(10000)
+    .optional()
+    .describe(
+      'Creates a Power Query PARAMETER with this current value (an M literal, e.g. "\\"https://host\\"") — the meta [IsParameterQuery=true, …] suffix is built for you.',
+    ),
+  parameterType: z
+    .string()
+    .max(64)
+    .optional()
+    .describe('Parameter type when using parameterValue (default: Text)'),
+  parameterRequired: z
+    .boolean()
+    .optional()
+    .describe('Whether the parameter is required (default: true)'),
+  queryGroup: z.string().max(256).optional().describe('Query group (folder) in Power Query'),
+  resultType: z.string().max(64).optional().describe('Result type, e.g. text / table'),
+});
+
+export const UpdateExpressionSchema = z.object({
+  projectPath,
+  expressionName: expressionName.describe('Expression or parameter to update'),
+  newName: expressionName.optional().describe('Rename the expression'),
+  expression: expression.optional().describe('New raw M expression'),
+  queryGroup: z.string().max(256).optional(),
+  resultType: z.string().max(64).optional(),
+});
+
+export const DeleteExpressionSchema = z.object({
+  projectPath,
+  expressionName: expressionName.describe('Expression or parameter to delete'),
+});

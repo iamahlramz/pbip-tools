@@ -5,7 +5,9 @@ export { loadProject } from './project-loader.js';
 export { applySecurityFilter } from './security-filter.js';
 export {
   safeWrite,
+  backupPathFor,
   writeTableFile,
+  writeExpressionsFile,
   deleteTableFile,
   writeModelFile,
   writeFunctionsFile,
