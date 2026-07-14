@@ -1,6 +1,6 @@
 {
   "name": "@pbip-tools/fabric-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fabric / Power BI REST client with scope-parameterized auth, per-scope token cache, and redacting error wrapper",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@pbip-tools/core": "0.3.0"
+    "@pbip-tools/core": "0.4.0"
   },
   "devDependencies": {
     "vitest": "^3.0.0"
