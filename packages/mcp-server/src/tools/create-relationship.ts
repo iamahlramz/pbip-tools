@@ -3,6 +3,7 @@ import type {
   RelationshipNode,
   Cardinality,
   CrossFilteringBehavior,
+  SecurityFilteringBehavior,
 } from '@pbip-tools/core';
 import { randomUUID } from 'node:crypto';
 
@@ -17,6 +18,9 @@ export function createRelationship(
     fromCardinality?: Cardinality;
     toCardinality?: Cardinality;
     crossFilteringBehavior?: CrossFilteringBehavior;
+    securityFilteringBehavior?: SecurityFilteringBehavior;
+    joinOnDateBehavior?: string;
+    relyOnReferentialIntegrity?: boolean;
     isActive?: boolean;
   },
 ) {
@@ -70,6 +74,13 @@ export function createRelationship(
   if (options?.crossFilteringBehavior) {
     relationship.crossFilteringBehavior = options.crossFilteringBehavior;
   }
+  if (options?.securityFilteringBehavior) {
+    relationship.securityFilteringBehavior = options.securityFilteringBehavior;
+  }
+  if (options?.joinOnDateBehavior) relationship.joinOnDateBehavior = options.joinOnDateBehavior;
+  if (options?.relyOnReferentialIntegrity !== undefined) {
+    relationship.relyOnReferentialIntegrity = options.relyOnReferentialIntegrity;
+  }
   if (options?.isActive === false) relationship.isActive = false;
 
   project.model.relationships.push(relationship);
@@ -81,6 +92,9 @@ export function createRelationship(
     fromCardinality: relationship.fromCardinality ?? 'many',
     toCardinality: relationship.toCardinality ?? 'one',
     crossFilteringBehavior: relationship.crossFilteringBehavior ?? 'oneDirection',
+    securityFilteringBehavior: relationship.securityFilteringBehavior,
+    joinOnDateBehavior: relationship.joinOnDateBehavior,
+    relyOnReferentialIntegrity: relationship.relyOnReferentialIntegrity,
     isActive: relationship.isActive !== false,
   };
 }

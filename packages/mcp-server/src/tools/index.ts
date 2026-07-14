@@ -10,6 +10,7 @@ import {
   writeRelationshipsFile,
   writeRoleFile,
   deleteRoleFile,
+  deleteTableFile,
 } from '@pbip-tools/project-discovery';
 import {
   // Read-only schemas
@@ -82,7 +83,12 @@ import {
   LiveListModelSchema,
   // Relationship write schemas
   CreateRelationshipSchema,
+  UpdateRelationshipSchema,
   DeleteRelationshipSchema,
+  RenameMeasureSchema,
+  UpdateCalcItemSchema,
+  DeleteCalcItemSchema,
+  DeleteCalcGroupSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -162,6 +168,9 @@ import { listInstalledDaxlibs } from './daxlib-list-installed.js';
 
 // Relationship write tool implementations
 import { createRelationship, deleteRelationship } from './create-relationship.js';
+import { updateRelationship } from './update-relationship.js';
+import { renameMeasure } from './rename-measure.js';
+import { updateCalcItem, deleteCalcItem, deleteCalcGroup } from './calc-item-write.js';
 
 // Fabric API tool implementations
 import { fabricListWorkspaces } from './fabric-list-workspaces.js';
@@ -295,9 +304,33 @@ export function registerTools(
           fromCardinality: args.fromCardinality,
           toCardinality: args.toCardinality,
           crossFilteringBehavior: args.crossFilteringBehavior,
+          securityFilteringBehavior: args.securityFilteringBehavior,
+          joinOnDateBehavior: args.joinOnDateBehavior,
+          relyOnReferentialIntegrity: args.relyOnReferentialIntegrity,
           isActive: args.isActive,
         },
       );
+      await writeRelationshipsFile(project, project.model.relationships);
+      invalidateCache(project.pbipPath);
+      return jsonResponse(result);
+    }),
+  );
+
+  server.tool(
+    'pbip_update_relationship',
+    'Modify an existing relationship (cardinality, cross-filter/security-filter direction, active state, date-join behavior, referential integrity). Endpoints are immutable — delete and recreate to re-point one.',
+    UpdateRelationshipSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateRelationship(project, args.relationshipName, {
+        fromCardinality: args.fromCardinality,
+        toCardinality: args.toCardinality,
+        crossFilteringBehavior: args.crossFilteringBehavior,
+        securityFilteringBehavior: args.securityFilteringBehavior,
+        joinOnDateBehavior: args.joinOnDateBehavior,
+        relyOnReferentialIntegrity: args.relyOnReferentialIntegrity,
+        isActive: args.isActive,
+      });
       await writeRelationshipsFile(project, project.model.relationships);
       invalidateCache(project.pbipPath);
       return jsonResponse(result);
@@ -467,6 +500,38 @@ export function registerTools(
     }),
   );
 
+  server.tool(
+    'pbip_rename_measure',
+    'Rename a measure and rewrite the visual.json bindings that reference it (destructive — changes visual bindings). Returns any OTHER measures whose DAX references the old name; those are NOT rewritten and must be updated by the caller.',
+    RenameMeasureSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = renameMeasure(project, args.measureName, args.newName);
+
+      await writeTableFile(project, findTable(project, result.table));
+
+      let bindingsResult = { filesModified: 0, totalUpdates: 0 };
+      if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
+        bindingsResult = await updateVisualBindings(project, result.bindingOps);
+      }
+
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        oldName: result.oldName,
+        newName: result.newName,
+        visualBindings: {
+          filesModified: bindingsResult.filesModified,
+          totalUpdates: bindingsResult.totalUpdates,
+        },
+        // Measures whose DAX still says [oldName] — the caller must fix these.
+        daxReferencesNeedingUpdate: result.daxReferences,
+      });
+    }),
+  );
+
   // =============================================
   // CALCULATION GROUP TOOLS (2)
   // =============================================
@@ -521,6 +586,62 @@ export function registerTools(
         item: result.item.name,
         ordinal: result.item.ordinal,
       });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_calc_item',
+    'Update an existing calculation item (DAX expression, ordinal, dynamic format string)',
+    UpdateCalcItemSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateCalcItem(project, args.tableName, args.itemName, {
+        expression: args.expression,
+        ordinal: args.ordinal,
+        formatStringExpression: args.formatStringExpression,
+      });
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        item: result.item.name,
+        ordinal: result.item.ordinal,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_calc_item',
+    'Delete a calculation item from a calculation group (destructive)',
+    DeleteCalcItemSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteCalcItem(project, args.tableName, args.itemName);
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_calc_group',
+    'Delete a calculation group and its backing table (destructive). Refuses while any measure still references the group.',
+    DeleteCalcGroupSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteCalcGroup(project, args.tableName);
+
+      await deleteTableFile(project, result.deletedTable);
+      // The table's `ref table` line was dropped from the model node — persist it.
+      await writeModelFile(project, project.model.model);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
     }),
   );
 

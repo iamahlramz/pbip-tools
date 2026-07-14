@@ -694,16 +694,86 @@ export const CreateRelationshipSchema = z.object({
     .enum(['oneDirection', 'bothDirections', 'automatic'])
     .optional()
     .describe('Cross-filter direction (default: oneDirection)'),
+  securityFilteringBehavior: z
+    .enum(['oneDirection', 'bothDirections'])
+    .optional()
+    .describe('Direction RLS filters propagate (default: oneDirection)'),
+  joinOnDateBehavior: z
+    .enum(['datePartOnly', 'dateAndTime'])
+    .optional()
+    .describe('For date-column joins: match on the date part only, or date + time'),
+  relyOnReferentialIntegrity: z
+    .boolean()
+    .optional()
+    .describe('Assume referential integrity (enables inner-join optimization in DirectQuery)'),
   isActive: z.boolean().optional().describe('Whether relationship is active (default: true)'),
+});
+
+const relationshipRef = z
+  .string()
+  .min(1)
+  .max(512)
+  .describe(
+    "Relationship name (UUID) or endpoint descriptor like 'FactSales.DateKey -> DimDate.DateKey'",
+  );
+
+export const UpdateRelationshipSchema = z.object({
+  projectPath,
+  relationshipName: relationshipRef,
+  fromCardinality: z.enum(['one', 'many']).optional().describe('Source cardinality'),
+  toCardinality: z.enum(['one', 'many']).optional().describe('Target cardinality'),
+  crossFilteringBehavior: z
+    .enum(['oneDirection', 'bothDirections', 'automatic'])
+    .optional()
+    .describe('Cross-filter direction'),
+  securityFilteringBehavior: z
+    .enum(['oneDirection', 'bothDirections'])
+    .optional()
+    .describe('Direction RLS filters propagate'),
+  joinOnDateBehavior: z
+    .enum(['datePartOnly', 'dateAndTime'])
+    .optional()
+    .describe('For date-column joins: match on the date part only, or date + time'),
+  relyOnReferentialIntegrity: z.boolean().optional().describe('Assume referential integrity'),
+  isActive: z.boolean().optional().describe('Whether the relationship is active'),
 });
 
 export const DeleteRelationshipSchema = z.object({
   projectPath,
-  relationshipName: z
+  relationshipName: relationshipRef,
+});
+
+export const RenameMeasureSchema = z.object({
+  projectPath,
+  measureName: measureName.describe('Current measure name'),
+  newName: measureName.describe('New measure name (must be unique across the model)'),
+  updateVisualBindings: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Rewrite visual.json bindings that reference the measure (default: true)'),
+});
+
+export const UpdateCalcItemSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Calculation group table'),
+  itemName: z.string().min(1).max(256).describe('Calculation item to update'),
+  expression: expression.optional().describe('New DAX expression'),
+  ordinal: z.number().int().min(0).optional().describe('New ordinal (display order)'),
+  formatStringExpression: z
     .string()
-    .min(1)
-    .max(512)
-    .describe(
-      "Relationship name (UUID) or endpoint descriptor like 'FactSales.DateKey -> DimDate.DateKey'",
-    ),
+    .max(100000)
+    .optional()
+    .describe('New dynamic format-string DAX expression'),
+});
+
+export const DeleteCalcItemSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Calculation group table'),
+  itemName: z.string().min(1).max(256).describe('Calculation item to delete'),
+});
+
+export const DeleteCalcGroupSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Calculation group table to delete (removes the whole table)'),
 });
