@@ -26,7 +26,7 @@ parser handler form.  parser
         |
 @pbip-tools/fabric-client                   (Fabric / Power BI REST + auth + retry)
         |
-@pbip-tools/mcp-server                      (MCP protocol + 55 tools)
+@pbip-tools/mcp-server                      (MCP protocol + 75 tools)
 ```
 
 The bottom of the graph (`mcp-server`) is what end users interact with. Everything above it is a library that can also be used independently — `fabric-client` in particular is designed for standalone use from CI scripts, Databricks notebooks, or any non-MCP context.
@@ -109,12 +109,12 @@ Powers the `pbip_list_workspaces` / `pbip_deploy_to_workspace` / `pbip_trigger_r
 
 ### @pbip-tools/mcp-server
 
-**The MCP protocol server exposing all 55 tools.**
+**The MCP protocol server exposing all 75 tools.**
 
 This is the package AI assistants (Claude, GitHub Copilot, Cursor, etc.) interact with via the [Model Context Protocol](https://modelcontextprotocol.io). It:
 
 - Implements the MCP server using `@modelcontextprotocol/sdk`
-- Defines all 55 tool schemas using Zod for input validation
+- Defines all 75 tool schemas using Zod for input validation
 - Routes tool calls to the appropriate functions in `project-discovery`, `tmdl-parser`, `visual-handler`, `dax-formatter`, `rdl-parser`, and `fabric-client`
 - Wraps every handler in `safeTool` so failures return clean MCP error responses without leaking stack traces
 

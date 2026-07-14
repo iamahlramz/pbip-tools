@@ -7,7 +7,7 @@ project:
   type: 'library'
   status: 'active'
   platform: 'ANY'
-  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 55 tools for semantic model authoring, validation, and deployment'
+  description: 'MCP server and TypeScript SDK for Power BI PBIP/TMDL development — 75 tools for semantic model authoring, validation, and deployment'
 
 stack:
   languages: ['TypeScript']
@@ -70,7 +70,7 @@ packages:
     exports: 'discoverProjects, loadProject, writeTableFile, writeModelFile, writeFunctionsFile, writeRoleFile'
   mcp-server:
     path: 'packages/mcp-server'
-    purpose: 'MCP server with 55 registered tools — the main entry point'
+    purpose: 'MCP server with 75 registered tools — the main entry point'
     exports: 'MCP tool handlers, schemas, data catalogs'
   rdl-parser:
     path: 'packages/rdl-parser'

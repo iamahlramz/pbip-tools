@@ -102,6 +102,9 @@ import {
   CreateExpressionSchema,
   UpdateExpressionSchema,
   DeleteExpressionSchema,
+  SetModelPropertiesSchema,
+  SetAnnotationSchema,
+  DeleteAnnotationSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -193,6 +196,12 @@ import {
   deleteExpression,
   buildParameterExpression,
 } from './expression-write.js';
+import {
+  setModelProperties,
+  setAnnotation,
+  deleteAnnotation,
+  type AnnotationTarget,
+} from './model-write.js';
 
 // Fabric API tool implementations
 import { fabricListWorkspaces } from './fabric-list-workspaces.js';
@@ -207,6 +216,16 @@ type ToolResponse = { content: { type: 'text'; text: string }[]; isError?: boole
 
 function jsonResponse(data: unknown): ToolResponse {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+}
+
+/**
+ * A dry run must never mutate the CACHED project object — the mutation helpers
+ * work in place, so a dry run that skipped only the disk write would leave the
+ * in-memory model corrupted for every later call. Cloning keeps the guards and
+ * the reported result honest while leaving the real project untouched.
+ */
+function mutationTarget(project: PbipProject, dryRun?: boolean): PbipProject {
+  return dryRun ? structuredClone(project) : project;
 }
 
 /**
@@ -365,10 +384,13 @@ export function registerTools(
     DeleteRelationshipSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteRelationship(project, args.relationshipName);
-      await writeRelationshipsFile(project, project.model.relationships);
-      invalidateCache(project.pbipPath);
-      return jsonResponse(result);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteRelationship(target, args.relationshipName);
+      if (!args.dryRun) {
+        await writeRelationshipsFile(target, target.model.relationships);
+        invalidateCache(target.pbipPath);
+      }
+      return jsonResponse({ dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -475,14 +497,17 @@ export function registerTools(
     DeleteMeasureSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteMeasure(project, args.measureName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteMeasure(target, args.measureName);
 
-      const table = findTable(project, result.table);
-      await writeTableFile(project, table);
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await writeTableFile(target, findTable(target, result.table));
+        invalidateCache(target.pbipPath);
+      }
 
       return jsonResponse({
         success: true,
+        dryRun: !!args.dryRun,
         table: result.table,
         deletedMeasure: result.deletedMeasure,
       });
@@ -641,12 +666,15 @@ export function registerTools(
     DeleteCalcItemSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteCalcItem(project, args.tableName, args.itemName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteCalcItem(target, args.tableName, args.itemName);
 
-      await writeTableFile(project, findTable(project, result.table));
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await writeTableFile(target, findTable(target, result.table));
+        invalidateCache(target.pbipPath);
+      }
 
-      return jsonResponse({ success: true, ...result });
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -656,14 +684,17 @@ export function registerTools(
     DeleteCalcGroupSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteCalcGroup(project, args.tableName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteCalcGroup(target, args.tableName);
 
-      await deleteTableFile(project, result.deletedTable);
-      // The table's `ref table` line was dropped from the model node — persist it.
-      await writeModelFile(project, project.model.model);
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await deleteTableFile(target, result.deletedTable);
+        // The table's `ref table` line was dropped from the model node — persist it.
+        await writeModelFile(target, target.model.model);
+        invalidateCache(target.pbipPath);
+      }
 
-      return jsonResponse({ success: true, ...result });
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -723,12 +754,15 @@ export function registerTools(
     DeleteHierarchySchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteHierarchy(project, args.tableName, args.hierarchyName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteHierarchy(target, args.tableName, args.hierarchyName);
 
-      await writeTableFile(project, findTable(project, result.table));
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await writeTableFile(target, findTable(target, result.table));
+        invalidateCache(target.pbipPath);
+      }
 
-      return jsonResponse({ success: true, ...result });
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -814,12 +848,15 @@ export function registerTools(
     DeleteColumnSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteColumn(project, args.tableName, args.columnName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteColumn(target, args.tableName, args.columnName);
 
-      await writeTableFile(project, findTable(project, result.table));
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await writeTableFile(target, findTable(target, result.table));
+        invalidateCache(target.pbipPath);
+      }
 
-      return jsonResponse({ success: true, ...result });
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -866,12 +903,15 @@ export function registerTools(
     DeleteFunctionSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteFunction(project, args.functionName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteFunction(target, args.functionName);
 
-      await writeFunctionsFile(project, project.model.functions);
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await writeFunctionsFile(target, target.model.functions);
+        invalidateCache(target.pbipPath);
+      }
 
-      return jsonResponse({ success: true, ...result });
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -940,12 +980,87 @@ export function registerTools(
     DeleteExpressionSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteExpression(project, args.expressionName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteExpression(target, args.expressionName);
 
-      await writeExpressionsFile(project, project.model.expressions);
+      if (!args.dryRun) {
+        await writeExpressionsFile(target, target.model.expressions);
+        invalidateCache(target.pbipPath);
+      }
+
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
+    }),
+  );
+
+  // =============================================
+  // MODEL PROPERTY + ANNOTATION TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_set_model_properties',
+    'Set model-level properties in model.tmdl (culture, discourageImplicitMeasures, defaultPowerBIDataSourceVersion)',
+    SetModelPropertiesSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = setModelProperties(project, {
+        culture: args.culture,
+        discourageImplicitMeasures: args.discourageImplicitMeasures,
+        defaultPowerBIDataSourceVersion: args.defaultPowerBIDataSourceVersion,
+      });
+
+      await writeModelFile(project, project.model.model);
       invalidateCache(project.pbipPath);
 
+      return jsonResponse({
+        success: true,
+        culture: result.model.culture,
+        discourageImplicitMeasures: result.model.discourageImplicitMeasures,
+        defaultPowerBIDataSourceVersion: result.model.defaultPowerBIDataSourceVersion,
+      });
+    }),
+  );
+
+  // Annotations are a generic TMDL mechanism, so the target is a discriminated
+  // union rather than there being a set-annotation tool per entity type.
+  async function persistAnnotationTarget(project: PbipProject, target: AnnotationTarget) {
+    if (target.kind === 'model') {
+      await writeModelFile(project, project.model.model);
+    } else {
+      await writeTableFile(project, findTable(project, target.table));
+    }
+    invalidateCache(project.pbipPath);
+  }
+
+  server.tool(
+    'pbip_set_annotation',
+    'Create or overwrite an annotation on the model, a table, a measure, or a column',
+    SetAnnotationSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const target = args.target as AnnotationTarget;
+      const result = setAnnotation(project, target, args.name, args.value);
+
+      await persistAnnotationTarget(project, target);
+
       return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_annotation',
+    'Remove an annotation from the model, a table, a measure, or a column (destructive)',
+    DeleteAnnotationSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const annTarget = args.target as AnnotationTarget;
+      const proj = mutationTarget(project, args.dryRun);
+      const result = deleteAnnotation(proj, annTarget, args.name);
+
+      if (!args.dryRun) {
+        await persistAnnotationTarget(proj, annTarget);
+      }
+
+      return jsonResponse({ success: true, dryRun: !!args.dryRun, ...result });
     }),
   );
 
@@ -1155,13 +1270,17 @@ export function registerTools(
     DeleteRoleSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = deleteRole(project, args.roleName);
+      const target = mutationTarget(project, args.dryRun);
+      const result = deleteRole(target, args.roleName);
 
-      await deleteRoleFile(project, result.deletedRole);
-      invalidateCache(project.pbipPath);
+      if (!args.dryRun) {
+        await deleteRoleFile(target, result.deletedRole);
+        invalidateCache(target.pbipPath);
+      }
 
       return jsonResponse({
         success: true,
+        dryRun: !!args.dryRun,
         deletedRole: result.deletedRole,
       });
     }),

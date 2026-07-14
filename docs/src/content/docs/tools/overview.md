@@ -1,11 +1,11 @@
 ---
 title: Tool Overview
-description: All 55 MCP tools at a glance
+description: All 75 MCP tools at a glance
 sidebar:
   order: 1
 ---
 
-pbip-tools exposes **55 MCP tools** organized into 13 categories. Most operate on the TMDL and visual.json files inside your Power BI Project (PBIP) folder — no running instance of Power BI Desktop is required. The Fabric API and live-mode tools additionally call Power BI / Fabric REST when supplied with service-principal credentials.
+pbip-tools exposes **75 MCP tools** organized into 13 categories. Most operate on the TMDL and visual.json files inside your Power BI Project (PBIP) folder — no running instance of Power BI Desktop is required. The Fabric API and live-mode tools additionally call Power BI / Fabric REST when supplied with service-principal credentials.
 
 ## Quick-reference table
 

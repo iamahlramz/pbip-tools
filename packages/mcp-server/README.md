@@ -1,6 +1,6 @@
 # @pbip-tools/mcp-server
 
-MCP server exposing 55 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
+MCP server exposing 75 Power BI PBIP project tools for AI assistants like Claude Code, Cursor, VS Code Copilot, and others.
 
 Part of the [pbip-tools](https://github.com/iamahlramz/pbip-tools) monorepo.
 
@@ -45,7 +45,7 @@ Add to your MCP settings:
 }
 ```
 
-## Tools (55)
+## Tools (75)
 
 ### Discovery & Read (10)
 
@@ -62,23 +62,56 @@ Add to your MCP settings:
 | `pbip_get_function`         | Full UDF detail: body, parameters, annotations           |
 | `pbip_list_visual_types`    | Catalog of supported PBIR visual types                   |
 
-### Measure & Calculation Write (6)
+### Measure & Calculation Write (10)
 
-| Tool                     | Description                                                |
-| ------------------------ | ---------------------------------------------------------- |
-| `pbip_create_measure`    | Create a new DAX measure (returns full `MeasureResponse`)  |
-| `pbip_update_measure`    | Modify expression, format, folder, description, visibility |
-| `pbip_delete_measure`    | Remove a measure                                           |
-| `pbip_move_measure`      | Move between tables with visual binding updates            |
-| `pbip_create_calc_group` | Create a calculation group table                           |
-| `pbip_add_calc_item`     | Add a calculation item to a group                          |
+| Tool                     | Description                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `pbip_create_measure`    | Create a new DAX measure (returns full `MeasureResponse`)                     |
+| `pbip_update_measure`    | Modify expression, format, folder, description, visibility                    |
+| `pbip_rename_measure`    | Rename + rewrite visual bindings; reports DAX references needing manual fixes |
+| `pbip_delete_measure`    | Remove a measure                                                              |
+| `pbip_move_measure`      | Move between tables with visual binding updates                               |
+| `pbip_create_calc_group` | Create a calculation group table                                              |
+| `pbip_add_calc_item`     | Add a calculation item to a group                                             |
+| `pbip_update_calc_item`  | Update an item's DAX, ordinal, or dynamic format string                       |
+| `pbip_delete_calc_item`  | Remove a calculation item                                                     |
+| `pbip_delete_calc_group` | Delete a group + table; refuses while a measure references it                 |
 
-### Relationships (2)
+### Columns & Hierarchies (6)
 
-| Tool                       | Description                                       |
-| -------------------------- | ------------------------------------------------- |
-| `pbip_create_relationship` | Create a relationship between two tables          |
-| `pbip_delete_relationship` | Delete a relationship by from/to tables + columns |
+| Tool                    | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `pbip_create_column`    | Data column, or **calculated** column when `expression` is supplied         |
+| `pbip_update_column`    | Update a column; renaming rewrites visual bindings                          |
+| `pbip_delete_column`    | Refuses while a relationship, hierarchy, sortByColumn, or DAX still uses it |
+| `pbip_create_hierarchy` | Create a hierarchy from an ordered column list (array order = drill order)  |
+| `pbip_update_hierarchy` | Rename, hide/show, or replace the level list                                |
+| `pbip_delete_hierarchy` | Remove a hierarchy                                                          |
+
+### Relationships (3)
+
+| Tool                       | Description                                                       |
+| -------------------------- | ----------------------------------------------------------------- |
+| `pbip_create_relationship` | Create a relationship between two tables                          |
+| `pbip_update_relationship` | Cardinality, cross-filter / security-filter direction, active, RI |
+| `pbip_delete_relationship` | Delete a relationship by from/to tables + columns                 |
+
+### UDFs, Expressions & Model (6)
+
+| Tool                        | Description                                                             |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `pbip_create_function`      | Create a DAX UDF in `functions.tmdl`                                    |
+| `pbip_update_function`      | Rename a UDF or change its body                                         |
+| `pbip_delete_function`      | Refuses while anything still calls it                                   |
+| `pbip_create_expression`    | Named M expression, or a Power Query **parameter** via `parameterValue` |
+| `pbip_update_expression`    | Update M, query group, or result type                                   |
+| `pbip_delete_expression`    | Refuses while a partition source or expression references it            |
+| `pbip_set_model_properties` | Culture, `discourageImplicitMeasures`, default data-source version      |
+| `pbip_set_annotation`       | Create/overwrite an annotation on model / table / measure / column      |
+| `pbip_delete_annotation`    | Remove an annotation from any of those                                  |
+
+> Every `pbip_delete_*` tool accepts `dryRun: true` — it runs the validation
+> guards and reports what _would_ change, without writing to disk.
 
 ### Visuals & Pages (6)
 

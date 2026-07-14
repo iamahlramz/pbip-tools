@@ -17,6 +17,11 @@ const optionalExpression = z.string().max(100000).optional();
 const displayFolder = z.string().max(1024).optional();
 const description = z.string().max(1024).optional();
 const formatString = z.string().max(1024).optional();
+const dryRun = z
+  .boolean()
+  .optional()
+  .default(false)
+  .describe('Validate and report what would change WITHOUT writing to disk (default: false)');
 
 // --- Read-only tool schemas ---
 
@@ -98,6 +103,7 @@ export const UpdateMeasureSchema = z.object({
 export const DeleteMeasureSchema = z.object({
   projectPath,
   measureName: measureName.describe('Name of the measure to delete'),
+  dryRun,
 });
 
 export const MoveMeasureSchema = z.object({
@@ -338,6 +344,7 @@ export const UpdateRoleSchema = z.object({
 export const DeleteRoleSchema = z.object({
   projectPath,
   roleName: roleName.describe('Name of the role to delete'),
+  dryRun,
 });
 
 // --- Live-mode tool schemas (Phase B) ---
@@ -741,6 +748,7 @@ export const UpdateRelationshipSchema = z.object({
 export const DeleteRelationshipSchema = z.object({
   projectPath,
   relationshipName: relationshipRef,
+  dryRun,
 });
 
 export const RenameMeasureSchema = z.object({
@@ -771,11 +779,13 @@ export const DeleteCalcItemSchema = z.object({
   projectPath,
   tableName: tableName.describe('Calculation group table'),
   itemName: z.string().min(1).max(256).describe('Calculation item to delete'),
+  dryRun,
 });
 
 export const DeleteCalcGroupSchema = z.object({
   projectPath,
   tableName: tableName.describe('Calculation group table to delete (removes the whole table)'),
+  dryRun,
 });
 
 // --- Hierarchy write schemas ---
@@ -813,6 +823,7 @@ export const DeleteHierarchySchema = z.object({
   projectPath,
   tableName: tableName.describe('Table containing the hierarchy'),
   hierarchyName: z.string().min(1).max(256).describe('Hierarchy to delete'),
+  dryRun,
 });
 
 // --- Column write schemas ---
@@ -873,6 +884,7 @@ export const DeleteColumnSchema = z.object({
   projectPath,
   tableName: tableName.describe('Table containing the column'),
   columnName: columnName.describe('Column to delete'),
+  dryRun,
 });
 
 // --- DAX UDF (functions.tmdl) write schemas ---
@@ -895,6 +907,7 @@ export const UpdateFunctionSchema = z.object({
 export const DeleteFunctionSchema = z.object({
   projectPath,
   functionName: functionName.describe('Function to delete'),
+  dryRun,
 });
 
 // --- Named expression / Power Query parameter (expressions.tmdl) schemas ---
@@ -939,4 +952,48 @@ export const UpdateExpressionSchema = z.object({
 export const DeleteExpressionSchema = z.object({
   projectPath,
   expressionName: expressionName.describe('Expression or parameter to delete'),
+  dryRun,
+});
+
+// --- Model property + annotation schemas ---
+
+export const SetModelPropertiesSchema = z.object({
+  projectPath,
+  culture: z.string().max(32).optional().describe('Model culture, e.g. en-US'),
+  discourageImplicitMeasures: z
+    .boolean()
+    .optional()
+    .describe('Discourage implicit measures (required for calculation groups)'),
+  defaultPowerBIDataSourceVersion: z
+    .string()
+    .max(64)
+    .optional()
+    .describe('Default Power BI data source version, e.g. powerBI_V3'),
+});
+
+/**
+ * Annotations hang off many different TMDL nodes, so the target is described
+ * rather than there being a set-annotation tool per entity type.
+ */
+const annotationTarget = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('model') }),
+    z.object({ kind: z.literal('table'), table: tableName }),
+    z.object({ kind: z.literal('measure'), table: tableName, name: measureName }),
+    z.object({ kind: z.literal('column'), table: tableName, name: columnName }),
+  ])
+  .describe('What the annotation lives on: the model, a table, a measure, or a column');
+
+export const SetAnnotationSchema = z.object({
+  projectPath,
+  target: annotationTarget,
+  name: z.string().min(1).max(256).describe('Annotation name'),
+  value: z.string().max(10000).describe('Annotation value (overwrites when it already exists)'),
+});
+
+export const DeleteAnnotationSchema = z.object({
+  projectPath,
+  target: annotationTarget,
+  name: z.string().min(1).max(256).describe('Annotation to remove'),
+  dryRun,
 });

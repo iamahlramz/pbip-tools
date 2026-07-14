@@ -9,7 +9,7 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 - **TMDL Parser** — Full parser for the tab-indented TMDL format including all 3 DAX expression forms (inline, multi-line, backtick-delimited), calculation groups, relationships, expressions with `meta` parameters, cultures, and DAX User-Defined Functions
 - **Project Discovery** — Auto-discovers `.pbip` projects in your workspace
 - **Security Filter** — Strips M-code and connection strings before sending content to AI, so any data source can be used safely
-- **55 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, RLS, offline DAX validation, TMDL validation (40+ BPA rules), SVG measure templates, DAXLib package management, Fabric API integration, and paginated report (RDL) tools
+- **75 MCP Tools** — Read-only queries, measure CRUD, calculation groups, visual binding management, RLS, offline DAX validation, TMDL validation (40+ BPA rules), SVG measure templates, DAXLib package management, Fabric API integration, and paginated report (RDL) tools
 - **Visual.json Handler** — Recursive binding extractor that handles all 6 binding locations (projections, sort, objects, container objects, reference lines, filters) for any visual type including Deneb and custom visuals
 - **RLS Support** — Full parser and write tools for row-level security roles with DAX filter expressions
 - **DAX Validation** — Offline syntax validation with 400+ function catalog; no network egress (the library's optional DaxFormatter.com client is not exposed as an MCP tool)
@@ -40,22 +40,45 @@ Open-source tools for Power BI PBIP projects. Parses TMDL (Tabular Model Definit
 | `pbip_list_functions`       | User-defined DAX functions (UDFs) in the model                               |
 | `pbip_get_function`         | Full UDF detail: body, parameters, annotations                               |
 
-### Semantic Model — Write (12)
+### Semantic Model — Write (32)
 
-| Tool                       | Description                                                          |
-| -------------------------- | -------------------------------------------------------------------- |
-| `pbip_create_measure`      | Create a new DAX measure with format string, display folder, etc.    |
-| `pbip_update_measure`      | Modify expression, format string, folder, description, or visibility |
-| `pbip_delete_measure`      | Remove a measure from its table                                      |
-| `pbip_move_measure`        | Move between tables with automatic visual.json binding updates       |
-| `pbip_create_calc_group`   | Create a new calculation group table with items                      |
-| `pbip_add_calc_item`       | Add a calculation item to an existing group                          |
-| `pbip_create_role`         | Create a new RLS role with table-level DAX filters                   |
-| `pbip_update_role`         | Modify role permission or filter expressions                         |
-| `pbip_delete_role`         | Remove an RLS role                                                   |
-| `pbip_get_role`            | Full role detail with DAX filter expressions                         |
-| `pbip_create_relationship` | Create a relationship between two tables                             |
-| `pbip_delete_relationship` | Delete a relationship by from / to tables + columns                  |
+Every destructive tool (`pbip_delete_*`) accepts `dryRun: true` — it runs the
+validation guards and reports what _would_ change, without touching disk.
+
+| Tool                        | Description                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `pbip_create_measure`       | Create a new DAX measure with format string, display folder, etc.                |
+| `pbip_update_measure`       | Modify expression, format string, folder, description, or visibility             |
+| `pbip_rename_measure`       | Rename + rewrite visual bindings; reports other measures whose DAX must be fixed |
+| `pbip_delete_measure`       | Remove a measure from its table                                                  |
+| `pbip_move_measure`         | Move between tables with automatic visual.json binding updates                   |
+| `pbip_create_column`        | Create a data column, or a **calculated** column when `expression` is supplied   |
+| `pbip_update_column`        | Update a column; renaming rewrites visual bindings                               |
+| `pbip_delete_column`        | Delete a column; refuses while a relationship/hierarchy/sort/DAX still uses it   |
+| `pbip_create_hierarchy`     | Create a hierarchy from an ordered column list (array order = drill order)       |
+| `pbip_update_hierarchy`     | Rename, hide/show, or replace the level list                                     |
+| `pbip_delete_hierarchy`     | Remove a hierarchy from a table                                                  |
+| `pbip_create_calc_group`    | Create a new calculation group table with items                                  |
+| `pbip_add_calc_item`        | Add a calculation item to an existing group                                      |
+| `pbip_update_calc_item`     | Update a calculation item's DAX, ordinal, or dynamic format string               |
+| `pbip_delete_calc_item`     | Remove a calculation item                                                        |
+| `pbip_delete_calc_group`    | Delete a calc group + its table; refuses while a measure still references it     |
+| `pbip_create_role`          | Create a new RLS role with table-level DAX filters                               |
+| `pbip_update_role`          | Modify role permission or filter expressions (preserves OLS)                     |
+| `pbip_delete_role`          | Remove an RLS role                                                               |
+| `pbip_get_role`             | Full role detail with DAX filter expressions                                     |
+| `pbip_create_relationship`  | Create a relationship between two tables                                         |
+| `pbip_update_relationship`  | Change cardinality, cross-filter/security-filter direction, active state, RI     |
+| `pbip_delete_relationship`  | Delete a relationship by from / to tables + columns                              |
+| `pbip_create_function`      | Create a DAX user-defined function in `functions.tmdl`                           |
+| `pbip_update_function`      | Rename a UDF or change its body                                                  |
+| `pbip_delete_function`      | Delete a UDF; refuses while anything still calls it                              |
+| `pbip_create_expression`    | Create a named M expression, or a Power Query **parameter** via `parameterValue` |
+| `pbip_update_expression`    | Update an expression / parameter (M, query group, result type)                   |
+| `pbip_delete_expression`    | Delete an expression; refuses while a partition or expression references it      |
+| `pbip_set_model_properties` | Set culture, `discourageImplicitMeasures`, default data-source version           |
+| `pbip_set_annotation`       | Create/overwrite an annotation on the model, a table, a measure, or a column     |
+| `pbip_delete_annotation`    | Remove an annotation from any of those                                           |
 
 ### Visual & Report Tools (8)
 
@@ -256,7 +279,7 @@ parser handler form. parser
         |
 @pbip-tools/fabric-client                     (Fabric / Power BI REST + auth + retry + redaction)
         |
-@pbip-tools/mcp-server                        (MCP protocol server + 55 tools)
+@pbip-tools/mcp-server                        (MCP protocol server + 75 tools)
 ```
 
 - **Monorepo:** npm workspaces + Turborepo (8 packages)
@@ -303,7 +326,7 @@ The parser handles the full TMDL specification:
 
 ## Production Hardening
 
-- **Input Validation** — All 55 tool schemas enforce string length limits (names ≤256 chars, expressions ≤100K chars)
+- **Input Validation** — All 75 tool schemas enforce string length limits (names ≤256 chars, expressions ≤100K chars)
 - **Error Handling** — All tool handlers wrapped in try-catch to prevent stack trace leakage through MCP
 - **Path Traversal Protection** — Resolved paths validated to stay within the working directory
 - **Security Filter** — Enhanced M-code patterns: `Sql.Native()`, `OleDb.DataSource()`, `Odbc.DataSource()`, connection strings, and URLs
@@ -320,7 +343,7 @@ The parser handles the full TMDL specification:
 | [`@pbip-tools/project-discovery`](packages/project-discovery) | Project discovery, loading, security filtering, and writing                      |
 | [`@pbip-tools/rdl-parser`](packages/rdl-parser)               | RDL / RDLX paginated report parser                                               |
 | [`@pbip-tools/fabric-client`](packages/fabric-client)         | Fabric / Power BI REST client — scope-parameterized auth, token cache, redaction |
-| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 55 tools for AI assistants                                       |
+| [`@pbip-tools/mcp-server`](packages/mcp-server)               | MCP server with 75 tools for AI assistants                                       |
 
 ## License
 
