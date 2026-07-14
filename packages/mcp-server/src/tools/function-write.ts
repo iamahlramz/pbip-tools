@@ -1,5 +1,6 @@
 import type { PbipProject, FunctionNode } from '@pbip-tools/core';
 import { randomUUID } from 'node:crypto';
+import { findFunctionCallers } from './references.js';
 
 /**
  * DAX User-Defined Functions live in functions.tmdl. pbip-tools could only
@@ -60,30 +61,7 @@ export function deleteFunction(
     throw new Error(`Function '${functionName}' not found`);
   }
 
-  // A UDF call is the bare name followed by `(`.
-  const callPattern = new RegExp(`\\b${escapeRegex(functionName)}\\s*\\(`);
-  const callers: string[] = [];
-
-  for (const table of project.model.tables) {
-    for (const m of table.measures) {
-      if (callPattern.test(m.expression)) callers.push(`measure ${table.name}[${m.name}]`);
-    }
-    for (const item of table.calculationGroup?.items ?? []) {
-      if (callPattern.test(item.expression)) {
-        callers.push(`calculation item '${table.name}'.${item.name}`);
-      }
-    }
-    for (const col of table.columns) {
-      if (col.expression && callPattern.test(col.expression)) {
-        callers.push(`calculated column ${table.name}.${col.name}`);
-      }
-    }
-  }
-  for (const f of project.model.functions) {
-    if (f.name !== functionName && callPattern.test(f.expression)) {
-      callers.push(`function ${f.name}`);
-    }
-  }
+  const callers = findFunctionCallers(project, functionName);
 
   if (callers.length > 0) {
     throw new Error(
@@ -94,8 +72,4 @@ export function deleteFunction(
   project.model.functions.splice(idx, 1);
 
   return { deletedFunction: functionName };
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -1,5 +1,6 @@
 import type { PbipProject, ExpressionNode } from '@pbip-tools/core';
 import { randomUUID } from 'node:crypto';
+import { findExpressionReferrers } from './references.js';
 
 /**
  * Named M expressions live in expressions.tmdl. A Power Query PARAMETER is the
@@ -81,26 +82,7 @@ export function deleteExpression(
     throw new Error(`Expression '${expressionName}' not found`);
   }
 
-  const refPattern = new RegExp(`\\b${escapeRegex(expressionName)}\\b`);
-  const referrers: string[] = [];
-
-  for (const table of project.model.tables) {
-    for (const part of table.partitions) {
-      const source = part.source;
-      const text =
-        source.type === 'mCode' || source.type === 'calculated'
-          ? source.expression
-          : (source.expressionSource ?? '');
-      if (text && refPattern.test(text)) {
-        referrers.push(`partition '${table.name}'.${part.name}`);
-      }
-    }
-  }
-  for (const e of project.model.expressions) {
-    if (e.name !== expressionName && refPattern.test(e.expression)) {
-      referrers.push(`expression ${e.name}`);
-    }
-  }
+  const referrers = findExpressionReferrers(project, expressionName);
 
   if (referrers.length > 0) {
     throw new Error(
@@ -111,8 +93,4 @@ export function deleteExpression(
   project.model.expressions.splice(idx, 1);
 
   return { deletedExpression: expressionName };
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

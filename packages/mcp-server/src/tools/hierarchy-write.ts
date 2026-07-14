@@ -1,17 +1,10 @@
 import type { PbipProject, HierarchyNode, HierarchyLevelNode, TableNode } from '@pbip-tools/core';
 import { randomUUID } from 'node:crypto';
+import { findTableOrThrow } from './references.js';
 
 export interface HierarchyLevelInput {
   name?: string;
   column: string;
-}
-
-function findTableOrThrow(project: PbipProject, tableName: string): TableNode {
-  const table = project.model.tables.find((t) => t.name === tableName);
-  if (!table) {
-    throw new Error(`Table '${tableName}' not found`);
-  }
-  return table;
 }
 
 /**

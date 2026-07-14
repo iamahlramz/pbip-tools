@@ -78,6 +78,9 @@ function parseRelationship(
         case 'securityFilteringBehavior':
           node.securityFilteringBehavior = t.value as RelationshipNode['securityFilteringBehavior'];
           break;
+        case 'fromCardinality':
+          node.fromCardinality = t.value as RelationshipNode['fromCardinality'];
+          break;
         case 'toCardinality':
           node.toCardinality = t.value as RelationshipNode['toCardinality'];
           break;

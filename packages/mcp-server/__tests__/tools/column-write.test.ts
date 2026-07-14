@@ -83,6 +83,53 @@ describe('updateColumn', () => {
     ]);
   });
 
+  it('re-points relationships, hierarchy levels and sortByColumn on rename', () => {
+    // DateKey is a relationship endpoint (FactSales -> DimDate) in the fixture.
+    const result = updateColumn(project, 'DimDate', 'DateKey', { newName: 'Date Key' });
+
+    expect(result.repointed.some((r) => r.startsWith('relationship'))).toBe(true);
+    const rel = project.model.relationships.find(
+      (r) => r.toTable === 'DimDate' && r.toColumn === 'Date Key',
+    );
+    expect(rel).toBeDefined();
+    // Nothing may still point at the old name.
+    expect(
+      project.model.relationships.some((r) => r.toTable === 'DimDate' && r.toColumn === 'DateKey'),
+    ).toBe(false);
+  });
+
+  it('re-points a hierarchy level on rename', () => {
+    const result = updateColumn(project, 'DimDate', 'Year', { newName: 'Calendar Year' });
+
+    expect(result.repointed.some((r) => r.startsWith('hierarchy'))).toBe(true);
+    const hier = project.model.tables.find((t) => t.name === 'DimDate')!.hierarchies[0];
+    expect(hier.levels.some((l) => l.column === 'Calendar Year')).toBe(true);
+    expect(hier.levels.some((l) => l.column === 'Year')).toBe(false);
+  });
+
+  it('switching a data column to calculated clears sourceColumn (and vice versa)', () => {
+    const dataCol = updateColumn(project, 'DimDate', 'MonthNumber', {
+      expression: 'MONTH(DimDate[Date])',
+    });
+    expect(dataCol.column.expression).toBe('MONTH(DimDate[Date])');
+    // Carrying BOTH would emit TMDL Power BI rejects.
+    expect(dataCol.column.sourceColumn).toBeUndefined();
+
+    const backToData = updateColumn(project, 'DimDate', 'MonthNumber', {
+      sourceColumn: 'MonthNumber',
+    });
+    expect(backToData.column.sourceColumn).toBe('MonthNumber');
+    expect(backToData.column.expression).toBeUndefined();
+  });
+
+  it('refuses a rename colliding with a MEASURE in the same table', () => {
+    const t = project.model.tables.find((x) => x.measures.length > 0)!;
+    t.columns.push({ kind: 'column', name: 'Scratch', dataType: 'int64' });
+    expect(() => updateColumn(project, t.name, 'Scratch', { newName: t.measures[0].name })).toThrow(
+      /measure named/,
+    );
+  });
+
   it('refuses a rename that collides with an existing column', () => {
     expect(() => updateColumn(project, 'DimDate', 'Year', { newName: 'Quarter' })).toThrow(
       /already exists/,
@@ -117,6 +164,12 @@ describe('deleteColumn', () => {
     });
 
     expect(() => deleteColumn(project, 'DimDate', 'Scratch')).toThrow(/calculated column/);
+  });
+
+  it('refuses while a MEASURE references it (the guard used to miss this entirely)', () => {
+    // Total Sales = SUM(FactSales[Amount]) in the fixture — deleting Amount
+    // previously succeeded and left the model unopenable.
+    expect(() => deleteColumn(project, 'FactSales', 'Amount')).toThrow(/measure/);
   });
 
   it('throws for an unknown column', () => {

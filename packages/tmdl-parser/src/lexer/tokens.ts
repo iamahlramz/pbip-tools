@@ -106,6 +106,7 @@ export const PROPERTY_KEYWORDS = new Set([
   'fromColumn',
   'toColumn',
   'toTable',
+  'fromCardinality',
   'toCardinality',
   'crossFilteringBehavior',
   'securityFilteringBehavior',

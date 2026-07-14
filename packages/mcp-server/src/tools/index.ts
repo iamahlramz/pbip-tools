@@ -553,19 +553,21 @@ export function registerTools(
     RenameMeasureSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = renameMeasure(project, args.measureName, args.newName);
-
-      await writeTableFile(project, findTable(project, result.table));
+      const target = mutationTarget(project, args.dryRun);
+      const result = renameMeasure(target, args.measureName, args.newName);
 
       let bindingsResult = { filesModified: 0, totalUpdates: 0 };
-      if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
-        bindingsResult = await updateVisualBindings(project, result.bindingOps);
+      if (!args.dryRun) {
+        await writeTableFile(target, findTable(target, result.table));
+        if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
+          bindingsResult = await updateVisualBindings(target, result.bindingOps);
+        }
+        invalidateCache(target.pbipPath);
       }
-
-      invalidateCache(project.pbipPath);
 
       return jsonResponse({
         success: true,
+        dryRun: !!args.dryRun,
         table: result.table,
         oldName: result.oldName,
         newName: result.newName,
@@ -807,7 +809,8 @@ export function registerTools(
     UpdateColumnSchema.shape,
     safeTool(async (args) => {
       const project = await getProjectForWrite(args.projectPath);
-      const result = updateColumn(project, args.tableName, args.columnName, {
+      const target = mutationTarget(project, args.dryRun);
+      const result = updateColumn(target, args.tableName, args.columnName, {
         newName: args.newName,
         dataType: args.dataType,
         expression: args.expression,
@@ -821,23 +824,31 @@ export function registerTools(
         isKey: args.isKey,
       });
 
-      await writeTableFile(project, findTable(project, result.table));
-
       let bindingsResult = { filesModified: 0, totalUpdates: 0 };
-      if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
-        bindingsResult = await updateVisualBindings(project, result.bindingOps);
+      if (!args.dryRun) {
+        // Renaming re-points relationships, so relationships.tmdl may have changed too.
+        await writeTableFile(target, findTable(target, result.table));
+        if (result.repointed.some((r) => r.startsWith('relationship'))) {
+          await writeRelationshipsFile(target, target.model.relationships);
+        }
+        if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
+          bindingsResult = await updateVisualBindings(target, result.bindingOps);
+        }
+        invalidateCache(target.pbipPath);
       }
-
-      invalidateCache(project.pbipPath);
 
       return jsonResponse({
         success: true,
+        dryRun: !!args.dryRun,
         table: result.table,
         column: result.column.name,
         visualBindings: {
           filesModified: bindingsResult.filesModified,
           totalUpdates: bindingsResult.totalUpdates,
         },
+        // Model refs re-pointed automatically, and DAX the caller must fix.
+        repointed: result.repointed,
+        daxReferencesNeedingUpdate: result.daxReferences,
       });
     }),
   );

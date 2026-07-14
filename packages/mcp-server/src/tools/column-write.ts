@@ -1,13 +1,6 @@
-import type { PbipProject, ColumnNode, TableNode, BindingUpdateOp } from '@pbip-tools/core';
+import type { PbipProject, ColumnNode, BindingUpdateOp } from '@pbip-tools/core';
 import { randomUUID } from 'node:crypto';
-
-function findTableOrThrow(project: PbipProject, tableName: string): TableNode {
-  const table = project.model.tables.find((t) => t.name === tableName);
-  if (!table) {
-    throw new Error(`Table '${tableName}' not found`);
-  }
-  return table;
-}
+import { findTableOrThrow, findColumnReferrers } from './references.js';
 
 export interface CreateColumnOptions {
   /** DAX — supply to create a CALCULATED column; omit for a data column. */
@@ -88,15 +81,27 @@ export interface UpdateColumnChanges {
 }
 
 /**
- * Update a column in place. Renaming emits a binding op so visual.json
- * references can be rewritten — the same contract as rename_measure.
+ * Update a column in place.
+ *
+ * Renaming re-points the model-internal references that would otherwise dangle
+ * (relationship endpoints, hierarchy levels, sortByColumn) and emits a binding
+ * op so visual.json is rewritten too. DAX naming the column is NOT rewritten —
+ * those references come back so the caller can fix them, the same contract as
+ * rename_measure. (deleteColumn refuses on exactly these references; a rename
+ * that ignored them would leave a model that won't load.)
  */
 export function updateColumn(
   project: PbipProject,
   tableName: string,
   columnName: string,
   changes: UpdateColumnChanges,
-): { table: string; column: ColumnNode; bindingOps: BindingUpdateOp[] } {
+): {
+  table: string;
+  column: ColumnNode;
+  bindingOps: BindingUpdateOp[];
+  daxReferences: string[];
+  repointed: string[];
+} {
   const table = findTableOrThrow(project, tableName);
   const column = table.columns.find((c) => c.name === columnName);
   if (!column) {
@@ -104,38 +109,93 @@ export function updateColumn(
   }
 
   const bindingOps: BindingUpdateOp[] = [];
+  const repointed: string[] = [];
+  let daxReferences: string[] = [];
 
   if (changes.newName !== undefined && changes.newName !== columnName) {
-    if (table.columns.some((c) => c.name === changes.newName)) {
-      throw new Error(`Column '${changes.newName}' already exists in table '${tableName}'`);
+    const newName = changes.newName;
+    if (table.columns.some((c) => c.name === newName)) {
+      throw new Error(`Column '${newName}' already exists in table '${tableName}'`);
     }
+    // Names must be unique within a table across BOTH columns and measures.
+    if (table.measures.some((m) => m.name === newName)) {
+      throw new Error(
+        `A measure named '${newName}' already exists in table '${tableName}' — names must be unique within a table`,
+      );
+    }
+
+    // Capture DAX referrers BEFORE renaming, while the old name still resolves.
+    daxReferences = findColumnReferrers(project, tableName, columnName).filter(
+      (r) =>
+        !r.startsWith('relationship') &&
+        !r.startsWith('hierarchy') &&
+        !r.startsWith('sortByColumn'),
+    );
+
+    for (const rel of project.model.relationships) {
+      if (rel.fromTable === tableName && rel.fromColumn === columnName) {
+        rel.fromColumn = newName;
+        repointed.push(`relationship '${rel.name}' (fromColumn)`);
+      }
+      if (rel.toTable === tableName && rel.toColumn === columnName) {
+        rel.toColumn = newName;
+        repointed.push(`relationship '${rel.name}' (toColumn)`);
+      }
+    }
+    for (const hier of table.hierarchies) {
+      for (const level of hier.levels) {
+        if (level.column === columnName) {
+          level.column = newName;
+          repointed.push(`hierarchy '${hier.name}' level '${level.name}'`);
+        }
+      }
+    }
+    for (const col of table.columns) {
+      if (col.sortByColumn === columnName) {
+        col.sortByColumn = newName;
+        repointed.push(`sortByColumn of '${col.name}'`);
+      }
+    }
+
     bindingOps.push({
       oldEntity: tableName,
       oldProperty: columnName,
       newEntity: tableName,
-      newProperty: changes.newName,
+      newProperty: newName,
     });
-    column.name = changes.newName;
+    column.name = newName;
   }
 
   if (changes.dataType !== undefined) column.dataType = changes.dataType;
-  if (changes.expression !== undefined) column.expression = changes.expression;
+
+  // A column is EITHER calculated (a DAX expression) or a data column bound to
+  // the partition query (sourceColumn). Carrying both emits TMDL that Power BI
+  // rejects, so switching kind clears the other side.
+  if (changes.expression !== undefined) {
+    column.expression = changes.expression;
+    delete column.sourceColumn;
+  }
+  if (changes.sourceColumn !== undefined) {
+    column.sourceColumn = changes.sourceColumn;
+    delete column.expression;
+  }
+
   if (changes.formatString !== undefined) column.formatString = changes.formatString;
   if (changes.displayFolder !== undefined) column.displayFolder = changes.displayFolder;
   if (changes.description !== undefined) column.description = changes.description;
   if (changes.summarizeBy !== undefined) column.summarizeBy = changes.summarizeBy;
   if (changes.dataCategory !== undefined) column.dataCategory = changes.dataCategory;
-  if (changes.sourceColumn !== undefined) column.sourceColumn = changes.sourceColumn;
   if (changes.isHidden !== undefined) column.isHidden = changes.isHidden;
   if (changes.isKey !== undefined) column.isKey = changes.isKey;
 
-  return { table: tableName, column, bindingOps };
+  return { table: tableName, column, bindingOps, daxReferences, repointed };
 }
 
 /**
  * Delete a column. Refuses while it is still referenced — by a relationship
- * endpoint, a hierarchy level, a sortByColumn, or another column's DAX —
- * since removing it would silently break each of those.
+ * endpoint, a hierarchy level, a sortByColumn, or ANY DAX in the model
+ * (measures, calculated columns, calculation items, RLS filters) — since
+ * removing it would silently break each of those.
  */
 export function deleteColumn(
   project: PbipProject,
@@ -148,36 +208,7 @@ export function deleteColumn(
     throw new Error(`Column '${columnName}' not found in table '${tableName}'`);
   }
 
-  const blockers: string[] = [];
-
-  for (const rel of project.model.relationships) {
-    if (
-      (rel.fromTable === tableName && rel.fromColumn === columnName) ||
-      (rel.toTable === tableName && rel.toColumn === columnName)
-    ) {
-      blockers.push(`relationship '${rel.name}'`);
-    }
-  }
-
-  for (const hier of table.hierarchies) {
-    if (hier.levels.some((l) => l.column === columnName)) {
-      blockers.push(`hierarchy '${hier.name}'`);
-    }
-  }
-
-  for (const col of table.columns) {
-    if (col.name !== columnName && col.sortByColumn === columnName) {
-      blockers.push(`sortByColumn of '${col.name}'`);
-    }
-  }
-
-  const daxRef = `[${columnName}]`;
-  for (const col of table.columns) {
-    if (col.name !== columnName && col.expression?.includes(daxRef)) {
-      blockers.push(`calculated column '${col.name}'`);
-    }
-  }
-
+  const blockers = findColumnReferrers(project, tableName, columnName);
   if (blockers.length > 0) {
     throw new Error(
       `Column '${tableName}'.${columnName} is still referenced by: ${blockers.join(', ')}. Remove those first.`,

@@ -1,4 +1,5 @@
-import type { PbipProject, ModelNode, AnnotationNode, TableNode } from '@pbip-tools/core';
+import type { PbipProject, ModelNode, AnnotationNode } from '@pbip-tools/core';
+import { findTableOrThrow } from './references.js';
 
 export interface ModelPropertyChanges {
   culture?: string;
@@ -35,14 +36,6 @@ export type AnnotationTarget =
 
 interface AnnotationHost {
   annotations?: AnnotationNode[];
-}
-
-function findTableOrThrow(project: PbipProject, tableName: string): TableNode {
-  const table = project.model.tables.find((t) => t.name === tableName);
-  if (!table) {
-    throw new Error(`Table '${tableName}' not found`);
-  }
-  return table;
 }
 
 /**

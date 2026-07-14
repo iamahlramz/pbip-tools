@@ -1,5 +1,11 @@
-import { parseTmdl, serializeTable, serializeModel, serializeRole } from '../src/index.js';
-import type { TableNode, ModelNode, RoleNode } from '@pbip-tools/core';
+import {
+  parseTmdl,
+  serializeTable,
+  serializeModel,
+  serializeRole,
+  serializeRelationships,
+} from '../src/index.js';
+import type { TableNode, ModelNode, RoleNode, RelationshipNode } from '@pbip-tools/core';
 
 /**
  * Round-trip fidelity regression suite for the P0 data-loss hazards found in
@@ -238,6 +244,39 @@ describe('partition source round-trip', () => {
     expect(result.warnings.some((w) => w.message.includes('policyRange'))).toBe(true);
   });
 });
+
+describe('relationship round-trip', () => {
+  it('preserves securityFilteringBehavior and fromCardinality', () => {
+    const input = [
+      'relationship Rel1',
+      '\tfromColumn: FactSales.CustomerKey',
+      '\ttoColumn: DimCustomer.CustomerKey',
+      '\tfromCardinality: one',
+      '\tcrossFilteringBehavior: bothDirections',
+      '\tsecurityFilteringBehavior: bothDirections',
+      '',
+    ].join('\n');
+
+    const result = parseTmdl(input, 'relationship');
+    expect(result.type).toBe('relationship');
+    const nodes = (result as { type: 'relationship'; nodes: RelationshipNode[] }).nodes;
+
+    expect(nodes[0].securityFilteringBehavior).toBe('bothDirections');
+    expect(nodes[0].fromCardinality).toBe('one');
+
+    // relationships.tmdl is rewritten WHOLE on every write, so dropping these
+    // would silently widen RLS propagation on relationships nobody touched.
+    const out = serializeRelationships(nodes);
+    expect(out).toContain('securityFilteringBehavior: bothDirections');
+    expect(out).toContain('fromCardinality: one');
+    expect(serializeRelationships(parseRelationships(out))).toBe(out);
+  });
+});
+
+function parseRelationships(text: string): RelationshipNode[] {
+  const r = parseTmdl(text, 'relationship');
+  return (r as { type: 'relationship'; nodes: RelationshipNode[] }).nodes;
+}
 
 describe('model ref round-trip', () => {
   it('preserves ref cultureInfo lines alongside ref table lines', () => {

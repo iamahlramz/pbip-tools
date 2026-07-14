@@ -760,6 +760,7 @@ export const RenameMeasureSchema = z.object({
     .optional()
     .default(true)
     .describe('Rewrite visual.json bindings that reference the measure (default: true)'),
+  dryRun,
 });
 
 export const UpdateCalcItemSchema = z.object({
@@ -878,6 +879,7 @@ export const UpdateColumnSchema = z.object({
     .optional()
     .default(true)
     .describe('Rewrite visual.json bindings when renaming (default: true)'),
+  dryRun,
 });
 
 export const DeleteColumnSchema = z.object({

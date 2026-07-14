@@ -389,9 +389,15 @@ function serializeRelationship(rel: RelationshipNode): string[] {
   lines.push(`${indent(1)}fromColumn: ${rel.fromTable}.${rel.fromColumn}`);
   lines.push(`${indent(1)}toColumn: ${rel.toTable}.${rel.toColumn}`);
 
+  if (rel.fromCardinality) lines.push(`${indent(1)}fromCardinality: ${rel.fromCardinality}`);
   if (rel.toCardinality) lines.push(`${indent(1)}toCardinality: ${rel.toCardinality}`);
   if (rel.crossFilteringBehavior) {
     lines.push(`${indent(1)}crossFilteringBehavior: ${rel.crossFilteringBehavior}`);
+  }
+  // Dropping this silently widens RLS propagation on EVERY relationship in the
+  // file, not just the one being edited — relationships.tmdl is rewritten whole.
+  if (rel.securityFilteringBehavior) {
+    lines.push(`${indent(1)}securityFilteringBehavior: ${rel.securityFilteringBehavior}`);
   }
   if (rel.isActive === false) lines.push(`${indent(1)}isActive: false`);
   if (rel.joinOnDateBehavior) {

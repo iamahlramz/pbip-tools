@@ -1,10 +1,8 @@
 import type { PbipProject, CalculationItemNode, TableNode } from '@pbip-tools/core';
+import { findTableOrThrow, findCalcGroupReferrers } from './references.js';
 
 function findCalcGroupTable(project: PbipProject, tableName: string): TableNode {
-  const table = project.model.tables.find((t) => t.name === tableName);
-  if (!table) {
-    throw new Error(`Table '${tableName}' not found`);
-  }
+  const table = findTableOrThrow(project, tableName);
   if (!table.calculationGroup) {
     throw new Error(`Table '${tableName}' is not a calculation group`);
   }
@@ -67,15 +65,8 @@ export function deleteCalcGroup(
   const table = findCalcGroupTable(project, tableName);
   const itemsRemoved = table.calculationGroup!.items.length;
 
-  const needle = `'${tableName}'`;
-  const referencing: string[] = [];
-  for (const t of project.model.tables) {
-    for (const m of t.measures) {
-      if (m.expression.includes(needle) || m.expression.includes(`[${tableName}]`)) {
-        referencing.push(`${t.name}[${m.name}]`);
-      }
-    }
-  }
+  const referencing = findCalcGroupReferrers(project, tableName);
+
   if (referencing.length > 0) {
     throw new Error(
       `Calculation group '${tableName}' is still referenced by ${referencing.length} measure(s): ${referencing.join(', ')}. Update them first.`,

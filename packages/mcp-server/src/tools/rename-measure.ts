@@ -36,6 +36,13 @@ export function renameMeasure(
         throw new Error(`A measure named '${newName}' already exists in table '${t.name}'`);
       }
     }
+    // And within a table, names must be unique across BOTH measures and columns
+    // — Power BI rejects a table carrying `column X` and `measure X`.
+    if (table.columns.some((c) => c.name === newName)) {
+      throw new Error(
+        `A column named '${newName}' already exists in table '${table.name}' — names must be unique within a table`,
+      );
+    }
 
     // Other measures referencing [Old Name] in their DAX — surfaced, not rewritten.
     const needle = `[${measureName}]`;
