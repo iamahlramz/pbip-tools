@@ -63,7 +63,9 @@ describe('dry-run mutation isolation', () => {
     expect(() => deleteColumn(target, 'DimDate', 'DateKey')).toThrow(/relationship/);
     // And the real project is still intact.
     expect(
-      project.model.tables.find((t) => t.name === 'DimDate')!.columns.some((c) => c.name === 'DateKey'),
+      project.model.tables
+        .find((t) => t.name === 'DimDate')!
+        .columns.some((c) => c.name === 'DateKey'),
     ).toBe(true);
   });
 });

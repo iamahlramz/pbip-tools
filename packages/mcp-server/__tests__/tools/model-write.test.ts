@@ -2,7 +2,11 @@ import { loadProject } from '@pbip-tools/project-discovery';
 import type { PbipProject } from '@pbip-tools/core';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { setModelProperties, setAnnotation, deleteAnnotation } from '../../src/tools/model-write.js';
+import {
+  setModelProperties,
+  setAnnotation,
+  deleteAnnotation,
+} from '../../src/tools/model-write.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, '../../../..', 'fixtures');
@@ -75,9 +79,9 @@ describe('setAnnotation', () => {
 
     const dimDate = project.model.tables.find((t) => t.name === 'DimDate')!;
     expect(dimDate.annotations?.find((a) => a.name === 'Layer')?.value).toBe('Dimension');
-    expect(
-      measureTable.measures[0].annotations?.find((a) => a.name === 'Certified')?.value,
-    ).toBe('true');
+    expect(measureTable.measures[0].annotations?.find((a) => a.name === 'Certified')?.value).toBe(
+      'true',
+    );
     expect(
       dimDate.columns.find((c) => c.name === 'Year')!.annotations?.find((a) => a.name === 'PII')
         ?.value,
