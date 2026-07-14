@@ -95,6 +95,9 @@ export function parseColumn(
           case 'columnType':
             node.columnType = t.value as ColumnNode['columnType'];
             break;
+          case 'description':
+            node.description = t.value;
+            break;
           case 'isAvailableInMdx':
             // `isAvailableInMdx: false` — the only form Tabular writes (true is
             // the default and is emitted as the bare flag, if at all).

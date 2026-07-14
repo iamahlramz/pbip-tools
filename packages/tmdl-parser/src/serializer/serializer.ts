@@ -189,6 +189,7 @@ function serializeColumn(col: ColumnNode, level: number): string[] {
   if (col.isDefaultLabel) lines.push(`${indent(level + 1)}isDefaultLabel`);
   if (col.isDefaultImage) lines.push(`${indent(level + 1)}isDefaultImage`);
   if (col.columnType) lines.push(`${indent(level + 1)}columnType: ${col.columnType}`);
+  if (col.description) lines.push(`${indent(level + 1)}description: ${col.description}`);
   if (col.formatString) lines.push(`${indent(level + 1)}formatString: ${col.formatString}`);
   if (col.displayFolder) lines.push(`${indent(level + 1)}displayFolder: ${col.displayFolder}`);
   if (col.lineageTag) lines.push(`${indent(level + 1)}lineageTag: ${col.lineageTag}`);

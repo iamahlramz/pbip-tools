@@ -89,6 +89,12 @@ import {
   UpdateCalcItemSchema,
   DeleteCalcItemSchema,
   DeleteCalcGroupSchema,
+  CreateHierarchySchema,
+  UpdateHierarchySchema,
+  DeleteHierarchySchema,
+  CreateColumnSchema,
+  UpdateColumnSchema,
+  DeleteColumnSchema,
 } from '../schemas.js';
 
 // Read-only tool implementations
@@ -171,6 +177,8 @@ import { createRelationship, deleteRelationship } from './create-relationship.js
 import { updateRelationship } from './update-relationship.js';
 import { renameMeasure } from './rename-measure.js';
 import { updateCalcItem, deleteCalcItem, deleteCalcGroup } from './calc-item-write.js';
+import { createHierarchy, updateHierarchy, deleteHierarchy } from './hierarchy-write.js';
+import { createColumn, updateColumn, deleteColumn } from './column-write.js';
 
 // Fabric API tool implementations
 import { fabricListWorkspaces } from './fabric-list-workspaces.js';
@@ -639,6 +647,162 @@ export function registerTools(
       await deleteTableFile(project, result.deletedTable);
       // The table's `ref table` line was dropped from the model node — persist it.
       await writeModelFile(project, project.model.model);
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  // =============================================
+  // HIERARCHY TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_create_hierarchy',
+    'Create a hierarchy on a table from an ordered list of columns (array order = drill order)',
+    CreateHierarchySchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = createHierarchy(project, args.tableName, args.hierarchyName, args.levels, {
+        isHidden: args.isHidden,
+      });
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        hierarchy: result.hierarchy.name,
+        levels: result.hierarchy.levels.map((l) => ({ name: l.name, column: l.column })),
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_hierarchy',
+    'Update a hierarchy: rename it, replace its levels (supplying levels replaces the whole list), or hide/show it',
+    UpdateHierarchySchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateHierarchy(project, args.tableName, args.hierarchyName, {
+        newName: args.newName,
+        levels: args.levels,
+        isHidden: args.isHidden,
+      });
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        hierarchy: result.hierarchy.name,
+        levels: result.hierarchy.levels.map((l) => ({ name: l.name, column: l.column })),
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_hierarchy',
+    'Delete a hierarchy from a table (destructive)',
+    DeleteHierarchySchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteHierarchy(project, args.tableName, args.hierarchyName);
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({ success: true, ...result });
+    }),
+  );
+
+  // =============================================
+  // COLUMN TOOLS (3)
+  // =============================================
+
+  server.tool(
+    'pbip_create_column',
+    'Create a column. Supply `expression` for a calculated column (column X = <dax>); omit it for a data column bound to the partition query via sourceColumn.',
+    CreateColumnSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = createColumn(project, args.tableName, args.columnName, args.dataType, {
+        expression: args.expression,
+        sourceColumn: args.sourceColumn,
+        formatString: args.formatString,
+        displayFolder: args.displayFolder,
+        description: args.description,
+        summarizeBy: args.summarizeBy,
+        dataCategory: args.dataCategory,
+        isHidden: args.isHidden,
+        isKey: args.isKey,
+      });
+
+      await writeTableFile(project, findTable(project, result.table));
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        column: result.column.name,
+        dataType: result.column.dataType,
+        calculated: result.column.expression !== undefined,
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_update_column',
+    'Update a column in place. Renaming rewrites the visual.json bindings that reference it.',
+    UpdateColumnSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = updateColumn(project, args.tableName, args.columnName, {
+        newName: args.newName,
+        dataType: args.dataType,
+        expression: args.expression,
+        formatString: args.formatString,
+        displayFolder: args.displayFolder,
+        description: args.description,
+        summarizeBy: args.summarizeBy,
+        dataCategory: args.dataCategory,
+        sourceColumn: args.sourceColumn,
+        isHidden: args.isHidden,
+        isKey: args.isKey,
+      });
+
+      await writeTableFile(project, findTable(project, result.table));
+
+      let bindingsResult = { filesModified: 0, totalUpdates: 0 };
+      if (args.updateVisualBindings !== false && result.bindingOps.length > 0) {
+        bindingsResult = await updateVisualBindings(project, result.bindingOps);
+      }
+
+      invalidateCache(project.pbipPath);
+
+      return jsonResponse({
+        success: true,
+        table: result.table,
+        column: result.column.name,
+        visualBindings: {
+          filesModified: bindingsResult.filesModified,
+          totalUpdates: bindingsResult.totalUpdates,
+        },
+      });
+    }),
+  );
+
+  server.tool(
+    'pbip_delete_column',
+    'Delete a column (destructive). Refuses while it is still referenced by a relationship, hierarchy level, sortByColumn, or another column’s DAX.',
+    DeleteColumnSchema.shape,
+    safeTool(async (args) => {
+      const project = await getProjectForWrite(args.projectPath);
+      const result = deleteColumn(project, args.tableName, args.columnName);
+
+      await writeTableFile(project, findTable(project, result.table));
       invalidateCache(project.pbipPath);
 
       return jsonResponse({ success: true, ...result });

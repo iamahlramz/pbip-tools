@@ -79,6 +79,7 @@ export interface ColumnNode extends TmdlNode {
   dataType: string;
   columnType?: ColumnType;
   expression?: string;
+  description?: string;
   formatString?: string;
   displayFolder?: string;
   lineageTag?: string;

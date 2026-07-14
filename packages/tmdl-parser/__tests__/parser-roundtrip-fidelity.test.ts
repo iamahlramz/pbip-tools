@@ -121,6 +121,27 @@ describe('quoted names containing "="', () => {
   });
 });
 
+describe('column description round-trip', () => {
+  it('preserves a column description (previously dropped on rewrite)', () => {
+    const input = [
+      'table T',
+      '',
+      '\tcolumn C',
+      '\t\tdataType: string',
+      '\t\tdescription: The customer’s home region',
+      '\t\tsourceColumn: Region',
+      '',
+    ].join('\n');
+
+    const node = parseTable(input);
+    expect(node.columns[0].description).toBe('The customer’s home region');
+
+    const out = serializeTable(node);
+    expect(out).toContain('description: The customer’s home region');
+    expect(serializeTable(parseTable(out))).toBe(out);
+  });
+});
+
 describe('isAvailableInMdx tri-state', () => {
   it('preserves an explicit `isAvailableInMdx: false`', () => {
     const input = [

@@ -777,3 +777,100 @@ export const DeleteCalcGroupSchema = z.object({
   projectPath,
   tableName: tableName.describe('Calculation group table to delete (removes the whole table)'),
 });
+
+// --- Hierarchy write schemas ---
+
+const columnName = z.string().min(1).max(256);
+
+const hierarchyLevels = z
+  .array(
+    z.object({
+      column: columnName.describe('Column backing this level'),
+      name: z.string().min(1).max(256).optional().describe('Level name (defaults to column name)'),
+    }),
+  )
+  .min(1)
+  .describe('Levels in drill order — the array order IS the hierarchy order');
+
+export const CreateHierarchySchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table to add the hierarchy to'),
+  hierarchyName: z.string().min(1).max(256).describe('Name of the new hierarchy'),
+  levels: hierarchyLevels,
+  isHidden: z.boolean().optional().describe('Hide the hierarchy from report view'),
+});
+
+export const UpdateHierarchySchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table containing the hierarchy'),
+  hierarchyName: z.string().min(1).max(256).describe('Hierarchy to update'),
+  newName: z.string().min(1).max(256).optional().describe('Rename the hierarchy'),
+  levels: hierarchyLevels.optional().describe('Replaces the entire level list when supplied'),
+  isHidden: z.boolean().optional().describe('Hide or show the hierarchy'),
+});
+
+export const DeleteHierarchySchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table containing the hierarchy'),
+  hierarchyName: z.string().min(1).max(256).describe('Hierarchy to delete'),
+});
+
+// --- Column write schemas ---
+
+export const CreateColumnSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table to add the column to'),
+  columnName: columnName.describe('Name of the new column'),
+  dataType: z
+    .enum(['string', 'int64', 'double', 'decimal', 'dateTime', 'boolean', 'binary', 'variant'])
+    .describe('TMDL data type'),
+  expression: expression
+    .optional()
+    .describe('DAX — supply to create a CALCULATED column; omit for a data column'),
+  sourceColumn: columnName
+    .optional()
+    .describe('Source column in the partition query (data columns; defaults to columnName)'),
+  formatString: z.string().max(256).optional().describe('Format string'),
+  displayFolder: z.string().max(256).optional().describe('Display folder'),
+  description: z.string().max(4000).optional().describe('Column description'),
+  summarizeBy: z
+    .enum(['none', 'sum', 'min', 'max', 'count', 'average', 'distinctCount'])
+    .optional()
+    .describe('Default aggregation (default: none for calculated, sum for numeric data columns)'),
+  dataCategory: z.string().max(256).optional().describe('Data category (e.g. ImageUrl)'),
+  isHidden: z.boolean().optional().describe('Hide the column from report view'),
+  isKey: z.boolean().optional().describe('Mark as the table key'),
+});
+
+export const UpdateColumnSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table containing the column'),
+  columnName: columnName.describe('Column to update'),
+  newName: columnName.optional().describe('Rename the column (rewrites visual bindings)'),
+  dataType: z
+    .enum(['string', 'int64', 'double', 'decimal', 'dateTime', 'boolean', 'binary', 'variant'])
+    .optional()
+    .describe('New TMDL data type'),
+  expression: expression.optional().describe('New DAX (calculated columns)'),
+  formatString: z.string().max(256).optional(),
+  displayFolder: z.string().max(256).optional(),
+  description: z.string().max(4000).optional(),
+  summarizeBy: z
+    .enum(['none', 'sum', 'min', 'max', 'count', 'average', 'distinctCount'])
+    .optional(),
+  dataCategory: z.string().max(256).optional(),
+  sourceColumn: columnName.optional(),
+  isHidden: z.boolean().optional(),
+  isKey: z.boolean().optional(),
+  updateVisualBindings: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Rewrite visual.json bindings when renaming (default: true)'),
+});
+
+export const DeleteColumnSchema = z.object({
+  projectPath,
+  tableName: tableName.describe('Table containing the column'),
+  columnName: columnName.describe('Column to delete'),
+});
